@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MealLogForm } from '@/components/forms/MealLogForm';
 import { useHealthStore } from '@/lib/store/healthStore';
@@ -18,13 +17,18 @@ jest.mock('@/components/forms/FoodSearchInput', () => ({
 
 describe('MealLogForm', () => {
   const mockAddMeal = jest.fn();
+  const mockFetchProfile = jest.fn();
+  const mockProfile = { id: 'user-1', allergies: [] };
 
   beforeEach(() => {
     (useHealthStore as unknown as jest.Mock).mockReturnValue({
       addMeal: mockAddMeal,
+      fetchProfile: mockFetchProfile,
+      profile: mockProfile,
       isLoading: false,
     });
     mockAddMeal.mockClear();
+    mockFetchProfile.mockClear();
   });
 
   it('adds food to the list and submits', async () => {
