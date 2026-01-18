@@ -695,10 +695,10 @@
 
 ### 4.1 Layout Components
 
-- [ ] Create `src/components/layout/Header.tsx` with navigation
-- [ ] Create `src/components/layout/Sidebar.tsx` with menu
-- [ ] Create `src/components/layout/MainLayout.tsx`
-- [ ] Commit: `git commit -m "feat: implement layout components"`
+- [x] Create `src/components/layout/Header.tsx` with navigation
+- [x] Create `src/components/layout/Sidebar.tsx` with menu
+- [x] Create `src/components/layout/MainLayout.tsx`
+- [x] Commit: `git commit -m "feat: implement layout components"`
 
 ### 4.2 Dashboard Components
 
