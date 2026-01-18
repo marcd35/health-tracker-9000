@@ -661,33 +661,33 @@
 
 ### 3.1 Nutritional Calculator
 
-- [ ] Create `src/lib/utils/nutritionalCalculator.ts`
-- [ ] Implement: `calculateBMR()`, `calculateTDEE()`, `calculateMacroTargets()`
-- [ ] Commit: `git commit -m "feat: implement nutritional calculation utilities"`
+- [x] Create `src/lib/utils/nutritionalCalculator.ts`
+- [x] Implement: `calculateBMR()`, `calculateTDEE()`, `calculateMacroTargets()`
+- [x] Commit: `git commit -m "feat: implement nutritional calculation utilities"`
 
 ### 3.2 Health Scoring Algorithm
 
-- [ ] Create `src/lib/utils/healthScoring.ts`
-- [ ] Implement scoring based on:
+- [x] Create `src/lib/utils/healthScoring.ts`
+- [x] Implement scoring based on:
   - Macro adherence (40% weight)
   - Micronutrient adherence (40% weight)
   - Supplement compliance (10% weight)
   - Hydration/notes (10% weight)
-- [ ] Return score 0-100 with breakdown
-- [ ] Commit: `git commit -m "feat: implement health scoring algorithm"`
+- [x] Return score 0-100 with breakdown
+- [x] Commit: `git commit -m "feat: implement health scoring algorithm"`
 
 ### 3.3 Recommendation Engine
 
-- [ ] Create `src/lib/utils/recommendations.ts`
-- [ ] Implement: `analyzeNutritionalGaps()`, `generateRecommendations()`
-- [ ] Consider gout-specific recommendations (low purine, vitamin C, hydration)
-- [ ] Commit: `git commit -m "feat: implement recommendation engine with gout considerations"`
+- [x] Create `src/lib/utils/recommendations.ts`
+- [x] Implement: `analyzeNutritionalGaps()`, `generateRecommendations()`
+- [x] Consider gout-specific recommendations (low purine, vitamin C, hydration)
+- [x] Commit: `git commit -m "feat: implement recommendation engine with gout considerations"`
 
 ### 3.4 Allergen Checker
 
-- [ ] Create `src/lib/utils/allergenChecker.ts`
-- [ ] Implement: `checkFoodForAllergens()`, `flagConflicts()`
-- [ ] Commit: `git commit -m "feat: implement allergen checking utility"`
+- [x] Create `src/lib/utils/allergenChecker.ts`
+- [x] Implement: `checkFoodForAllergens()`, `flagConflicts()`
+- [x] Commit: `git commit -m "feat: implement allergen checking utility"`
 
 ---
 

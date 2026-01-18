@@ -45,6 +45,7 @@ export interface Food {
   servingSize: number; // grams
   servingUnit: string;
   nutritionPer100g: NutritionalValues;
+  allergens?: string[];
 }
 
 export interface NutritionalValues {
