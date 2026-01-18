@@ -1,10 +1,7 @@
 import '@testing-library/jest-dom';
-<<<<<<< Updated upstream
 
 global.ResizeObserver = class ResizeObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
+  observe() { }
+  unobserve() { }
+  disconnect() { }
 };
-=======
->>>>>>> Stashed changes
