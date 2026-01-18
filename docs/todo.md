@@ -702,12 +702,12 @@
 
 ### 4.2 Dashboard Components
 
-- [ ] Create `src/components/dashboard/HealthScoreCard.tsx` - displays score with color coding
-- [ ] Create `src/components/dashboard/NutritionSummaryCard.tsx` - macro/micro overview
-- [ ] Create `src/components/dashboard/RecommendationsCard.tsx` - actionable suggestions
-- [ ] Create `src/components/dashboard/TodaysMeals.tsx` - meal log list
-- [ ] Create `src/components/dashboard/TodaysSupplements.tsx` - supplement checklist
-- [ ] Commit: `git commit -m "feat: implement dashboard overview components"`
+- [x] Create `src/components/dashboard/HealthScoreCard.tsx` - displays score with color coding
+- [x] Create `src/components/dashboard/NutritionSummaryCard.tsx` - macro/micro overview
+- [x] Create `src/components/dashboard/RecommendationsCard.tsx` - actionable suggestions
+- [x] Create `src/components/dashboard/TodaysMeals.tsx` - meal log list
+- [x] Create `src/components/dashboard/TodaysSupplements.tsx` - supplement checklist
+- [x] Commit: `git commit -m "feat: implement dashboard overview components"`
 
 ### 4.3 Form Components
 
