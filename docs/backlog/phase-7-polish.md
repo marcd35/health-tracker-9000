@@ -17,9 +17,9 @@
 
 ### 7.3 Responsive Design
 
-- [ ] Ensure mobile responsiveness for all pages
-- [ ] Test on tablet and mobile breakpoints
-- [ ] Commit: `git commit -m "feat: ensure responsive design across all breakpoints"`
+- [x] Ensure mobile responsiveness for all pages
+- [x] Test on tablet and mobile breakpoints
+- [x] Commit: `git commit -m "feat: ensure responsive design across all breakpoints"`
 
 ### 7.4 Accessibility
 
