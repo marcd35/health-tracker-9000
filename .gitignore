@@ -41,7 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 # local data (IMPORTANT - keep health data private)
-/data/
+/data/*
 !/data/.gitkeep
 *.db
 *.sqlite
