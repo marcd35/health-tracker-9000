@@ -35,8 +35,22 @@ export function MealLogForm() {
     setSelectedFoods(newFoods);
   };
 
+  const [errors, setErrors] = useState<Record<number, string>>({});
+
+  const validate = () => {
+    const newErrors: Record<number, string> = {};
+    selectedFoods.forEach((food, index) => {
+      if (food.amount <= 0) {
+        newErrors[index] = 'Amount must be > 0';
+      }
+    });
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleLogMeal = async () => {
     if (selectedFoods.length === 0) return;
+    if (!validate()) return;
 
     const today = new Date().toISOString().split('T')[0];
     await addMeal({
@@ -49,6 +63,7 @@ export function MealLogForm() {
       })),
     });
     setSelectedFoods([]);
+    setErrors({});
   };
 
   return (
@@ -80,20 +95,32 @@ export function MealLogForm() {
             {selectedFoods.map((food, index) => (
               <div
                 key={index}
-                className="flex items-center gap-4 p-3 rounded-lg border bg-muted/50"
+                className={`flex items-center gap-4 p-3 rounded-lg border ${
+                  errors[index] ? 'border-destructive bg-destructive/5' : 'bg-muted/50'
+                }`}
               >
                 <div className="flex-1">
                   <p className="text-sm font-medium">{food.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {food.nutritionPer100g.calories} kcal per 100g
                   </p>
+                  {errors[index] && (
+                    <p className="text-xs text-destructive mt-1">{errors[index]}</p>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <Input
                     type="number"
                     value={food.amount}
-                    onChange={(e) => updateAmount(index, parseInt(e.target.value) || 0)}
-                    className="w-20 h-8"
+                    onChange={(e) => {
+                      updateAmount(index, parseInt(e.target.value) || 0);
+                      if (errors[index]) {
+                        const newErrors = { ...errors };
+                        delete newErrors[index];
+                        setErrors(newErrors);
+                      }
+                    }}
+                    className={`w-20 h-8 ${errors[index] ? 'border-destructive' : ''}`}
                   />
                   <span className="text-sm text-muted-foreground">g</span>
                 </div>

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { toast } from 'sonner';
 import { UserProfile, DailyLog, MealLog, Food, Supplement } from '@/lib/types/health';
 
 interface HealthState {
@@ -48,6 +49,7 @@ export const useHealthStore = create<HealthState>((set, get) => ({
       set({ profile: data, isLoading: false });
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
+      toast.error(err.message || 'Failed to fetch profile');
     }
   },
 
@@ -62,8 +64,10 @@ export const useHealthStore = create<HealthState>((set, get) => ({
       if (!response.ok) throw new Error('Failed to update profile');
       const data = await response.json();
       set({ profile: data, isLoading: false });
+      toast.success('Profile updated successfully');
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
+      toast.error(err.message || 'Failed to update profile');
     }
   },
 
@@ -76,6 +80,7 @@ export const useHealthStore = create<HealthState>((set, get) => ({
       set({ dailyLog: data, isLoading: false });
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
+      toast.error(err.message || 'Failed to fetch daily log');
     }
   },
 
@@ -88,6 +93,7 @@ export const useHealthStore = create<HealthState>((set, get) => ({
       set({ weeklySummary: data, isLoading: false });
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
+      toast.error(err.message || 'Failed to fetch weekly summary');
     }
   },
 
@@ -100,6 +106,7 @@ export const useHealthStore = create<HealthState>((set, get) => ({
       set({ allSupplements: data, isLoading: false });
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
+      toast.error(err.message || 'Failed to fetch supplements');
     }
   },
 
@@ -116,8 +123,10 @@ export const useHealthStore = create<HealthState>((set, get) => ({
       // Refresh daily log to get updated nutrition and score
       const date = meal.date;
       await get().fetchDailyLog(date);
+      toast.success('Meal added successfully');
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
+      toast.error(err.message || 'Failed to add meal');
     }
   },
 
@@ -133,8 +142,10 @@ export const useHealthStore = create<HealthState>((set, get) => ({
       if (get().dailyLog) {
         await get().fetchDailyLog(get().dailyLog!.date);
       }
+      toast.success('Meal deleted successfully');
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
+      toast.error(err.message || 'Failed to delete meal');
     }
   },
 
@@ -150,8 +161,10 @@ export const useHealthStore = create<HealthState>((set, get) => ({
 
       // Refresh daily log
       await get().fetchDailyLog(date);
+      toast.success(`${supplementName} marked as ${taken ? 'taken' : 'not taken'}`);
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
+      toast.error(err.message || 'Failed to update supplement');
     }
   },
 
@@ -163,6 +176,7 @@ export const useHealthStore = create<HealthState>((set, get) => ({
       return await response.json();
     } catch (err: any) {
       console.error(err);
+      toast.error('Failed to search foods');
       return [];
     }
   },

@@ -41,7 +41,24 @@ function ProfileForm({
     activityLevel: profile.activityLevel,
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (formData.age <= 0 || formData.age > 120) newErrors.age = 'Age must be between 1 and 120';
+    if (formData.weight <= 0 || formData.weight > 300)
+      newErrors.weight = 'Enter a valid weight (1-300kg)';
+    if (formData.height <= 0 || formData.height > 250)
+      newErrors.height = 'Enter a valid height (1-250cm)';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSave = async () => {
+    if (!validate()) {
+      return;
+    }
     await onSave(formData);
   };
 
@@ -63,8 +80,13 @@ function ProfileForm({
                 id="age"
                 type="number"
                 value={formData.age}
-                onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) || 0 })}
+                onChange={(e) => {
+                  setFormData({ ...formData, age: parseInt(e.target.value) || 0 });
+                  if (errors.age) setErrors({ ...errors, age: '' });
+                }}
+                className={errors.age ? 'border-destructive' : ''}
               />
+              {errors.age && <p className="text-xs text-destructive">{errors.age}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="gender">Gender</Label>
@@ -90,10 +112,13 @@ function ProfileForm({
                 id="weight"
                 type="number"
                 value={formData.weight}
-                onChange={(e) =>
-                  setFormData({ ...formData, weight: parseFloat(e.target.value) || 0 })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, weight: parseFloat(e.target.value) || 0 });
+                  if (errors.weight) setErrors({ ...errors, weight: '' });
+                }}
+                className={errors.weight ? 'border-destructive' : ''}
               />
+              {errors.weight && <p className="text-xs text-destructive">{errors.weight}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="height">Height (cm)</Label>
@@ -101,10 +126,13 @@ function ProfileForm({
                 id="height"
                 type="number"
                 value={formData.height}
-                onChange={(e) =>
-                  setFormData({ ...formData, height: parseFloat(e.target.value) || 0 })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, height: parseFloat(e.target.value) || 0 });
+                  if (errors.height) setErrors({ ...errors, height: '' });
+                }}
+                className={errors.height ? 'border-destructive' : ''}
               />
+              {errors.height && <p className="text-xs text-destructive">{errors.height}</p>}
             </div>
           </div>
           <div className="space-y-2">
