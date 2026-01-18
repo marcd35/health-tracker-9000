@@ -711,17 +711,17 @@
 
 ### 4.3 Form Components
 
-- [ ] Create `src/components/forms/MealLogForm.tsx` - add/edit meals
-- [ ] Create `src/components/forms/FoodSearchInput.tsx` - search and select foods
-- [ ] Create `src/components/forms/SupplementCheckbox.tsx` - mark supplements taken
-- [ ] Commit: `git commit -m "feat: implement meal and supplement logging forms"`
+- [x] Create `src/components/forms/MealLogForm.tsx` - add/edit meals
+- [x] Create `src/components/forms/FoodSearchInput.tsx` - search and select foods
+- [x] Create `src/components/forms/SupplementCheckbox.tsx` - mark supplements taken
+- [x] Commit: `git commit -m "feat: implement meal and supplement logging forms"`
 
 ### 4.4 Chart Components
 
-- [ ] Create `src/components/dashboard/MacroChart.tsx` - pie/bar chart for macros
-- [ ] Create `src/components/dashboard/WeeklyTrendChart.tsx` - line chart for score over time
-- [ ] Create `src/components/dashboard/MicronutrientGrid.tsx` - grid showing vitamin/mineral %
-- [ ] Commit: `git commit -m "feat: implement data visualization components"`
+- [x] Create `src/components/dashboard/MacroChart.tsx` - pie/bar chart for macros
+- [x] Create `src/components/dashboard/WeeklyTrendChart.tsx` - line chart for score over time
+- [x] Create `src/components/dashboard/MicronutrientGrid.tsx` - grid showing vitamin/mineral %
+- [x] Commit: `git commit -m "feat: implement data visualization components"`
 
 ---
 
