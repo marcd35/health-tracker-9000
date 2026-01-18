@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Pill } from 'lucide-react';
+import { Pill, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 interface SupplementEntry {
   id: string;
@@ -27,8 +28,14 @@ export function TodaysSupplements({ supplements }: TodaysSupplementsProps) {
       </CardHeader>
       <CardContent>
         {supplements.length === 0 ? (
-          <div className="py-6 text-center text-sm text-muted-foreground">
-            No supplements scheduled.
+          <div className="py-8 text-center space-y-4">
+            <p className="text-sm text-muted-foreground">No supplements scheduled.</p>
+            <Button asChild variant="outline" size="sm" className="gap-2">
+              <Link href="/supplements">
+                <Plus className="h-3.5 w-3.5" />
+                Manage Supplements
+              </Link>
+            </Button>
           </div>
         ) : (
           <div className="space-y-4">

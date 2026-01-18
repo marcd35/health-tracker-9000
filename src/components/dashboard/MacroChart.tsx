@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { memo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -14,7 +14,7 @@ interface MacroChartProps {
 
 const COLORS = ['#3b82f6', '#f97316', '#eab308'];
 
-export const MacroChart = React.memo(function MacroChart({ data }: MacroChartProps) {
+export const MacroChart = memo(function MacroChart({ data }: MacroChartProps) {
   const chartData = [
     { name: 'Protein', value: data.protein },
     { name: 'Carbs', value: data.carbs },

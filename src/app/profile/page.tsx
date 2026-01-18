@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -23,6 +23,7 @@ import { User, ShieldAlert, Heart, Save } from 'lucide-react';
 import { useHealthStore } from '@/lib/store/healthStore';
 import { UserProfile } from '@/lib/types/health';
 import { ProfileSkeleton } from '@/components/profile/ProfileSkeleton';
+import { toast } from 'sonner';
 
 function ProfileForm({
   profile,
@@ -59,7 +60,12 @@ function ProfileForm({
     if (!validate()) {
       return;
     }
-    await onSave(formData);
+    try {
+      await onSave(formData);
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      toast.error('Failed to update profile');
+    }
   };
 
   return (
@@ -229,7 +235,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Profile Settings</h1>

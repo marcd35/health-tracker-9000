@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -23,11 +22,21 @@ const navigation = [
   { name: 'Profile', href: '/profile', icon: Settings },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  className?: string;
+  onClose?: () => void;
+}
+
+export function Sidebar({ className, onClose }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <div className="flex h-full w-64 flex-col border-r bg-card text-card-foreground">
+    <div
+      className={cn(
+        'flex h-full w-64 flex-col border-r bg-card text-card-foreground',
+        className
+      )}
+    >
       <div className="flex h-16 items-center border-b px-6">
         <Link href="/" className="flex items-center gap-2 font-bold text-primary">
           <HeartPulse className="h-6 w-6" />
@@ -41,6 +50,7 @@ export function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
+              onClick={onClose}
               className={cn(
                 'group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors',
                 isActive

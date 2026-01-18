@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useHealthStore } from '@/lib/store/healthStore';
 import { HealthScoreCard } from '@/components/dashboard/HealthScoreCard';
 import { NutritionSummaryCard } from '@/components/dashboard/NutritionSummaryCard';
@@ -126,7 +126,7 @@ export default function DashboardPage() {
     .reverse();
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -136,15 +136,15 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button asChild variant="outline" className="gap-2">
+          <Button asChild variant="outline" className="gap-2" aria-label="Navigate to meal logging">
             <Link href="/meals">
-              <Utensils className="h-4 w-4" />
+              <Utensils className="h-4 w-4" aria-hidden="true" />
               Log Meal
             </Link>
           </Button>
-          <Button asChild className="gap-2">
+          <Button asChild className="gap-2" aria-label="Navigate to supplement logging">
             <Link href="/supplements">
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4" aria-hidden="true" />
               Quick Action
             </Link>
           </Button>

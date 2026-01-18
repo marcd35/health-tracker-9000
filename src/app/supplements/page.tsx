@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { SupplementCheckbox } from '@/components/forms/SupplementCheckbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pill } from 'lucide-react';
 import { useHealthStore } from '@/lib/store/healthStore';
 import { SupplementsSkeleton } from '@/components/supplements/SupplementsSkeleton';
+
+import { toast } from 'sonner';
 
 export default function SupplementsPage() {
   const {
@@ -31,7 +33,12 @@ export default function SupplementsPage() {
   const handleToggle = async (id: string, taken: boolean) => {
     const supp = allSupplements.find((s) => s.id === id);
     if (!supp) return;
-    await toggleSupplement(id, supp.name, today, taken);
+    try {
+      await toggleSupplement(id, supp.name, today, taken);
+      toast.success(`${supp.name} marked as ${taken ? 'taken' : 'not taken'}`);
+    } catch (error) {
+      toast.error(`Failed to update ${supp.name}`);
+    }
   };
 
   const supplementsWithStatus = allSupplements.map((supp) => {
@@ -43,7 +50,7 @@ export default function SupplementsPage() {
   });
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Supplements</h1>

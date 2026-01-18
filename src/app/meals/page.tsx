@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { MealLogForm } from '@/components/forms/MealLogForm';
 import { TodaysMeals } from '@/components/dashboard/TodaysMeals';
 import { useHealthStore } from '@/lib/store/healthStore';
@@ -19,7 +19,7 @@ export default function MealsPage() {
   }
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Meal Logging</h1>

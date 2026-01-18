@@ -1,10 +1,10 @@
 'use client';
 
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { Activity } from 'lucide-react';
+import { Activity, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface HealthScoreCardProps {
   score: number;
@@ -46,21 +46,25 @@ export function HealthScoreCard({ score, breakdown }: HealthScoreCardProps) {
             label="Macros"
             value={breakdown.macros}
             color={getProgressColor(breakdown.macros)}
+            description="Balance of protein, carbs, and fats relative to your daily targets."
           />
           <ScoreItem
             label="Micros"
             value={breakdown.micros}
             color={getProgressColor(breakdown.micros)}
+            description="Adherence to vitamin and mineral goals (e.g., Vitamin C, Magnesium, Zinc)."
           />
           <ScoreItem
             label="Supplements"
             value={breakdown.supplements}
             color={getProgressColor(breakdown.supplements)}
+            description="Percentage of scheduled supplements taken today."
           />
           <ScoreItem
             label="Hydration"
             value={breakdown.hydration}
             color={getProgressColor(breakdown.hydration)}
+            description="Tracking liquid intake (currently based on meal hydration values)."
           />
         </div>
       </CardContent>
@@ -68,11 +72,31 @@ export function HealthScoreCard({ score, breakdown }: HealthScoreCardProps) {
   );
 }
 
-function ScoreItem({ label, value, color }: { label: string; value: number; color: string }) {
+function ScoreItem({
+  label,
+  value,
+  color,
+  description,
+}: {
+  label: string;
+  value: number;
+  color: string;
+  description: string;
+}) {
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs">
-        <span>{label}</span>
+        <div className="flex items-center gap-1 text-muted-foreground">
+          {label}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="h-3 w-3 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>{description}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         <span className="font-medium">{value}%</span>
       </div>
       <Progress value={value} className="h-1" indicatorClassName={color} />

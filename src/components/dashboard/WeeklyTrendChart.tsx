@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { memo } from 'react';
 import {
   XAxis,
   YAxis,
@@ -20,9 +20,7 @@ interface WeeklyTrendChartProps {
   }[];
 }
 
-export const WeeklyTrendChart = React.memo(function WeeklyTrendChart({
-  data,
-}: WeeklyTrendChartProps) {
+export const WeeklyTrendChart = memo(function WeeklyTrendChart({ data }: WeeklyTrendChartProps) {
   return (
     <Card className="h-[400px]">
       <CardHeader>

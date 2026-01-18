@@ -7,8 +7,10 @@ Health Tracker 9000 is a comprehensive web application for tracking personal hea
 - **Nutritional Tracking**: Log meals and track macro/micronutrient intake.
 - **Supplement Management**: Track daily supplement compliance.
 - **Health Scoring**: Get a daily health score based on adherence to nutritional targets.
+- **Advanced Analytics**: Visualize trends in health scores, weight, and caloric intake.
 - **Recommendations**: Receive personalized suggestions for improving health outcomes.
 - **Data Privacy**: All data is stored locally in a SQLite database.
+- **Data Safety**: Built-in backup and restore system for your health database.
 
 ## tech Stack
 

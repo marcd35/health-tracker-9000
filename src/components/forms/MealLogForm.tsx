@@ -17,6 +17,8 @@ import { Trash2, Plus, Loader2, AlertTriangle } from 'lucide-react';
 import { useHealthStore } from '@/lib/store/healthStore';
 import { checkFoodForAllergens } from '@/lib/utils/allergenChecker';
 import { useEffect } from 'react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { toast } from 'sonner';
 
 export function MealLogForm() {
   const [mealType, setMealType] = useState('breakfast');
@@ -31,10 +33,13 @@ export function MealLogForm() {
 
   const addFood = (food: any) => {
     setSelectedFoods([...selectedFoods, { ...food, amount: 100 }]);
+    toast.success(`Added ${food.name}`);
   };
 
   const removeFood = (index: number) => {
+    const foodName = selectedFoods[index].name;
     setSelectedFoods(selectedFoods.filter((_, i) => i !== index));
+    toast.info(`Removed ${foodName}`);
   };
 
   const updateAmount = (index: number, amount: number) => {
@@ -57,21 +62,29 @@ export function MealLogForm() {
   };
 
   const handleLogMeal = async () => {
-    if (selectedFoods.length === 0) return;
+    if (selectedFoods.length === 0) {
+      toast.error('Please add at least one food item');
+      return;
+    }
     if (!validate()) return;
 
     const today = new Date().toISOString().split('T')[0];
-    await addMeal({
-      date: today,
-      mealType: mealType as any,
-      foods: selectedFoods.map((f) => ({
-        foodId: f.id,
-        foodName: f.name,
-        amount: f.amount,
-      })),
-    });
-    setSelectedFoods([]);
-    setErrors({});
+    try {
+      await addMeal({
+        date: today,
+        mealType: mealType as any,
+        foods: selectedFoods.map((f) => ({
+          foodId: f.id,
+          foodName: f.name,
+          amount: f.amount,
+        })),
+      });
+      toast.success(`${mealType.charAt(0).toUpperCase() + mealType.slice(1)} logged successfully!`);
+      setSelectedFoods([]);
+      setErrors({});
+    } catch (error) {
+      toast.error('Failed to log meal. Please try again.');
+    }
   };
 
   return (
@@ -103,9 +116,8 @@ export function MealLogForm() {
             {selectedFoods.map((food, index) => (
               <div
                 key={index}
-                className={`flex items-center gap-4 p-3 rounded-lg border ${
-                  errors[index] ? 'border-destructive bg-destructive/5' : 'bg-muted/50'
-                }`}
+                className={`flex items-center gap-4 p-3 rounded-lg border ${errors[index] ? 'border-destructive bg-destructive/5' : 'bg-muted/50'
+                  }`}
               >
                 <div className="flex-1">
                   <p className="text-sm font-medium">{food.name}</p>
@@ -120,12 +132,22 @@ export function MealLogForm() {
                       const conflict = checkFoodForAllergens(food, profile);
                       if (conflict) {
                         return (
-                          <div className="flex items-center gap-1.5 mt-1.5 text-amber-600 dark:text-amber-400">
-                            <AlertTriangle className="h-3.5 w-3.5" />
-                            <p className="text-[11px] font-semibold">
-                              Contains allergens: {conflict.allergensFound.join(', ')}
-                            </p>
-                          </div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1.5 mt-1.5 text-amber-600 dark:text-amber-400 cursor-help">
+                                  <AlertTriangle className="h-3.5 w-3.5" />
+                                  <p className="text-[11px] font-semibold">
+                                    Contains allergens: {conflict.allergensFound.join(', ')}
+                                  </p>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                This food contains ingredients you are allergic to:{' '}
+                                {conflict.allergensFound.join(', ')}.
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         );
                       }
                       return null;
