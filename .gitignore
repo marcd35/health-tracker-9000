@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local data (IMPORTANT - keep health data private)
+/data/
+*.db
+*.sqlite
+*.sqlite3
