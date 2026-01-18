@@ -84,9 +84,9 @@
 
 ### 0.4 Husky & Git Hooks Setup
 
-- [ ] Install husky and lint-staged: `npm install -D husky lint-staged`
-- [ ] Initialize husky: `npx husky init`
-- [ ] Create `.husky/pre-commit`:
+- [x] Install husky and lint-staged: `npm install -D husky lint-staged`
+- [x] Initialize husky: `npx husky init`
+- [x] Create `.husky/pre-commit`:
 
   ```bash
   #!/usr/bin/env sh
@@ -95,7 +95,7 @@
   npx lint-staged
   ```
 
-- [ ] Add to `package.json`:
+- [x] Add to `package.json`:
   ```json
   {
     "lint-staged": {
@@ -104,46 +104,13 @@
     }
   }
   ```
-- [ ] Test pre-commit hook with a dummy change
-- [ ] Commit: `git commit -m "chore: configure Prettier, ESLint, and Husky pre-commit hooks"`
+- [x] Test pre-commit hook with a dummy change
+- [x] Commit: `git commit -m "chore: configure Prettier, ESLint, and Husky pre-commit hooks"`
 
 ### 0.5 TypeScript Configuration Enhancement
 
-- [ ] Update `tsconfig.json` for strict type checking:
-  ```json
-  {
-    "compilerOptions": {
-      "target": "ES2020",
-      "lib": ["dom", "dom.iterable", "esnext"],
-      "allowJs": true,
-      "skipLibCheck": true,
-      "strict": true,
-      "noUnusedLocals": true,
-      "noUnusedParameters": true,
-      "noFallthroughCasesInSwitch": true,
-      "forceConsistentCasingInFileNames": true,
-      "noEmit": true,
-      "esModuleInterop": true,
-      "module": "esnext",
-      "moduleResolution": "bundler",
-      "resolveJsonModule": true,
-      "isolatedModules": true,
-      "jsx": "preserve",
-      "incremental": true,
-      "plugins": [
-        {
-          "name": "next"
-        }
-      ],
-      "paths": {
-        "@/*": ["./src/*"]
-      }
-    },
-    "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-    "exclude": ["node_modules"]
-  }
-  ```
-- [ ] Commit: `git commit -m "chore: enhance TypeScript strict mode configuration"`
+- [x] Update `tsconfig.json` for strict type checking:
+- [x] Commit: `git commit -m "chore: enhance TypeScript strict mode configuration"`
 
 ### 0.6 Install Core Dependencies
 
