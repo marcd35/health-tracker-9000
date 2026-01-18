@@ -13,13 +13,21 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { FoodSearchInput } from './FoodSearchInput';
-import { Trash2, Plus, Loader2 } from 'lucide-react';
+import { Trash2, Plus, Loader2, AlertTriangle } from 'lucide-react';
 import { useHealthStore } from '@/lib/store/healthStore';
+import { checkFoodForAllergens } from '@/lib/utils/allergenChecker';
+import { useEffect } from 'react';
 
 export function MealLogForm() {
   const [mealType, setMealType] = useState('breakfast');
   const [selectedFoods, setSelectedFoods] = useState<any[]>([]);
-  const { addMeal, isLoading } = useHealthStore();
+  const { addMeal, profile, fetchProfile, isLoading } = useHealthStore();
+
+  useEffect(() => {
+    if (!profile) {
+      fetchProfile();
+    }
+  }, [profile, fetchProfile]);
 
   const addFood = (food: any) => {
     setSelectedFoods([...selectedFoods, { ...food, amount: 100 }]);
@@ -107,6 +115,21 @@ export function MealLogForm() {
                   {errors[index] && (
                     <p className="text-xs text-destructive mt-1">{errors[index]}</p>
                   )}
+                  {profile &&
+                    (() => {
+                      const conflict = checkFoodForAllergens(food, profile);
+                      if (conflict) {
+                        return (
+                          <div className="flex items-center gap-1.5 mt-1.5 text-amber-600 dark:text-amber-400">
+                            <AlertTriangle className="h-3.5 w-3.5" />
+                            <p className="text-[11px] font-semibold">
+                              Contains allergens: {conflict.allergensFound.join(', ')}
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                 </div>
                 <div className="flex items-center gap-2">
                   <Input

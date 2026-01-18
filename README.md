@@ -64,6 +64,32 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Data Management
+
+### Backups
+
+Create a backup of your current database:
+
+```bash
+npm run db:backup
+```
+
+Backups are stored in the `/backups` directory with a timestamp.
+
+### Restore
+
+To restore a database from a backup:
+
+1. List available backups:
+   ```bash
+   npm run db:restore
+   ```
+2. Restore a specific backup file:
+   ```bash
+   npm run db:restore health-YYYY-MM-DDTHH-mm-ss-msZ.db
+   ```
+   _Note: Providing a filename is required to perform the restore._
+
 ## Architecture
 
 - `src/app`: Page components and API routes.
