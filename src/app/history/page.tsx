@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { History as HistoryIcon, Calendar } from 'lucide-react';
+import { History as HistoryIcon, Calendar, RefreshCcw } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -11,21 +11,24 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-
-const mockHistory = [
-  { date: '2026-01-17', score: 85, calories: 1850, meals: 3, weight: 82.0 },
-  { date: '2026-01-16', score: 92, calories: 2100, meals: 4, weight: 81.9 },
-  { date: '2026-01-15', score: 88, calories: 1950, meals: 3, weight: 82.1 },
-  { date: '2026-01-14', score: 70, calories: 2400, meals: 5, weight: 82.4 },
-  { date: '2026-01-13', score: 82, calories: 2050, meals: 3, weight: 82.3 },
-];
+import { useHealthStore } from '@/lib/store/healthStore';
 
 export default function HistoryPage() {
+  const { weeklySummary, isLoading, fetchWeeklySummary } = useHealthStore();
+
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    fetchWeeklySummary(today);
+  }, [fetchWeeklySummary]);
+
   return (
     <div className="space-y-8 pb-12">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gradient">History</h1>
-        <p className="text-muted-foreground">Look back at your progress and historical data.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-gradient">History</h1>
+          <p className="text-muted-foreground">Look back at your progress and historical data.</p>
+        </div>
+        {isLoading && <RefreshCcw className="h-5 w-5 animate-spin text-primary" />}
       </div>
 
       <Card>
@@ -36,7 +39,7 @@ export default function HistoryPage() {
           </CardTitle>
           <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted px-3 py-1 rounded-full">
             <Calendar className="h-4 w-4" />
-            Last 30 Days
+            Last 7 Days
           </div>
         </CardHeader>
         <CardContent>
@@ -52,20 +55,20 @@ export default function HistoryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockHistory.map((day) => (
+              {weeklySummary.map((day) => (
                 <TableRow key={day.date}>
                   <TableCell className="font-medium">{day.date}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <div
-                        className={`h-2 w-2 rounded-full ${day.score >= 80 ? 'bg-green-500' : 'bg-yellow-500'}`}
+                        className={`h-2 w-2 rounded-full ${day.healthScore >= 80 ? 'bg-green-500' : 'bg-yellow-500'}`}
                       />
-                      {day.score}
+                      {day.healthScore}
                     </div>
                   </TableCell>
-                  <TableCell>{day.calories} kcal</TableCell>
-                  <TableCell>{day.weight} kg</TableCell>
-                  <TableCell>{day.meals}</TableCell>
+                  <TableCell>{Math.round(day.totalNutrition.calories)} kcal</TableCell>
+                  <TableCell>{day.weight || '-'} kg</TableCell>
+                  <TableCell>{day.meals.length}</TableCell>
                   <TableCell className="text-right">
                     <button className="text-primary hover:underline text-sm font-medium">
                       View Details
@@ -73,6 +76,13 @@ export default function HistoryPage() {
                   </TableCell>
                 </TableRow>
               ))}
+              {!isLoading && weeklySummary.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    No history found. Start logging today!
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

@@ -13,11 +13,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { FoodSearchInput } from './FoodSearchInput';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Loader2 } from 'lucide-react';
+import { useHealthStore } from '@/lib/store/healthStore';
 
 export function MealLogForm() {
   const [mealType, setMealType] = useState('breakfast');
   const [selectedFoods, setSelectedFoods] = useState<any[]>([]);
+  const { addMeal, isLoading } = useHealthStore();
 
   const addFood = (food: any) => {
     setSelectedFoods([...selectedFoods, { ...food, amount: 100 }]);
@@ -31,6 +33,22 @@ export function MealLogForm() {
     const newFoods = [...selectedFoods];
     newFoods[index].amount = amount;
     setSelectedFoods(newFoods);
+  };
+
+  const handleLogMeal = async () => {
+    if (selectedFoods.length === 0) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    await addMeal({
+      date: today,
+      mealType: mealType as any,
+      foods: selectedFoods.map((f) => ({
+        foodId: f.id,
+        foodName: f.name,
+        amount: f.amount,
+      })),
+    });
+    setSelectedFoods([]);
   };
 
   return (
@@ -66,7 +84,9 @@ export function MealLogForm() {
               >
                 <div className="flex-1">
                   <p className="text-sm font-medium">{food.name}</p>
-                  <p className="text-xs text-muted-foreground">{food.calories} kcal per 100g</p>
+                  <p className="text-xs text-muted-foreground">
+                    {food.nutritionPer100g.calories} kcal per 100g
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Input
@@ -91,9 +111,15 @@ export function MealLogForm() {
         </div>
       </CardContent>
       <CardFooter className="flex justify-end gap-3 border-t pt-6">
-        <Button variant="outline">Cancel</Button>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
+        <Button variant="outline" onClick={() => setSelectedFoods([])} disabled={isLoading}>
+          Clear
+        </Button>
+        <Button
+          className="gap-2"
+          onClick={handleLogMeal}
+          disabled={isLoading || selectedFoods.length === 0}
+        >
+          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
           Log Meal
         </Button>
       </CardFooter>

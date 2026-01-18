@@ -9,6 +9,7 @@ export interface UserProfile {
   allergies: string[]; // e.g., ['shellfish', 'peanuts']
   createdAt: string;
   updatedAt: string;
+  targets?: NutritionalTargets;
 }
 
 export interface NutritionalTargets {
@@ -89,6 +90,8 @@ export interface SupplementLog {
   createdAt: string;
 }
 
+import { HealthScoreBreakdown } from '../utils/healthScoring';
+
 export interface DailyLog {
   date: string;
   weight?: number;
@@ -96,5 +99,6 @@ export interface DailyLog {
   supplements: SupplementLog[];
   totalNutrition: NutritionalValues;
   healthScore: number;
+  healthScoreBreakdown?: HealthScoreBreakdown;
   notes?: string;
 }

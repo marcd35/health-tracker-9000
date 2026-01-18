@@ -1,21 +1,41 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { SupplementCheckbox } from '@/components/forms/SupplementCheckbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Pill } from 'lucide-react';
-
-const mockSupplements = [
-  { id: '1', name: "Sentry Men's Multivitamin", brand: 'Care One', taken: true },
-  { id: '2', name: 'Fish Oil', brand: 'Nature Made', taken: false },
-  { id: '3', name: 'Vitamin C', brand: 'Emergen-C', taken: true },
-  { id: '4', name: 'Magnesium Glycinate', brand: 'Pure Encapsulations', taken: false },
-];
+import { Pill, RefreshCcw } from 'lucide-react';
+import { useHealthStore } from '@/lib/store/healthStore';
 
 export default function SupplementsPage() {
-  const handleToggle = (id: string, taken: boolean) => {
-    console.log(`Toggle supplement ${id} to ${taken}`);
+  const {
+    allSupplements,
+    dailyLog,
+    isLoading,
+    fetchAllSupplements,
+    fetchDailyLog,
+    toggleSupplement,
+  } = useHealthStore();
+
+  const today = new Date().toISOString().split('T')[0];
+
+  useEffect(() => {
+    fetchAllSupplements();
+    fetchDailyLog(today);
+  }, [fetchAllSupplements, fetchDailyLog, today]);
+
+  const handleToggle = async (id: string, taken: boolean) => {
+    const supp = allSupplements.find((s) => s.id === id);
+    if (!supp) return;
+    await toggleSupplement(id, supp.name, today, taken);
   };
+
+  const supplementsWithStatus = allSupplements.map((supp) => {
+    const log = dailyLog?.supplements.find((l) => l.supplementId === supp.id);
+    return {
+      ...supp,
+      taken: log ? log.taken : false,
+    };
+  });
 
   return (
     <div className="space-y-8 pb-12">
@@ -26,6 +46,7 @@ export default function SupplementsPage() {
             Manage your daily supplement routine and track compliance.
           </p>
         </div>
+        {isLoading && <RefreshCcw className="h-5 w-5 animate-spin text-muted-foreground" />}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -38,18 +59,24 @@ export default function SupplementsPage() {
             <CardDescription>Click to mark as taken for today</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {mockSupplements.map((supp) => (
-                <SupplementCheckbox
-                  key={supp.id}
-                  id={supp.id}
-                  name={supp.name}
-                  brand={supp.brand}
-                  taken={supp.taken}
-                  onToggle={handleToggle}
-                />
-              ))}
-            </div>
+            {supplementsWithStatus.length === 0 && !isLoading ? (
+              <p className="text-center py-8 text-muted-foreground">
+                No supplements found. Add some in settings!
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {supplementsWithStatus.map((supp) => (
+                  <SupplementCheckbox
+                    key={supp.id}
+                    id={supp.id}
+                    name={supp.name}
+                    brand={supp.brand}
+                    taken={supp.taken}
+                    onToggle={handleToggle}
+                  />
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

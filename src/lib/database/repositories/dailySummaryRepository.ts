@@ -3,6 +3,7 @@ import type { DailyLog, NutritionalValues } from '@/lib/types/health';
 import { MealLogRepository } from './mealLogRepository';
 import { SupplementRepository } from './supplementRepository';
 import { ProfileRepository } from './profileRepository';
+import { calculateHealthScore } from '@/lib/utils/healthScoring';
 
 export class DailySummaryRepository {
   private db = getDatabase();
@@ -11,35 +12,7 @@ export class DailySummaryRepository {
   private profileRepo = new ProfileRepository();
 
   async getDailySummary(date: string): Promise<DailyLog | null> {
-    const stmt = this.db.prepare('SELECT * FROM daily_summary WHERE date = ?');
-    const row = stmt.get(date) as any;
-
-    const meals = this.mealRepo.getMealLogsByDate(date);
-    const supplements = this.supplementRepo.getSupplementLogsByDate(date);
-    const profile = this.profileRepo.getProfile();
-
-    if (!row) {
-      // Create empty summary if it doesn't exist
-      return {
-        date,
-        weight: profile?.weight,
-        meals,
-        supplements,
-        totalNutrition: this.calculateDailyTotals(meals, supplements),
-        healthScore: 0,
-        notes: '',
-      };
-    }
-
-    return {
-      date: row.date,
-      weight: row.weight,
-      meals,
-      supplements,
-      totalNutrition: JSON.parse(row.total_nutrition),
-      healthScore: row.health_score,
-      notes: row.notes,
-    };
+    return this.getDailySummarySync(date);
   }
 
   calculateDailyTotals(meals: any[], supplementLogs: any[]): NutritionalValues {
@@ -112,7 +85,6 @@ export class DailySummaryRepository {
   }
 
   getWeeklySummary(endDate: string): DailyLog[] {
-    // Basic implementation for last 7 days
     const summaries: DailyLog[] = [];
     const end = new Date(endDate);
 
@@ -120,8 +92,6 @@ export class DailySummaryRepository {
       const d = new Date(end);
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split('T')[0];
-      // Note: This is synchronous in our case but using a real DB this might be async
-      // For now we just call it synchronously
       const s = this.getDailySummarySync(dateStr);
       if (s) summaries.push(s);
     }
@@ -129,7 +99,6 @@ export class DailySummaryRepository {
     return summaries;
   }
 
-  // Synchronous version for internal use or simple queries
   private getDailySummarySync(date: string): DailyLog | null {
     const stmt = this.db.prepare('SELECT * FROM daily_summary WHERE date = ?');
     const row = stmt.get(date) as any;
@@ -138,26 +107,25 @@ export class DailySummaryRepository {
     const supplements = this.supplementRepo.getSupplementLogsByDate(date);
     const profile = this.profileRepo.getProfile();
 
-    if (!row) {
-      return {
-        date,
-        weight: profile?.weight,
-        meals,
-        supplements,
-        totalNutrition: this.calculateDailyTotals(meals, supplements),
-        healthScore: 0,
-        notes: '',
-      };
-    }
-
-    return {
-      date: row.date,
-      weight: row.weight,
+    const summary: DailyLog = {
+      date: row ? row.date : date,
+      weight: row ? row.weight : profile?.weight,
       meals,
       supplements,
-      totalNutrition: JSON.parse(row.total_nutrition),
-      healthScore: row.health_score,
-      notes: row.notes,
+      totalNutrition: row
+        ? JSON.parse(row.total_nutrition)
+        : this.calculateDailyTotals(meals, supplements),
+      healthScore: row ? row.health_score : 0,
+      notes: row ? row.notes : '',
     };
+
+    if (profile) {
+      const targets = this.profileRepo.calculateNutritionalTargets();
+      const breakdown = calculateHealthScore(summary.totalNutrition, targets, summary);
+      summary.healthScoreBreakdown = breakdown;
+      summary.healthScore = breakdown.total;
+    }
+
+    return summary;
   }
 }

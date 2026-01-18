@@ -769,26 +769,26 @@
 
 ### 6.1 Zustand Store Setup
 
-- [ ] Create `src/lib/store/healthStore.ts`
-- [ ] Define state: profile, dailyLog, supplements, loading states
-- [ ] Implement actions: loadProfile, addMeal, toggleSupplement
-- [ ] Commit: `git commit -m "feat: implement Zustand store for health data"`
+- [x] Create `src/lib/store/healthStore.ts`
+- [x] Define state: profile, dailyLog, supplements, loading states
+- [x] Implement actions: loadProfile, addMeal, toggleSupplement
+- [x] Commit: `git commit -m "feat: implement Zustand store for health data"`
 
 ### 6.2 API Routes for Data Fetching
 
-- [ ] Create `src/app/api/profile/route.ts` - GET/PUT profile
-- [ ] Create `src/app/api/meals/route.ts` - GET/POST meals
-- [ ] Create `src/app/api/supplements/route.ts` - GET/POST supplement logs
-- [ ] Create `src/app/api/daily-summary/[date]/route.ts` - GET daily summary
-- [ ] Create `src/app/api/foods/search/route.ts` - GET search foods
-- [ ] Commit: `git commit -m "feat: implement API routes for data operations"`
+- [x] Create `src/app/api/profile/route.ts` - GET/PUT profile
+- [x] Create `src/app/api/meals/route.ts` - GET/POST meals
+- [x] Create `src/app/api/supplements/route.ts` - GET/POST supplement logs
+- [x] Create `src/app/api/daily-summary/[date]/route.ts` - GET daily summary
+- [x] Create `src/app/api/foods/search/route.ts` - GET search foods
+- [x] Commit: `git commit -m "feat: implement API routes for data operations"`
 
 ### 6.3 Custom Hooks
 
-- [ ] Create `src/hooks/useProfile.ts`
-- [ ] Create `src/hooks/useDailyLog.ts`
-- [ ] Create `src/hooks/useHealthScore.ts`
-- [ ] Commit: `git commit -m "feat: implement custom React hooks for data fetching"`
+- [x] Create `src/hooks/useProfile.ts`
+- [x] Create `src/hooks/useDailyLog.ts`
+- [x] Create `src/hooks/useHealthScore.ts`
+- [x] Commit: `git commit -m "feat: implement custom React hooks for data fetching"`
 
 ---
 

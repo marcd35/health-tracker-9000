@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,29 +13,33 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-
-interface Food {
-  id: string;
-  name: string;
-  calories: number;
-}
+import { useHealthStore } from '@/lib/store/healthStore';
 
 interface FoodSearchInputProps {
-  onSelect: (food: Food) => void;
+  onSelect: (food: any) => void;
 }
-
-// Mock results for UI development
-const mockFoods: Food[] = [
-  { id: '1', name: 'Chicken Breast', calories: 165 },
-  { id: '2', name: 'Brown Rice', calories: 111 },
-  { id: '3', name: 'Broccoli', calories: 35 },
-  { id: '4', name: 'Salmon', calories: 208 },
-  { id: '5', name: 'Avocado', calories: 160 },
-];
 
 export function FoodSearchInput({ onSelect }: FoodSearchInputProps) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const { searchFoods } = useHealthStore();
+
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (query.length > 1) {
+        setIsSearching(true);
+        const res = await searchFoods(query);
+        setResults(res);
+        setIsSearching(false);
+      } else {
+        setResults([]);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query, searchFoods]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -46,22 +50,29 @@ export function FoodSearchInput({ onSelect }: FoodSearchInputProps) {
           aria-expanded={open}
           className="w-full justify-between"
         >
-          {value ? mockFoods.find((food) => food.name === value)?.name : 'Search for a food...'}
+          {value ? value : 'Search for a food...'}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
-        <Command>
-          <CommandInput placeholder="Type a food name..." />
+      <PopoverContent className="w-full p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput placeholder="Type a food name..." onValueChange={setQuery} />
           <CommandList>
-            <CommandEmpty>No food found.</CommandEmpty>
+            {isSearching && (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </div>
+            )}
+            {!isSearching && results.length === 0 && query.length > 1 && (
+              <CommandEmpty>No food found.</CommandEmpty>
+            )}
             <CommandGroup>
-              {mockFoods.map((food) => (
+              {results.map((food) => (
                 <CommandItem
                   key={food.id}
                   value={food.name}
                   onSelect={(currentValue) => {
-                    setValue(currentValue === value ? '' : currentValue);
+                    setValue(currentValue);
                     onSelect(food);
                     setOpen(false);
                   }}
@@ -72,10 +83,13 @@ export function FoodSearchInput({ onSelect }: FoodSearchInputProps) {
                       value === food.name ? 'opacity-100' : 'opacity-0'
                     )}
                   />
-                  {food.name}
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    {food.calories} kcal/100g
-                  </span>
+                  <div className="flex flex-col">
+                    <span>{food.name}</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {food.nutritionPer100g.calories} kcal/100g • {food.nutritionPer100g.protein}g
+                      P • {food.nutritionPer100g.carbs}g C • {food.nutritionPer100g.fat}g F
+                    </span>
+                  </div>
                 </CommandItem>
               ))}
             </CommandGroup>
