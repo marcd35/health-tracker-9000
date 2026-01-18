@@ -114,17 +114,14 @@
 
 ### 0.6 Install Core Dependencies
 
-- [ ] Install production dependencies:
-  ```bash
-  npm install better-sqlite3 @types/better-sqlite3 recharts date-fns zustand zod
-  ```
-- [ ] Install shadcn/ui CLI: `npx shadcn@latest init`
+- [x] Install production dependencies: `npm install better-sqlite3 recharts date-fns zustand zod`
+- [x] Install shadcn/ui CLI: `npx shadcn@latest init`
   - Choose defaults for shadcn config
-- [ ] Install initial shadcn components:
-  ```bash
+- [x] Install initial shadcn components:
+  ```
   npx shadcn@latest add button card input label select table tabs
   ```
-- [ ] Commit: `git commit -m "chore: install core dependencies and shadcn/ui components"`
+- [x] Commit: `git commit -m "chore: install core dependencies and shadcn/ui components"`
 
 ### 0.7 Project Structure Setup
 
