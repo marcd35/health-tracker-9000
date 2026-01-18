@@ -7,8 +7,6 @@ import { NutritionSummaryCard } from '@/components/dashboard/NutritionSummaryCar
 import { RecommendationsCard } from '@/components/dashboard/RecommendationsCard';
 import { TodaysMeals } from '@/components/dashboard/TodaysMeals';
 import { TodaysSupplements } from '@/components/dashboard/TodaysSupplements';
-import { MacroChart } from '@/components/dashboard/MacroChart';
-import { WeeklyTrendChart } from '@/components/dashboard/WeeklyTrendChart';
 import { MicronutrientGrid } from '@/components/dashboard/MicronutrientGrid';
 import { Button } from '@/components/ui/button';
 import { Plus, Utensils } from 'lucide-react';
@@ -16,6 +14,24 @@ import Link from 'next/link';
 import { generateRecommendations } from '@/lib/utils/recommendations';
 
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
+import dynamic from 'next/dynamic';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const MacroChart = dynamic(
+  () => import('@/components/dashboard/MacroChart').then((mod) => mod.MacroChart),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[350px] w-full rounded-xl" />,
+  }
+);
+
+const WeeklyTrendChart = dynamic(
+  () => import('@/components/dashboard/WeeklyTrendChart').then((mod) => mod.WeeklyTrendChart),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[400px] w-full rounded-xl" />,
+  }
+);
 
 export default function DashboardPage() {
   const {

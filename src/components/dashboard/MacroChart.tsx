@@ -14,7 +14,7 @@ interface MacroChartProps {
 
 const COLORS = ['#3b82f6', '#f97316', '#eab308'];
 
-export function MacroChart({ data }: MacroChartProps) {
+export const MacroChart = React.memo(function MacroChart({ data }: MacroChartProps) {
   const chartData = [
     { name: 'Protein', value: data.protein },
     { name: 'Carbs', value: data.carbs },
@@ -56,4 +56,4 @@ export function MacroChart({ data }: MacroChartProps) {
       </CardContent>
     </Card>
   );
-}
+});

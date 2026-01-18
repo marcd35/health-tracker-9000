@@ -104,3 +104,5 @@ CREATE TABLE IF NOT EXISTS daily_summary (
 CREATE INDEX IF NOT EXISTS idx_meal_logs_date ON meal_logs(date);
 CREATE INDEX IF NOT EXISTS idx_supplement_logs_date ON supplement_logs(date);
 CREATE INDEX IF NOT EXISTS idx_foods_name ON foods(name);
+CREATE INDEX IF NOT EXISTS idx_supplement_logs_date_id ON supplement_logs(date, supplement_id);
+CREATE INDEX IF NOT EXISTS idx_nutritional_targets_profile_id ON nutritional_targets(profile_id);

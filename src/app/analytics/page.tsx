@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { WeeklyTrendChart } from '@/components/dashboard/WeeklyTrendChart';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   BarChart,
@@ -16,6 +15,16 @@ import {
 
 import { useHealthStore } from '@/lib/store/healthStore';
 import { AnalyticsSkeleton } from '@/components/analytics/AnalyticsSkeleton';
+import dynamic from 'next/dynamic';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const WeeklyTrendChart = dynamic(
+  () => import('@/components/dashboard/WeeklyTrendChart').then((mod) => mod.WeeklyTrendChart),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[400px] w-full rounded-xl" />,
+  }
+);
 
 const mockTrends = [
   { date: 'Mon', score: 75, weight: 82.5, calories: 1900 },

@@ -20,7 +20,9 @@ interface WeeklyTrendChartProps {
   }[];
 }
 
-export function WeeklyTrendChart({ data }: WeeklyTrendChartProps) {
+export const WeeklyTrendChart = React.memo(function WeeklyTrendChart({
+  data,
+}: WeeklyTrendChartProps) {
   return (
     <Card className="h-[400px]">
       <CardHeader>
@@ -76,4 +78,4 @@ export function WeeklyTrendChart({ data }: WeeklyTrendChartProps) {
       </CardContent>
     </Card>
   );
-}
+});
