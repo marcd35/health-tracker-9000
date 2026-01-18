@@ -14,6 +14,9 @@ import {
   Legend,
 } from 'recharts';
 
+import { useHealthStore } from '@/lib/store/healthStore';
+import { AnalyticsSkeleton } from '@/components/analytics/AnalyticsSkeleton';
+
 const mockTrends = [
   { date: 'Mon', score: 75, weight: 82.5, calories: 1900 },
   { date: 'Tue', score: 82, weight: 82.3, calories: 2100 },
@@ -25,6 +28,12 @@ const mockTrends = [
 ];
 
 export default function AnalyticsPage() {
+  const { isLoading } = useHealthStore();
+
+  if (isLoading) {
+    return <AnalyticsSkeleton />;
+  }
+
   return (
     <div className="space-y-8 pb-12">
       <div>

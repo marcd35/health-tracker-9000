@@ -11,9 +11,11 @@ import { MacroChart } from '@/components/dashboard/MacroChart';
 import { WeeklyTrendChart } from '@/components/dashboard/WeeklyTrendChart';
 import { MicronutrientGrid } from '@/components/dashboard/MicronutrientGrid';
 import { Button } from '@/components/ui/button';
-import { Plus, Utensils, RefreshCcw } from 'lucide-react';
+import { Plus, Utensils } from 'lucide-react';
 import Link from 'next/link';
 import { generateRecommendations } from '@/lib/utils/recommendations';
+
+import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 
 export default function DashboardPage() {
   const {
@@ -35,11 +37,7 @@ export default function DashboardPage() {
   }, [fetchProfile, fetchDailyLog, fetchWeeklySummary, today]);
 
   if (isLoading && !dailyLog) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <RefreshCcw className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   const actual = dailyLog?.totalNutrition || {

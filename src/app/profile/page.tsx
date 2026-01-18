@@ -19,9 +19,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { User, ShieldAlert, Heart, RefreshCcw, Save } from 'lucide-react';
+import { User, ShieldAlert, Heart, Save } from 'lucide-react';
 import { useHealthStore } from '@/lib/store/healthStore';
 import { UserProfile } from '@/lib/types/health';
+import { ProfileSkeleton } from '@/components/profile/ProfileSkeleton';
 
 function ProfileForm({
   profile,
@@ -196,11 +197,7 @@ export default function ProfilePage() {
   }, [fetchProfile]);
 
   if (!profile) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <RefreshCcw className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <ProfileSkeleton />;
   }
 
   return (
@@ -212,7 +209,6 @@ export default function ProfilePage() {
             Manage your physical metrics, health conditions, and preferences.
           </p>
         </div>
-        {isLoading && <RefreshCcw className="h-5 w-5 animate-spin text-primary" />}
       </div>
 
       <ProfileForm profile={profile} onSave={updateProfile} isLoading={isLoading} />

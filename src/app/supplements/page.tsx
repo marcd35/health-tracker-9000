@@ -3,8 +3,9 @@
 import React, { useEffect } from 'react';
 import { SupplementCheckbox } from '@/components/forms/SupplementCheckbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Pill, RefreshCcw } from 'lucide-react';
+import { Pill } from 'lucide-react';
 import { useHealthStore } from '@/lib/store/healthStore';
+import { SupplementsSkeleton } from '@/components/supplements/SupplementsSkeleton';
 
 export default function SupplementsPage() {
   const {
@@ -22,6 +23,10 @@ export default function SupplementsPage() {
     fetchAllSupplements();
     fetchDailyLog(today);
   }, [fetchAllSupplements, fetchDailyLog, today]);
+
+  if (isLoading && allSupplements.length === 0) {
+    return <SupplementsSkeleton />;
+  }
 
   const handleToggle = async (id: string, taken: boolean) => {
     const supp = allSupplements.find((s) => s.id === id);
@@ -46,7 +51,6 @@ export default function SupplementsPage() {
             Manage your daily supplement routine and track compliance.
           </p>
         </div>
-        {isLoading && <RefreshCcw className="h-5 w-5 animate-spin text-muted-foreground" />}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -59,7 +63,7 @@ export default function SupplementsPage() {
             <CardDescription>Click to mark as taken for today</CardDescription>
           </CardHeader>
           <CardContent>
-            {supplementsWithStatus.length === 0 && !isLoading ? (
+            {supplementsWithStatus.length === 0 ? (
               <p className="text-center py-8 text-muted-foreground">
                 No supplements found. Add some in settings!
               </p>
