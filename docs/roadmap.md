@@ -2,7 +2,7 @@
 
 This is the central source of truth for project progress.
 
-## Current Status: 🟢 Phase 7 - Polish & UX Enhancements
+## Current Status: 🟢 Phase 8 - Testing & Documentation
 
 ---
 
@@ -17,8 +17,8 @@ This is the central source of truth for project progress.
 | **4**      | UI Components        | ✅ Done    | [Archive](./archive/completed-tasks.md)    |
 | **5**      | Pages & Routing      | ✅ Done    | [Archive](./archive/completed-tasks.md)    |
 | **6**      | State & API Routes   | ✅ Done    | [Archive](./archive/completed-tasks.md)    |
-| **7**      | **Polish & UX**      | 🏃 Active  | [Backlog](./backlog/phase-7-polish.md)     |
-| **8**      | Testing & Docs       | ⏳ Pending | [Backlog](./backlog/phase-8-testing.md)    |
+| **7**      | Polish & UX          | ✅ Done    | [Archive](./backlog/phase-7-polish.md)     |
+| **8**      | **Testing & Docs**   | 🏃 Active  | [Backlog](./backlog/phase-8-testing.md)    |
 | **9**      | MVP Launch           | ⏳ Pending | [Backlog](./backlog/phase-9-launch.md)     |
 | **Future** | Post-MVP             | 🚀 Planned | [Future](./backlog/future-enhancements.md) |
 
@@ -31,9 +31,9 @@ This is the central source of truth for project progress.
 
 ---
 
-## 🎯 Next Immediate Milestones (Phase 7)
+## 🎯 Next Immediate Milestones (Phase 8)
 
-- [ ] Skeleton Loaders & Spinners
-- [ ] Error Boundaries & Toasts
-- [ ] Mobile Responsiveness Audit
-- [ ] Accessibility (ARIA) Audit
+- [ ] Setup Testing Env (Jest, RTL)
+- [ ] Unit Tests (Utils)
+- [ ] Integration Tests (Repositories)
+- [ ] Component Tests
