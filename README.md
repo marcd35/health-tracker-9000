@@ -40,6 +40,20 @@ Health Tracker 9000 is a comprehensive web application for tracking personal hea
    npm run seed
    ```
 
+### Testing
+
+Run the test suite:
+
+```bash
+npm test
+```
+
+Watch mode:
+
+```bash
+npm run test:watch
+```
+
 ### Development
 
 Run the development server:

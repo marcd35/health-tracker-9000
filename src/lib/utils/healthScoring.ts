@@ -8,6 +8,15 @@ export interface HealthScoreBreakdown {
   hydration: number;
 }
 
+/**
+ * Calculates the overall health score based on nutritional intakem supplement compliance,
+ * and other factors.
+ *
+ * @param actual - The actual nutritional values consumed (macros and micros).
+ * @param targets - The user's daily nutritional targets.
+ * @param dailyLog - The full daily log including supplements and notes.
+ * @returns {HealthScoreBreakdown} A breakdown of the score including total, macros, micros, etc.
+ */
 export function calculateHealthScore(
   actual: NutritionalValues,
   targets: NutritionalTargets,
@@ -51,7 +60,7 @@ function calculateMacroAdherence(actual: NutritionalValues, targets: Nutritional
 }
 
 function calculateMicroAdherence(actual: NutritionalValues, targets: NutritionalTargets): number {
-  const micros = [
+  const micros: (keyof NutritionalTargets)[] = [
     'vitaminA',
     'vitaminC',
     'vitaminD',
@@ -74,8 +83,8 @@ function calculateMicroAdherence(actual: NutritionalValues, targets: Nutritional
 
   let totalScore = 0;
   micros.forEach((key) => {
-    const targetVal = (targets as any)[key];
-    const actualVal = (actual as any)[key] || 0;
+    const targetVal = targets[key];
+    const actualVal = actual[key] || 0;
 
     if (targetVal > 0) {
       // For micros, we often want AT LEAST the target.

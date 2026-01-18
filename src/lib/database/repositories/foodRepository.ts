@@ -6,6 +6,7 @@ export class FoodRepository {
 
   searchFoods(query: string): Food[] {
     const stmt = this.db.prepare('SELECT * FROM foods WHERE name LIKE ?');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rows = stmt.all(`%${query}%`) as any[];
 
     return rows.map((row) => ({
@@ -25,6 +26,7 @@ export class FoodRepository {
 
   getFoodById(id: string): Food | null {
     const stmt = this.db.prepare('SELECT * FROM foods WHERE id = ?');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const row = stmt.get(id) as any;
 
     if (!row) return null;
@@ -51,6 +53,7 @@ export class FoodRepository {
     // In a real app, allergens would be stored in the DB.
     // Our mock schema has an allergens column.
     const stmt = this.db.prepare('SELECT allergens FROM foods WHERE id = ?');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const row = stmt.get(foodId) as any;
     const foodAllergens = JSON.parse(row.allergens || '[]') as string[];
 
