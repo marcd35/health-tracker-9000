@@ -23,10 +23,10 @@
 
 ### 7.4 Accessibility
 
-- [ ] Add ARIA labels to interactive elements
-- [ ] Ensure keyboard navigation works
-- [ ] Test with screen reader
-- [ ] Commit: `git commit -m "feat: improve accessibility with ARIA labels and keyboard nav"`
+- [x] Add ARIA labels to interactive elements
+- [x] Ensure keyboard navigation works
+- [x] Test with screen reader
+- [x] Commit: `git commit -m "feat: improve accessibility with ARIA labels and keyboard nav"`
 
 ### 7.5 Performance Optimization
 

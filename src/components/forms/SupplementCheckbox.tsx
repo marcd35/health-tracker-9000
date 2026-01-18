@@ -22,9 +22,10 @@ export function SupplementCheckbox({
   className,
 }: SupplementCheckboxProps) {
   return (
-    <div
+    <label
+      htmlFor={id}
       className={cn(
-        'flex items-center justify-between p-4 rounded-xl border transition-all duration-200',
+        'flex items-center justify-between p-4 rounded-xl border transition-all duration-200 cursor-pointer',
         taken
           ? 'bg-primary/5 border-primary/20 shadow-sm'
           : 'bg-card border-border hover:border-primary/30',
@@ -48,6 +49,6 @@ export function SupplementCheckbox({
         onCheckedChange={(checked) => onToggle(id, !!checked)}
         className="h-6 w-6 rounded-full border-2"
       />
-    </div>
+    </label>
   );
 }

@@ -15,19 +15,20 @@ export function Header() {
             type="search"
             placeholder="Search foods, recipes..."
             className="w-full bg-background pl-8"
+            aria-label="Search foods and recipes"
           />
         </div>
       </div>
 
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
           <Bell className="h-5 w-5" />
           <span className="absolute top-2 right-2 flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
           </span>
         </Button>
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon" aria-label="User Profile">
           <User className="h-5 w-5" />
         </Button>
       </div>
