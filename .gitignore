@@ -49,4 +49,4 @@ next-env.d.ts
 !/USDA
 
 # backups
-/backups/
+/backups/USDA/

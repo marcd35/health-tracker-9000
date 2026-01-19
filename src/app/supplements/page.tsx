@@ -75,7 +75,11 @@ export default function SupplementsPage() {
   }, [todayLogs]);
 
   // Calculate nutrient progress
-  const nutrientProgress = useMemo(() => calculateNutrientProgress(), [calculateNutrientProgress]);
+  const nutrientProgress = useMemo(
+    () => calculateNutrientProgress(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [todayLogs, supplements, nutrientTargets]
+  );
 
   // Handlers
   const handleCreateSupplement = async (data: SupplementFormData) => {
