@@ -1,4 +1,5 @@
 import { getDatabase } from '../connection';
+import { v4 as uuidv4 } from 'uuid';
 import type { UserProfile, NutritionalTargets } from '@/lib/types/health';
 import { calculateNutritionalTargets } from '@/lib/utils/nutritionalCalculator';
 
@@ -11,6 +12,14 @@ export class ProfileRepository {
 
     if (!row) return null;
 
+    const conditions = this.db
+      .prepare('SELECT name FROM user_conditions WHERE profile_id = ?')
+      .all(row.id) as { name: string }[];
+
+    const allergies = this.db
+      .prepare('SELECT name FROM user_allergies WHERE profile_id = ?')
+      .all(row.id) as { name: string }[];
+
     return {
       id: row.id,
       age: row.age,
@@ -18,8 +27,8 @@ export class ProfileRepository {
       height: row.height,
       gender: row.gender,
       activityLevel: row.activity_level,
-      healthConditions: JSON.parse(row.health_conditions || '[]'),
-      allergies: JSON.parse(row.allergies || '[]'),
+      healthConditions: conditions.map((c) => c.name),
+      allergies: allergies.map((a) => a.name),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
@@ -31,30 +40,51 @@ export class ProfileRepository {
 
     const updated = { ...current, ...profile, updatedAt: new Date().toISOString() };
 
-    const stmt = this.db.prepare(`
-      UPDATE profile SET 
-        age = ?, 
-        weight = ?, 
-        height = ?, 
-        gender = ?, 
-        activity_level = ?, 
-        health_conditions = ?, 
-        allergies = ?, 
-        updated_at = ?
-      WHERE id = ?
-    `);
+    const updateTx = this.db.transaction(() => {
+      // Update main profile fields
+      this.db
+        .prepare(
+          `
+        UPDATE profile SET 
+          age = ?, 
+          weight = ?, 
+          height = ?, 
+          gender = ?, 
+          activity_level = ?, 
+          updated_at = ?
+        WHERE id = ?
+      `
+        )
+        .run(
+          updated.age,
+          updated.weight,
+          updated.height,
+          updated.gender,
+          updated.activityLevel,
+          updated.updatedAt,
+          updated.id
+        );
 
-    stmt.run(
-      updated.age,
-      updated.weight,
-      updated.height,
-      updated.gender,
-      updated.activityLevel,
-      JSON.stringify(updated.healthConditions),
-      JSON.stringify(updated.allergies),
-      updated.updatedAt,
-      updated.id
-    );
+      // Update Health Conditions
+      this.db.prepare('DELETE FROM user_conditions WHERE profile_id = ?').run(updated.id);
+      const insertCondition = this.db.prepare(
+        'INSERT INTO user_conditions (id, profile_id, name, created_at) VALUES (?, ?, ?, ?)'
+      );
+      updated.healthConditions.forEach((condition) => {
+        insertCondition.run(uuidv4(), updated.id, condition, new Date().toISOString());
+      });
+
+      // Update Allergies
+      this.db.prepare('DELETE FROM user_allergies WHERE profile_id = ?').run(updated.id);
+      const insertAllergy = this.db.prepare(
+        'INSERT INTO user_allergies (id, profile_id, name, created_at) VALUES (?, ?, ?, ?)'
+      );
+      updated.allergies.forEach((allergy) => {
+        insertAllergy.run(uuidv4(), updated.id, allergy, new Date().toISOString());
+      });
+    });
+
+    updateTx();
   }
 
   calculateNutritionalTargets(): NutritionalTargets {

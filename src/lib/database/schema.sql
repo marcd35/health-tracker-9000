@@ -12,6 +12,24 @@ CREATE TABLE IF NOT EXISTS profile (
   updated_at TEXT NOT NULL
 );
 
+-- User Conditions
+CREATE TABLE IF NOT EXISTS user_conditions (
+  id TEXT PRIMARY KEY,
+  profile_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (profile_id) REFERENCES profile(id)
+);
+
+-- User Allergies
+CREATE TABLE IF NOT EXISTS user_allergies (
+  id TEXT PRIMARY KEY,
+  profile_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (profile_id) REFERENCES profile(id)
+);
+
 -- Nutritional Targets
 CREATE TABLE IF NOT EXISTS nutritional_targets (
   id TEXT PRIMARY KEY,

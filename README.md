@@ -11,6 +11,7 @@ Health Tracker 9000 is a comprehensive web application for tracking personal hea
 - **Recommendations**: Receive personalized suggestions for improving health outcomes.
 - **Data Privacy**: All data is stored locally in a SQLite database.
 - **Data Safety**: Built-in backup and restore system for your health database.
+- **Custom Profile**: Manage health conditions and allergies with flexibility.
 
 ## tech Stack
 

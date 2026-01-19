@@ -19,11 +19,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { User, ShieldAlert, Heart, Save } from 'lucide-react';
+import { User, ShieldAlert, Heart, Save, X } from 'lucide-react';
 import { useHealthStore } from '@/lib/store/healthStore';
 import { UserProfile } from '@/lib/types/health';
 import { ProfileSkeleton } from '@/components/profile/ProfileSkeleton';
 import { toast } from 'sonner';
+import { AddItemDialog } from '@/components/profile/AddItemDialog';
+import { COMMON_CONDITIONS, COMMON_ALLERGIES } from '@/constants/healthOptions';
 
 function ProfileForm({
   profile,
@@ -63,7 +65,7 @@ function ProfileForm({
     try {
       await onSave(formData);
       toast.success('Profile updated successfully');
-    } catch (error) {
+    } catch {
       toast.error('Failed to update profile');
     }
   };
@@ -182,14 +184,33 @@ function ProfileForm({
               {profile.healthConditions.map((c) => (
                 <div
                   key={c}
-                  className="bg-orange-500/10 text-orange-600 dark:text-orange-400 px-3 py-1 rounded-full text-sm font-medium border border-orange-500/20 capitalize"
+                  className="bg-orange-500/10 text-orange-600 dark:text-orange-400 px-3 py-1 rounded-full text-sm font-medium border border-orange-500/20 capitalize flex items-center gap-2"
                 >
                   {c}
+                  <button
+                    onClick={() => {
+                      const updated = profile.healthConditions.filter((item) => item !== c);
+                      onSave({ ...profile, healthConditions: updated });
+                    }}
+                    className="hover:bg-orange-500/20 rounded-full p-0.5"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
                 </div>
               ))}
-              <Button variant="outline" size="sm" className="rounded-full border-dashed">
-                + Add Condition
-              </Button>
+              <AddItemDialog
+                title="Add Health Condition"
+                description="Search for a condition or add a custom one."
+                triggerLabel="Add Condition"
+                items={COMMON_CONDITIONS}
+                existingItems={profile.healthConditions}
+                onAdd={(item) => {
+                  onSave({
+                    ...profile,
+                    healthConditions: [...profile.healthConditions, item],
+                  });
+                }}
+              />
             </div>
           </CardContent>
         </Card>
@@ -207,14 +228,33 @@ function ProfileForm({
               {profile.allergies.map((a) => (
                 <div
                   key={a}
-                  className="bg-red-500/10 text-red-600 dark:text-red-400 px-3 py-1 rounded-full text-sm font-medium border border-red-500/20 capitalize"
+                  className="bg-red-500/10 text-red-600 dark:text-red-400 px-3 py-1 rounded-full text-sm font-medium border border-red-500/20 capitalize flex items-center gap-2"
                 >
                   {a}
+                  <button
+                    onClick={() => {
+                      const updated = profile.allergies.filter((item) => item !== a);
+                      onSave({ ...profile, allergies: updated });
+                    }}
+                    className="hover:bg-red-500/20 rounded-full p-0.5"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
                 </div>
               ))}
-              <Button variant="outline" size="sm" className="rounded-full border-dashed">
-                + Add Allergy
-              </Button>
+              <AddItemDialog
+                title="Add Allergy"
+                description="Search for an allergy or add a custom one."
+                triggerLabel="Add Allergy"
+                items={COMMON_ALLERGIES}
+                existingItems={profile.allergies}
+                onAdd={(item) => {
+                  onSave({
+                    ...profile,
+                    allergies: [...profile.allergies, item],
+                  });
+                }}
+              />
             </div>
           </CardContent>
         </Card>

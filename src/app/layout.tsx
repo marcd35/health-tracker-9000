@@ -17,11 +17,9 @@ export const metadata: Metadata = {
   description: 'Precision health and nutrition tracking system',
 };
 
-import { Toaster } from '@/components/ui/toaster';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { MainLayout } from '@/components/layout/MainLayout';
 import { Toaster } from 'sonner';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import { MainLayout } from '@/components/layout/MainLayout';
 
 export default function RootLayout({
   children,

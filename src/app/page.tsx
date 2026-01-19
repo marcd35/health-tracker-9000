@@ -117,13 +117,11 @@ export default function DashboardPage() {
     { name: 'Zinc', actual: (actual.zinc as number) || 0, target: (targets.zinc as number) || 11 },
   ];
 
-  const trendData = weeklySummary
-    .map((day) => ({
-      date: new Date(day.date).toLocaleDateString(undefined, { weekday: 'short' }),
-      score: day.healthScore,
-      weight: day.weight || 0,
-    }))
-    .reverse();
+  const trendData = weeklySummary.map((day) => ({
+    date: new Date(day.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+    score: day.healthScore,
+    weight: day.weight || 0,
+  }));
 
   return (
     <div className="space-y-8 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">

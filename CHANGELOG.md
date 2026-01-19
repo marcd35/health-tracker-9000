@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- **Profile Customization**: Users can now add specific health conditions and allergies via a searchable autocomplete or custom text input.
+
 ## [1.0.0] - 2026-01-18
 
 ### Added
