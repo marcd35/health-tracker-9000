@@ -10,6 +10,7 @@ import {
   Settings,
   BarChart3,
   HeartPulse,
+  Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +21,7 @@ const navigation = [
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'History', href: '/history', icon: History },
   { name: 'Profile', href: '/profile', icon: Settings },
+  { name: 'Admin', href: '/admin', icon: Shield },
 ];
 
 interface SidebarProps {
@@ -32,10 +34,7 @@ export function Sidebar({ className, onClose }: SidebarProps) {
 
   return (
     <div
-      className={cn(
-        'flex h-full w-64 flex-col border-r bg-card text-card-foreground',
-        className
-      )}
+      className={cn('flex h-full w-64 flex-col border-r bg-card text-card-foreground', className)}
     >
       <div className="flex h-16 items-center border-b px-6">
         <Link href="/" className="flex items-center gap-2 font-bold text-primary">

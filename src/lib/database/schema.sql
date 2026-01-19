@@ -84,6 +84,10 @@ CREATE TABLE IF NOT EXISTS supplements (
   serving_size TEXT NOT NULL,
   nutrients TEXT NOT NULL, -- JSON
   notes TEXT,
+  color TEXT DEFAULT '#6366f1',
+  dosage_frequency TEXT DEFAULT 'daily', -- 'daily' | 'weekly'
+  dosage_quantity INTEGER DEFAULT 1,
+  dosage_notes TEXT,
   created_at TEXT NOT NULL
 );
 
@@ -104,8 +108,19 @@ CREATE TABLE IF NOT EXISTS supplement_logs (
   supplement_id TEXT NOT NULL,
   supplement_name TEXT NOT NULL,
   taken INTEGER NOT NULL, -- boolean as 0/1
+  taken_at TEXT, -- ISO timestamp for exact time taken
   created_at TEXT NOT NULL,
   FOREIGN KEY (supplement_id) REFERENCES supplements(id)
+);
+
+-- Supplement Nutrient Targets (custom overrides for RDA)
+CREATE TABLE IF NOT EXISTS supplement_nutrient_targets (
+  id TEXT PRIMARY KEY,
+  nutrient_key TEXT NOT NULL UNIQUE,
+  target_value REAL NOT NULL,
+  use_rda INTEGER DEFAULT 1, -- 1 = use RDA, 0 = use custom target_value
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
 );
 
 -- Daily Summary
@@ -124,3 +139,4 @@ CREATE INDEX IF NOT EXISTS idx_supplement_logs_date ON supplement_logs(date);
 CREATE INDEX IF NOT EXISTS idx_foods_name ON foods(name);
 CREATE INDEX IF NOT EXISTS idx_supplement_logs_date_id ON supplement_logs(date, supplement_id);
 CREATE INDEX IF NOT EXISTS idx_nutritional_targets_profile_id ON nutritional_targets(profile_id);
+CREATE INDEX IF NOT EXISTS idx_supplement_nutrient_targets_key ON supplement_nutrient_targets(nutrient_key);

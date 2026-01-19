@@ -36,8 +36,11 @@ export class DailySummaryRepository {
       if (log.taken) {
         const supp = allSupplements.find((s) => s.id === log.supplementId);
         if (supp && supp.nutrients) {
-          Object.keys(supp.nutrients).forEach((key) => {
-            totals[key] = (totals[key] || 0) + (supp.nutrients[key] || 0);
+          Object.entries(supp.nutrients).forEach(([key, value]) => {
+            if (value !== undefined && key in totals) {
+              (totals as Record<string, number>)[key] =
+                ((totals as Record<string, number>)[key] || 0) + value;
+            }
           });
         }
       }

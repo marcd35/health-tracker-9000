@@ -1,57 +1,244 @@
 import { getDatabase } from '../connection';
-import type { Supplement, SupplementLog } from '@/lib/types/health';
+import type {
+  Supplement,
+  SupplementLog,
+  SupplementNutrientTarget,
+  NutrientKey,
+} from '@/lib/types/supplements';
 import { v4 as uuidv4 } from 'uuid';
 
 export class SupplementRepository {
   private db = getDatabase();
 
-  getAllSupplements(): Supplement[] {
-    const stmt = this.db.prepare('SELECT * FROM supplements');
-    const rows = stmt.all() as any[];
+  // ===== SUPPLEMENTS CRUD =====
 
-    return rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      brand: row.brand,
-      servingSize: row.serving_size,
-      nutrients: JSON.parse(row.nutrients),
-      notes: row.notes,
-    }));
+  getAllSupplements(): Supplement[] {
+    const stmt = this.db.prepare('SELECT * FROM supplements ORDER BY name');
+    const rows = stmt.all() as Record<string, unknown>[];
+    return rows.map(this.mapRowToSupplement);
   }
 
-  logSupplementTaken(log: Omit<SupplementLog, 'id' | 'createdAt'>): SupplementLog {
+  getSupplementById(id: string): Supplement | null {
+    const stmt = this.db.prepare('SELECT * FROM supplements WHERE id = ?');
+    const row = stmt.get(id) as Record<string, unknown> | undefined;
+    return row ? this.mapRowToSupplement(row) : null;
+  }
+
+  createSupplement(
+    data: Omit<Supplement, 'id' | 'createdAt'>
+  ): Supplement {
     const id = uuidv4();
     const createdAt = new Date().toISOString();
-    const newLog = { ...log, id, createdAt };
 
     const stmt = this.db.prepare(`
-      INSERT INTO supplement_logs (id, date, supplement_id, supplement_name, taken, created_at)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO supplements
+      (id, name, brand, serving_size, nutrients, notes, color, dosage_frequency, dosage_quantity, dosage_notes, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
-      newLog.id,
-      newLog.date,
-      newLog.supplementId,
-      newLog.supplementName,
-      newLog.taken ? 1 : 0,
-      newLog.createdAt
+      id,
+      data.name,
+      data.brand,
+      data.servingSize,
+      JSON.stringify(data.nutrients),
+      data.notes || null,
+      data.color,
+      data.dosageFrequency,
+      data.dosageQuantity,
+      data.dosageNotes || null,
+      createdAt
     );
 
-    return newLog;
+    return { ...data, id, createdAt };
+  }
+
+  updateSupplement(
+    id: string,
+    data: Partial<Omit<Supplement, 'id' | 'createdAt'>>
+  ): Supplement {
+    const existing = this.getSupplementById(id);
+    if (!existing) throw new Error('Supplement not found');
+
+    const updated: Supplement = {
+      ...existing,
+      ...data,
+      nutrients: data.nutrients ?? existing.nutrients,
+    };
+
+    const stmt = this.db.prepare(`
+      UPDATE supplements SET
+        name = ?, brand = ?, serving_size = ?, nutrients = ?, notes = ?,
+        color = ?, dosage_frequency = ?, dosage_quantity = ?, dosage_notes = ?
+      WHERE id = ?
+    `);
+
+    stmt.run(
+      updated.name,
+      updated.brand,
+      updated.servingSize,
+      JSON.stringify(updated.nutrients),
+      updated.notes || null,
+      updated.color,
+      updated.dosageFrequency,
+      updated.dosageQuantity,
+      updated.dosageNotes || null,
+      id
+    );
+
+    return updated;
+  }
+
+  deleteSupplement(id: string): void {
+    // Delete associated logs first
+    this.db.prepare('DELETE FROM supplement_logs WHERE supplement_id = ?').run(id);
+    this.db.prepare('DELETE FROM supplements WHERE id = ?').run(id);
+  }
+
+  // ===== SUPPLEMENT LOGS =====
+
+  logSupplementTaken(
+    log: Omit<SupplementLog, 'id' | 'createdAt'>
+  ): SupplementLog {
+    const id = uuidv4();
+    const createdAt = new Date().toISOString();
+    const takenAt = log.takenAt || createdAt;
+
+    const stmt = this.db.prepare(`
+      INSERT INTO supplement_logs (id, date, supplement_id, supplement_name, taken, taken_at, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      id,
+      log.date,
+      log.supplementId,
+      log.supplementName,
+      log.taken ? 1 : 0,
+      takenAt,
+      createdAt
+    );
+
+    return { ...log, id, takenAt, createdAt };
   }
 
   getSupplementLogsByDate(date: string): SupplementLog[] {
-    const stmt = this.db.prepare('SELECT * FROM supplement_logs WHERE date = ?');
-    const rows = stmt.all(date) as any[];
+    const stmt = this.db.prepare(
+      'SELECT * FROM supplement_logs WHERE date = ? ORDER BY taken_at'
+    );
+    const rows = stmt.all(date) as Record<string, unknown>[];
+    return rows.map(this.mapRowToLog);
+  }
 
-    return rows.map((row) => ({
-      id: row.id,
-      date: row.date,
-      supplementId: row.supplement_id,
-      supplementName: row.supplement_name,
+  getSupplementLogsByDateAndId(
+    date: string,
+    supplementId: string
+  ): SupplementLog[] {
+    const stmt = this.db.prepare(
+      'SELECT * FROM supplement_logs WHERE date = ? AND supplement_id = ? ORDER BY taken_at'
+    );
+    const rows = stmt.all(date, supplementId) as Record<string, unknown>[];
+    return rows.map(this.mapRowToLog);
+  }
+
+  deleteSupplementLog(id: string): void {
+    this.db.prepare('DELETE FROM supplement_logs WHERE id = ?').run(id);
+  }
+
+  // ===== NUTRIENT TARGETS =====
+
+  getAllNutrientTargets(): SupplementNutrientTarget[] {
+    const stmt = this.db.prepare('SELECT * FROM supplement_nutrient_targets');
+    const rows = stmt.all() as Record<string, unknown>[];
+    return rows.map(this.mapRowToTarget);
+  }
+
+  getNutrientTarget(nutrientKey: string): SupplementNutrientTarget | null {
+    const stmt = this.db.prepare(
+      'SELECT * FROM supplement_nutrient_targets WHERE nutrient_key = ?'
+    );
+    const row = stmt.get(nutrientKey) as Record<string, unknown> | undefined;
+    return row ? this.mapRowToTarget(row) : null;
+  }
+
+  upsertNutrientTarget(
+    nutrientKey: NutrientKey,
+    targetValue: number,
+    useRda: boolean
+  ): SupplementNutrientTarget {
+    const now = new Date().toISOString();
+    const existing = this.getNutrientTarget(nutrientKey);
+
+    if (existing) {
+      const stmt = this.db.prepare(`
+        UPDATE supplement_nutrient_targets
+        SET target_value = ?, use_rda = ?, updated_at = ?
+        WHERE nutrient_key = ?
+      `);
+      stmt.run(targetValue, useRda ? 1 : 0, now, nutrientKey);
+      return { ...existing, targetValue, useRda, updatedAt: now };
+    } else {
+      const id = uuidv4();
+      const stmt = this.db.prepare(`
+        INSERT INTO supplement_nutrient_targets (id, nutrient_key, target_value, use_rda, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `);
+      stmt.run(id, nutrientKey, targetValue, useRda ? 1 : 0, now, now);
+      return {
+        id,
+        nutrientKey,
+        targetValue,
+        useRda,
+        createdAt: now,
+        updatedAt: now,
+      };
+    }
+  }
+
+  deleteNutrientTarget(nutrientKey: string): void {
+    this.db
+      .prepare('DELETE FROM supplement_nutrient_targets WHERE nutrient_key = ?')
+      .run(nutrientKey);
+  }
+
+  // ===== HELPERS =====
+
+  private mapRowToSupplement(row: Record<string, unknown>): Supplement {
+    return {
+      id: row.id as string,
+      name: row.name as string,
+      brand: row.brand as string,
+      servingSize: row.serving_size as string,
+      nutrients: JSON.parse((row.nutrients as string) || '{}'),
+      notes: row.notes as string | undefined,
+      color: (row.color as string) || '#6366f1',
+      dosageFrequency: (row.dosage_frequency as 'daily' | 'weekly') || 'daily',
+      dosageQuantity: (row.dosage_quantity as number) || 1,
+      dosageNotes: row.dosage_notes as string | undefined,
+      createdAt: row.created_at as string,
+    };
+  }
+
+  private mapRowToLog(row: Record<string, unknown>): SupplementLog {
+    return {
+      id: row.id as string,
+      date: row.date as string,
+      supplementId: row.supplement_id as string,
+      supplementName: row.supplement_name as string,
       taken: row.taken === 1,
-      createdAt: row.created_at,
-    }));
+      takenAt: row.taken_at as string | undefined,
+      createdAt: row.created_at as string,
+    };
+  }
+
+  private mapRowToTarget(row: Record<string, unknown>): SupplementNutrientTarget {
+    return {
+      id: row.id as string,
+      nutrientKey: row.nutrient_key as NutrientKey,
+      targetValue: row.target_value as number,
+      useRda: row.use_rda === 1,
+      createdAt: row.created_at as string,
+      updatedAt: row.updated_at as string,
+    };
   }
 }

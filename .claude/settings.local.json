@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev:*)",
+      "Bash(npx next dev:*)",
+      "Bash(npm install:*)",
+      "mcp__filesystem__directory_tree",
+      "mcp__filesystem__list_directory",
+      "mcp__filesystem__list_allowed_directories",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "WebSearch",
+      "Bash(npm run lint)",
+      "Bash(npm run build:*)"
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "powershell -NoProfile -Command \"$input=[Console]::In.ReadToEnd(); if($input){$data=$input|ConvertFrom-Json; $total=$data.context_window.total_input_tokens+$data.context_window.total_output_tokens; $used=$data.context_window.used_percentage; $rem=$data.context_window.remaining_percentage; if($null -ne $used){$totalK=[math]::Round($total/1000,1); $usedR=[math]::Round($used,1); $remR=[math]::Round($rem,1); $fill=[math]::Floor($used/5); $empty=20-$fill; $bar='['+('='*$fill)+('-'*$empty)+']'; Write-Host \\\"$bar Session: ${totalK}K tokens | Context: ${usedR}% used, ${remR}% remaining\\\"}else{Write-Host \\\"Session: $total tokens | Context: --\\\"}}else{Write-Host 'Tokens: --'}\""
+  }
+}

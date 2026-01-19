@@ -1,12 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Check, X } from 'lucide-react';
+import { Plus, Check } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
     DialogDescription,
-    DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
