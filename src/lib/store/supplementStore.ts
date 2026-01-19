@@ -31,6 +31,7 @@ interface SupplementState {
     date: string,
     takenAt?: string
   ) => Promise<void>;
+  updateLog: (logId: string, takenAt: string, date: string) => Promise<void>;
   deleteLog: (logId: string, date: string) => Promise<void>;
 
   // Targets
@@ -43,7 +44,7 @@ interface SupplementState {
   deleteNutrientTarget: (nutrientKey: NutrientKey, date: string) => Promise<void>;
 
   // Computed
-  calculateNutrientProgress: (date: string) => NutrientProgress[];
+  calculateNutrientProgress: () => NutrientProgress[];
 }
 
 export const useSupplementStore = create<SupplementState>((set, get) => ({
@@ -167,6 +168,22 @@ export const useSupplementStore = create<SupplementState>((set, get) => ({
     }
   },
 
+  updateLog: async (logId, takenAt, date) => {
+    try {
+      const res = await fetch('/api/supplements/logs', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: logId, takenAt }),
+      });
+      if (!res.ok) throw new Error('Failed to update log');
+      await get().fetchTodayLogs(date);
+      toast.success('Log updated');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to update log';
+      toast.error(message);
+    }
+  },
+
   deleteLog: async (logId, date) => {
     try {
       const res = await fetch(`/api/supplements/logs?id=${logId}`, { method: 'DELETE' });
@@ -225,15 +242,14 @@ export const useSupplementStore = create<SupplementState>((set, get) => ({
 
   // ===== COMPUTED =====
 
-  calculateNutrientProgress: (_date) => {
+  calculateNutrientProgress: () => {
     const { supplements, todayLogs, nutrientTargets } = get();
 
     // Count how many times each supplement was taken today
     const supplementTakenCount: Record<string, number> = {};
     todayLogs.forEach((log) => {
       if (log.taken) {
-        supplementTakenCount[log.supplementId] =
-          (supplementTakenCount[log.supplementId] || 0) + 1;
+        supplementTakenCount[log.supplementId] = (supplementTakenCount[log.supplementId] || 0) + 1;
       }
     });
 

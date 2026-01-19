@@ -24,9 +24,7 @@ export class SupplementRepository {
     return row ? this.mapRowToSupplement(row) : null;
   }
 
-  createSupplement(
-    data: Omit<Supplement, 'id' | 'createdAt'>
-  ): Supplement {
+  createSupplement(data: Omit<Supplement, 'id' | 'createdAt'>): Supplement {
     const id = uuidv4();
     const createdAt = new Date().toISOString();
 
@@ -53,10 +51,7 @@ export class SupplementRepository {
     return { ...data, id, createdAt };
   }
 
-  updateSupplement(
-    id: string,
-    data: Partial<Omit<Supplement, 'id' | 'createdAt'>>
-  ): Supplement {
+  updateSupplement(id: string, data: Partial<Omit<Supplement, 'id' | 'createdAt'>>): Supplement {
     const existing = this.getSupplementById(id);
     if (!existing) throw new Error('Supplement not found');
 
@@ -97,9 +92,7 @@ export class SupplementRepository {
 
   // ===== SUPPLEMENT LOGS =====
 
-  logSupplementTaken(
-    log: Omit<SupplementLog, 'id' | 'createdAt'>
-  ): SupplementLog {
+  logSupplementTaken(log: Omit<SupplementLog, 'id' | 'createdAt'>): SupplementLog {
     const id = uuidv4();
     const createdAt = new Date().toISOString();
     const takenAt = log.takenAt || createdAt;
@@ -123,17 +116,12 @@ export class SupplementRepository {
   }
 
   getSupplementLogsByDate(date: string): SupplementLog[] {
-    const stmt = this.db.prepare(
-      'SELECT * FROM supplement_logs WHERE date = ? ORDER BY taken_at'
-    );
+    const stmt = this.db.prepare('SELECT * FROM supplement_logs WHERE date = ? ORDER BY taken_at');
     const rows = stmt.all(date) as Record<string, unknown>[];
     return rows.map(this.mapRowToLog);
   }
 
-  getSupplementLogsByDateAndId(
-    date: string,
-    supplementId: string
-  ): SupplementLog[] {
+  getSupplementLogsByDateAndId(date: string, supplementId: string): SupplementLog[] {
     const stmt = this.db.prepare(
       'SELECT * FROM supplement_logs WHERE date = ? AND supplement_id = ? ORDER BY taken_at'
     );
@@ -143,6 +131,15 @@ export class SupplementRepository {
 
   deleteSupplementLog(id: string): void {
     this.db.prepare('DELETE FROM supplement_logs WHERE id = ?').run(id);
+  }
+
+  updateSupplementLog(id: string, takenAt: string): void {
+    const stmt = this.db.prepare(`
+      UPDATE supplement_logs
+      SET taken_at = ?
+      WHERE id = ?
+    `);
+    stmt.run(takenAt, id);
   }
 
   // ===== NUTRIENT TARGETS =====

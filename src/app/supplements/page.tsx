@@ -9,12 +9,13 @@ import { useSupplementStore } from '@/lib/store/supplementStore';
 import { SupplementCard } from '@/components/supplements/SupplementCard';
 import { SupplementDialog } from '@/components/supplements/SupplementDialog';
 import { SupplementLogItem } from '@/components/supplements/SupplementLogItem';
+import { EditLogDialog } from '@/components/supplements/EditLogDialog';
 import { NutrientProgressGrid } from '@/components/supplements/NutrientProgressGrid';
 import { TemplateSelector } from '@/components/supplements/TemplateSelector';
 import { JSONImportDialog } from '@/components/supplements/JSONImportDialog';
 import { NutrientTargetsEditor } from '@/components/supplements/NutrientTargetsEditor';
 import { SupplementsSkeleton } from '@/components/supplements/SupplementsSkeleton';
-import type { Supplement, SupplementFormData } from '@/lib/types/supplements';
+import type { Supplement, SupplementFormData, SupplementLog } from '@/lib/types/supplements';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +42,7 @@ export default function SupplementsPage() {
     updateSupplement,
     deleteSupplement,
     logSupplementTaken,
+    updateLog,
     deleteLog,
     updateNutrientTarget,
     deleteNutrientTarget,
@@ -51,6 +53,7 @@ export default function SupplementsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingSupplement, setEditingSupplement] = useState<Supplement | undefined>();
+  const [editingLog, setEditingLog] = useState<SupplementLog | null>(null);
   const [deletingSupplementId, setDeletingSupplementId] = useState<string | null>(null);
 
   // Initial data fetch
@@ -72,11 +75,7 @@ export default function SupplementsPage() {
   }, [todayLogs]);
 
   // Calculate nutrient progress
-  const nutrientProgress = useMemo(
-    () => calculateNutrientProgress(today),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- calculateNutrientProgress reads from store state
-    [calculateNutrientProgress, today]
-  );
+  const nutrientProgress = useMemo(() => calculateNutrientProgress(), [calculateNutrientProgress]);
 
   // Handlers
   const handleCreateSupplement = async (data: SupplementFormData) => {
@@ -107,6 +106,10 @@ export default function SupplementsPage() {
 
   const handleTake = async (supplement: Supplement) => {
     await logSupplementTaken(supplement.id, supplement.name, today);
+  };
+
+  const handleEditLog = async (logId: string, takenAt: string) => {
+    await updateLog(logId, takenAt, today);
   };
 
   const handleDeleteLog = async (logId: string) => {
@@ -233,9 +236,7 @@ export default function SupplementsPage() {
                       <History className="h-5 w-5 text-primary" />
                       <CardTitle>Today&apos;s Logs</CardTitle>
                     </div>
-                    <CardDescription>
-                      Supplements taken today with timestamps.
-                    </CardDescription>
+                    <CardDescription>Supplements taken today with timestamps.</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
@@ -245,9 +246,8 @@ export default function SupplementsPage() {
                           <SupplementLogItem
                             key={log.id}
                             log={log}
-                            supplement={supplements.find(
-                              (s) => s.id === log.supplementId
-                            )}
+                            supplement={supplements.find((s) => s.id === log.supplementId)}
+                            onEdit={() => setEditingLog(log)}
                             onDelete={() => handleDeleteLog(log.id)}
                           />
                         ))}
@@ -262,16 +262,11 @@ export default function SupplementsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base">Nutrient Progress</CardTitle>
-                  <CardDescription>
-                    Daily intake from supplements taken today.
-                  </CardDescription>
+                  <CardDescription>Daily intake from supplements taken today.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="max-h-[600px] overflow-y-auto px-6 pb-6">
-                    <NutrientProgressGrid
-                      progressData={nutrientProgress}
-                      showEmpty={false}
-                    />
+                    <NutrientProgressGrid progressData={nutrientProgress} showEmpty={false} />
                   </div>
                 </CardContent>
               </Card>
@@ -285,8 +280,7 @@ export default function SupplementsPage() {
             <CardHeader>
               <CardTitle>Supplement Templates</CardTitle>
               <CardDescription>
-                Quick-start with common supplements. Click to add with pre-filled
-                values.
+                Quick-start with common supplements. Click to add with pre-filled values.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -307,9 +301,9 @@ export default function SupplementsPage() {
             <CardContent>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  JSON format supports the following fields: name, brand, servingSize,
-                  nutrients (object with nutrient keys), color, dosageFrequency,
-                  dosageQuantity, dosageNotes, and notes.
+                  JSON format supports the following fields: name, brand, servingSize, nutrients
+                  (object with nutrient keys), color, dosageFrequency, dosageQuantity, dosageNotes,
+                  and notes.
                 </p>
                 <Button onClick={() => setIsImportOpen(true)}>
                   <FileJson className="h-4 w-4 mr-2" />
@@ -348,6 +342,13 @@ export default function SupplementsPage() {
         onImport={handleImport}
       />
 
+      <EditLogDialog
+        log={editingLog}
+        open={!!editingLog}
+        onOpenChange={(open) => !open && setEditingLog(null)}
+        onSave={handleEditLog}
+      />
+
       {/* Delete Confirmation */}
       <AlertDialog
         open={!!deletingSupplementId}
@@ -357,8 +358,8 @@ export default function SupplementsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Supplement?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this supplement and all its log history.
-              This action cannot be undone.
+              This will permanently delete this supplement and all its log history. This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
