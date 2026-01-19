@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
     // If body has 'supplementId' and 'date', it's a log action
     if (body.supplementId && body.date) {
-      const { date, supplementId, supplementName, taken, takenAt } = body;
+      const { date, supplementId, supplementName, taken, takenAt, isDuplicateWarning } = body;
 
       supplementRepo.logSupplementTaken({
         date,
@@ -45,6 +45,7 @@ export async function POST(request: Request) {
         supplementName,
         taken,
         takenAt: takenAt || new Date().toISOString(),
+        isDuplicateWarning: isDuplicateWarning || false,
       });
 
       // Update daily summary

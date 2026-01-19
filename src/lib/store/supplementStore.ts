@@ -25,11 +25,13 @@ interface SupplementState {
 
   // Logging
   fetchTodayLogs: (date: string) => Promise<void>;
+  checkDuplicateLog: (supplementId: string, date: string) => boolean;
   logSupplementTaken: (
     supplementId: string,
     supplementName: string,
     date: string,
-    takenAt?: string
+    takenAt?: string,
+    isDuplicateWarning?: boolean
   ) => Promise<void>;
   updateLog: (logId: string, takenAt: string, date: string) => Promise<void>;
   deleteLog: (logId: string, date: string) => Promise<void>;
@@ -146,7 +148,14 @@ export const useSupplementStore = create<SupplementState>((set, get) => ({
     }
   },
 
-  logSupplementTaken: async (supplementId, supplementName, date, takenAt) => {
+  checkDuplicateLog: (supplementId, date) => {
+    const { todayLogs } = get();
+    return todayLogs.some(
+      (log) => log.supplementId === supplementId && log.date === date && log.taken
+    );
+  },
+
+  logSupplementTaken: async (supplementId, supplementName, date, takenAt, isDuplicateWarning) => {
     try {
       const res = await fetch('/api/supplements', {
         method: 'POST',
@@ -157,6 +166,7 @@ export const useSupplementStore = create<SupplementState>((set, get) => ({
           date,
           taken: true,
           takenAt: takenAt || new Date().toISOString(),
+          isDuplicateWarning: isDuplicateWarning || false,
         }),
       });
       if (!res.ok) throw new Error('Failed to log supplement');

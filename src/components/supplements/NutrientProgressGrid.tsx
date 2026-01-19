@@ -26,12 +26,8 @@ export function NutrientProgressGrid({
   });
 
   // Filter out empty ones if showEmpty is false
-  const displayVitamins = showEmpty
-    ? vitamins
-    : vitamins.filter((p) => p.total > 0);
-  const displayMinerals = showEmpty
-    ? minerals
-    : minerals.filter((p) => p.total > 0);
+  const displayVitamins = showEmpty ? vitamins : vitamins.filter((p) => p.total > 0);
+  const displayMinerals = showEmpty ? minerals : minerals.filter((p) => p.total > 0);
 
   const hasAnyProgress = progressData.some((p) => p.total > 0);
 
@@ -46,21 +42,15 @@ export function NutrientProgressGrid({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {displayVitamins.length > 0 && (
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Vitamins
-            </CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold">Vitamins</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-0">
+          <CardContent className="space-y-1">
             {displayVitamins.map((progress) => (
-              <NutrientProgressCard
-                key={progress.nutrientKey}
-                progress={progress}
-                compact
-              />
+              <NutrientProgressCard key={progress.nutrientKey} progress={progress} />
             ))}
           </CardContent>
         </Card>
@@ -68,18 +58,12 @@ export function NutrientProgressGrid({
 
       {displayMinerals.length > 0 && (
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Minerals
-            </CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold">Minerals</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-0">
+          <CardContent className="space-y-1">
             {displayMinerals.map((progress) => (
-              <NutrientProgressCard
-                key={progress.nutrientKey}
-                progress={progress}
-                compact
-              />
+              <NutrientProgressCard key={progress.nutrientKey} progress={progress} />
             ))}
           </CardContent>
         </Card>

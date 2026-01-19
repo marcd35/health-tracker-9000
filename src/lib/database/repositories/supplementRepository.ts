@@ -96,10 +96,11 @@ export class SupplementRepository {
     const id = uuidv4();
     const createdAt = new Date().toISOString();
     const takenAt = log.takenAt || createdAt;
+    const isDuplicateWarning = log.isDuplicateWarning || false;
 
     const stmt = this.db.prepare(`
-      INSERT INTO supplement_logs (id, date, supplement_id, supplement_name, taken, taken_at, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO supplement_logs (id, date, supplement_id, supplement_name, taken, taken_at, is_duplicate_warning, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -109,10 +110,11 @@ export class SupplementRepository {
       log.supplementName,
       log.taken ? 1 : 0,
       takenAt,
+      isDuplicateWarning ? 1 : 0,
       createdAt
     );
 
-    return { ...log, id, takenAt, createdAt };
+    return { ...log, id, takenAt, isDuplicateWarning, createdAt };
   }
 
   getSupplementLogsByDate(date: string): SupplementLog[] {
@@ -127,6 +129,14 @@ export class SupplementRepository {
     );
     const rows = stmt.all(date, supplementId) as Record<string, unknown>[];
     return rows.map(this.mapRowToLog);
+  }
+
+  checkDuplicateLog(date: string, supplementId: string): boolean {
+    const stmt = this.db.prepare(
+      'SELECT COUNT(*) as count FROM supplement_logs WHERE date = ? AND supplement_id = ? AND taken = 1'
+    );
+    const result = stmt.get(date, supplementId) as { count: number };
+    return result.count > 0;
   }
 
   deleteSupplementLog(id: string): void {
@@ -224,6 +234,7 @@ export class SupplementRepository {
       supplementName: row.supplement_name as string,
       taken: row.taken === 1,
       takenAt: row.taken_at as string | undefined,
+      isDuplicateWarning: row.is_duplicate_warning === 1,
       createdAt: row.created_at as string,
     };
   }

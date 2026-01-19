@@ -1,8 +1,9 @@
 'use client';
 
 import { format } from 'date-fns';
-import { Clock, Trash2, Pencil } from 'lucide-react';
+import { Clock, Trash2, Pencil, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { SupplementLog, Supplement } from '@/lib/types/supplements';
 
 interface SupplementLogItemProps {
@@ -23,9 +24,21 @@ export function SupplementLogItem({ log, supplement, onEdit, onDelete }: Supplem
         )}
         <div>
           <p className="text-sm font-medium">{log.supplementName}</p>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            <span>{time}</span>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <span>{time}</span>
+            </div>
+            {log.isDuplicateWarning && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <AlertTriangle className="h-3 w-3 text-yellow-600 dark:text-yellow-500" />
+                  </TooltipTrigger>
+                  <TooltipContent>Multiple entries logged for this supplement</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
         </div>
       </div>

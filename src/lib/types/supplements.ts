@@ -67,6 +67,7 @@ export interface SupplementLog {
   supplementName: string;
   taken: boolean;
   takenAt?: string; // ISO timestamp
+  isDuplicateWarning?: boolean; // Flag for duplicate logs on same day
   createdAt: string;
 }
 

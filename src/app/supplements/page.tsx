@@ -15,7 +15,12 @@ import { TemplateSelector } from '@/components/supplements/TemplateSelector';
 import { JSONImportDialog } from '@/components/supplements/JSONImportDialog';
 import { NutrientTargetsEditor } from '@/components/supplements/NutrientTargetsEditor';
 import { SupplementsSkeleton } from '@/components/supplements/SupplementsSkeleton';
+import { ViewSupplementModal } from '@/components/supplements/ViewSupplementModal';
+import { TakeEarlierDialog } from '@/components/supplements/TakeEarlierDialog';
+import { DuplicateWarningDialog } from '@/components/supplements/DuplicateWarningDialog';
+import { DRVReferenceTable } from '@/components/supplements/DRVReferenceTable';
 import type { Supplement, SupplementFormData, SupplementLog } from '@/lib/types/supplements';
+import type { UserProfile } from '@/lib/types/health';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,6 +47,7 @@ export default function SupplementsPage() {
     updateSupplement,
     deleteSupplement,
     logSupplementTaken,
+    checkDuplicateLog,
     updateLog,
     deleteLog,
     updateNutrientTarget,
@@ -55,12 +61,34 @@ export default function SupplementsPage() {
   const [editingSupplement, setEditingSupplement] = useState<Supplement | undefined>();
   const [editingLog, setEditingLog] = useState<SupplementLog | null>(null);
   const [deletingSupplementId, setDeletingSupplementId] = useState<string | null>(null);
+  const [viewingSupplement, setViewingSupplement] = useState<Supplement | null>(null);
+  const [takeEarlierSupplement, setTakeEarlierSupplement] = useState<Supplement | null>(null);
+  const [duplicateWarning, setDuplicateWarning] = useState<{
+    supplement: Supplement;
+    existingLogs: SupplementLog[];
+  } | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   // Initial data fetch
   useEffect(() => {
-    fetchSupplements();
-    fetchTodayLogs(today);
-    fetchNutrientTargets();
+    const fetchData = async () => {
+      fetchSupplements();
+      fetchTodayLogs(today);
+      fetchNutrientTargets();
+
+      // Fetch profile
+      try {
+        const res = await fetch('/api/profile');
+        if (res.ok) {
+          const data = await res.json();
+          setProfile(data.profile);
+        }
+      } catch (err) {
+        console.error('Failed to fetch profile:', err);
+      }
+    };
+
+    fetchData();
   }, [fetchSupplements, fetchTodayLogs, fetchNutrientTargets, today]);
 
   // Calculate taken counts per supplement
@@ -103,13 +131,35 @@ export default function SupplementsPage() {
     }
   };
 
-  const handleEdit = (supplement: Supplement) => {
-    setEditingSupplement(supplement);
-    setIsFormOpen(true);
+  const handleTake = async (supplement: Supplement) => {
+    const isDuplicate = checkDuplicateLog(supplement.id, today);
+
+    if (isDuplicate) {
+      const logs = todayLogs.filter((l) => l.supplementId === supplement.id && l.taken);
+      setDuplicateWarning({ supplement, existingLogs: logs });
+    } else {
+      await logSupplementTaken(supplement.id, supplement.name, today);
+    }
   };
 
-  const handleTake = async (supplement: Supplement) => {
-    await logSupplementTaken(supplement.id, supplement.name, today);
+  const handleConfirmDuplicate = async () => {
+    if (duplicateWarning) {
+      await logSupplementTaken(
+        duplicateWarning.supplement.id,
+        duplicateWarning.supplement.name,
+        today,
+        undefined,
+        true
+      );
+      setDuplicateWarning(null);
+    }
+  };
+
+  const handleTakeEarlier = async (supplement: Supplement, date: string, time: string) => {
+    const takenAt = `${date}T${time}:00`;
+    const isDuplicate = checkDuplicateLog(supplement.id, date);
+    await logSupplementTaken(supplement.id, supplement.name, date, takenAt, isDuplicate);
+    setTakeEarlierSupplement(null);
   };
 
   const handleEditLog = async (logId: string, takenAt: string) => {
@@ -193,46 +243,63 @@ export default function SupplementsPage() {
 
         {/* My Stack Tab */}
         <TabsContent value="stack" className="space-y-6">
+          {/* Daily Stack - Full Width at Top */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Pill className="h-5 w-5 text-primary" />
+                <CardTitle>Daily Stack</CardTitle>
+              </div>
+              <CardDescription>
+                Your supplements. Click &quot;Take Now&quot; to log.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {supplements.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No supplements yet.</p>
+                  <p className="text-sm mt-1">
+                    Add supplements or choose from templates to get started.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {supplements.map((supplement) => (
+                    <SupplementCard
+                      key={supplement.id}
+                      supplement={supplement}
+                      takenCount={takenCounts[supplement.id] || 0}
+                      onView={() => setViewingSupplement(supplement)}
+                      onTakeEarlier={() => setTakeEarlierSupplement(supplement)}
+                      onTake={() => handleTake(supplement)}
+                    />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Bottom Grid: Nutrient Progress + DRV Table | Today's Logs */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left: Supplements + Logs */}
+            {/* Left: Nutrient Progress + DRV Table (2 cols) */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Supplement Cards */}
+              {/* Nutrient Progress */}
               <Card>
                 <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Pill className="h-5 w-5 text-primary" />
-                    <CardTitle>Daily Stack</CardTitle>
-                  </div>
-                  <CardDescription>
-                    Your supplements. Click &quot;Take Now&quot; to log.
-                  </CardDescription>
+                  <CardTitle>Nutrient Progress</CardTitle>
+                  <CardDescription>Daily intake from supplements taken today.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {supplements.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <p>No supplements yet.</p>
-                      <p className="text-sm mt-1">
-                        Add supplements or choose from templates to get started.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {supplements.map((supplement) => (
-                        <SupplementCard
-                          key={supplement.id}
-                          supplement={supplement}
-                          takenCount={takenCounts[supplement.id] || 0}
-                          onEdit={() => handleEdit(supplement)}
-                          onDelete={() => setDeletingSupplementId(supplement.id)}
-                          onTake={() => handleTake(supplement)}
-                        />
-                      ))}
-                    </div>
-                  )}
+                  <NutrientProgressGrid progressData={nutrientProgress} showEmpty={false} />
                 </CardContent>
               </Card>
 
-              {/* Today's Logs */}
+              {/* DRV Reference Table */}
+              <DRVReferenceTable profile={profile} nutrientTargets={nutrientTargets} />
+            </div>
+
+            {/* Right: Today's Logs (1 col) */}
+            <div className="space-y-6">
               {todayLogs.length > 0 && (
                 <Card>
                   <CardHeader>
@@ -259,21 +326,6 @@ export default function SupplementsPage() {
                   </CardContent>
                 </Card>
               )}
-            </div>
-
-            {/* Right: Progress */}
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Nutrient Progress</CardTitle>
-                  <CardDescription>Daily intake from supplements taken today.</CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="max-h-[600px] overflow-y-auto px-6 pb-6">
-                    <NutrientProgressGrid progressData={nutrientProgress} showEmpty={false} />
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </div>
         </TabsContent>
@@ -377,6 +429,41 @@ export default function SupplementsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* View Supplement Modal */}
+      <ViewSupplementModal
+        supplement={viewingSupplement}
+        open={!!viewingSupplement}
+        onClose={() => setViewingSupplement(null)}
+        onEdit={(s) => {
+          setEditingSupplement(s);
+          setIsFormOpen(true);
+          setViewingSupplement(null);
+        }}
+        onDelete={(id) => {
+          setDeletingSupplementId(id);
+          setViewingSupplement(null);
+        }}
+      />
+
+      {/* Take Earlier Dialog */}
+      <TakeEarlierDialog
+        supplement={takeEarlierSupplement}
+        open={!!takeEarlierSupplement}
+        onClose={() => setTakeEarlierSupplement(null)}
+        onSubmit={(date, time) =>
+          takeEarlierSupplement && handleTakeEarlier(takeEarlierSupplement, date, time)
+        }
+      />
+
+      {/* Duplicate Warning Dialog */}
+      <DuplicateWarningDialog
+        supplementName={duplicateWarning?.supplement.name}
+        existingLogs={duplicateWarning?.existingLogs || []}
+        open={!!duplicateWarning}
+        onConfirm={handleConfirmDuplicate}
+        onCancel={() => setDuplicateWarning(null)}
+      />
     </div>
   );
 }
