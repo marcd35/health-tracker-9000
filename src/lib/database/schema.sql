@@ -71,7 +71,16 @@ CREATE TABLE IF NOT EXISTS foods (
   carbs REAL NOT NULL,
   fat REAL NOT NULL,
   fiber REAL,
-  -- Add all other nutrients as columns
+  sugar REAL,
+  calcium REAL,
+  iron REAL,
+  sodium REAL,
+  potassium REAL,
+  vitamin_a REAL,
+  vitamin_c REAL,
+  vitamin_d REAL,
+  brand_name TEXT,
+  ingredients TEXT,
   allergens TEXT, -- JSON array
   source TEXT DEFAULT 'manual', -- 'manual' | 'mock' | 'usda'
   usda_fdc_id TEXT, -- USDA FoodData Central ID

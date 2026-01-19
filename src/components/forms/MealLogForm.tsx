@@ -81,11 +81,10 @@ export function MealLogForm() {
           foodData: f.id.startsWith('usda-') ? f : undefined,
         })),
       });
-      toast.success(`${mealType.charAt(0).toUpperCase() + mealType.slice(1)} logged successfully!`);
       setSelectedFoods([]);
       setErrors({});
     } catch {
-      toast.error('Failed to log meal. Please try again.');
+      // Error is handled by addMeal in healthStore
     }
   };
 

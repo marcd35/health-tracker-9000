@@ -14,7 +14,7 @@ export type VitaminKey =
   | 'folate' // B9
   | 'vitaminB12'; // B12
 
-// Mineral keys (12 minerals - extended set)
+// Mineral keys (14 minerals - extended set)
 export type MineralKey =
   | 'calcium'
   | 'iron'
@@ -27,7 +27,9 @@ export type MineralKey =
   | 'chromium'
   | 'iodine'
   | 'phosphorus'
-  | 'sodium';
+  | 'sodium'
+  | 'chloride'
+  | 'molybdenum';
 
 // Combined nutrient key type
 export type NutrientKey = VitaminKey | MineralKey;

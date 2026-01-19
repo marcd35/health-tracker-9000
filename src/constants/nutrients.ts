@@ -100,21 +100,21 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     key: 'calcium',
     name: 'Calcium',
     unit: 'mg',
-    rdaDefault: 1000,
+    rdaDefault: 1300,
     category: 'mineral',
   },
   iron: {
     key: 'iron',
     name: 'Iron',
     unit: 'mg',
-    rdaDefault: 8,
+    rdaDefault: 18,
     category: 'mineral',
   },
   magnesium: {
     key: 'magnesium',
     name: 'Magnesium',
     unit: 'mg',
-    rdaDefault: 400,
+    rdaDefault: 420,
     category: 'mineral',
   },
   zinc: {
@@ -128,7 +128,7 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     key: 'potassium',
     name: 'Potassium',
     unit: 'mg',
-    rdaDefault: 2600,
+    rdaDefault: 4700,
     category: 'mineral',
   },
   selenium: {
@@ -170,7 +170,7 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     key: 'phosphorus',
     name: 'Phosphorus',
     unit: 'mg',
-    rdaDefault: 700,
+    rdaDefault: 1250,
     category: 'mineral',
   },
   sodium: {
@@ -178,6 +178,20 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     name: 'Sodium',
     unit: 'mg',
     rdaDefault: 2300,
+    category: 'mineral',
+  },
+  chloride: {
+    key: 'chloride',
+    name: 'Chloride',
+    unit: 'mg',
+    rdaDefault: 2300,
+    category: 'mineral',
+  },
+  molybdenum: {
+    key: 'molybdenum',
+    name: 'Molybdenum',
+    unit: 'mcg',
+    rdaDefault: 45,
     category: 'mineral',
   },
 };

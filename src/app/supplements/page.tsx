@@ -10,7 +10,7 @@ import { SupplementCard } from '@/components/supplements/SupplementCard';
 import { SupplementDialog } from '@/components/supplements/SupplementDialog';
 import { SupplementLogItem } from '@/components/supplements/SupplementLogItem';
 import { EditLogDialog } from '@/components/supplements/EditLogDialog';
-import { NutrientProgressGrid } from '@/components/supplements/NutrientProgressGrid';
+import { NutrientTrackingTable } from '@/components/supplements/NutrientTrackingTable';
 import { TemplateSelector } from '@/components/supplements/TemplateSelector';
 import { JSONImportDialog } from '@/components/supplements/JSONImportDialog';
 import { NutrientTargetsEditor } from '@/components/supplements/NutrientTargetsEditor';
@@ -18,9 +18,7 @@ import { SupplementsSkeleton } from '@/components/supplements/SupplementsSkeleto
 import { ViewSupplementModal } from '@/components/supplements/ViewSupplementModal';
 import { TakeEarlierDialog } from '@/components/supplements/TakeEarlierDialog';
 import { DuplicateWarningDialog } from '@/components/supplements/DuplicateWarningDialog';
-import { DRVReferenceTable } from '@/components/supplements/DRVReferenceTable';
 import type { Supplement, SupplementFormData, SupplementLog } from '@/lib/types/supplements';
-import type { UserProfile } from '@/lib/types/health';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,7 +65,6 @@ export default function SupplementsPage() {
     supplement: Supplement;
     existingLogs: SupplementLog[];
   } | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   // Initial data fetch
   useEffect(() => {
@@ -75,17 +72,6 @@ export default function SupplementsPage() {
       fetchSupplements();
       fetchTodayLogs(today);
       fetchNutrientTargets();
-
-      // Fetch profile
-      try {
-        const res = await fetch('/api/profile');
-        if (res.ok) {
-          const data = await res.json();
-          setProfile(data.profile);
-        }
-      } catch (err) {
-        console.error('Failed to fetch profile:', err);
-      }
     };
 
     fetchData();
@@ -276,58 +262,34 @@ export default function SupplementsPage() {
                   ))}
                 </div>
               )}
+
+              {/* Today's Logs Section - Integrates into Daily Stack Card */}
+              {todayLogs.length > 0 && (
+                <div className="mt-8 pt-6 border-t">
+                  <div className="flex items-center gap-2 mb-4">
+                    <History className="h-5 w-5 text-primary" />
+                    <h3 className="text-lg font-semibold">Today&apos;s Logs</h3>
+                  </div>
+                  <div className="space-y-2">
+                    {todayLogs
+                      .filter((log) => log.taken)
+                      .map((log) => (
+                        <SupplementLogItem
+                          key={log.id}
+                          log={log}
+                          supplement={supplements.find((s) => s.id === log.supplementId)}
+                          onEdit={() => setEditingLog(log)}
+                          onDelete={() => handleDeleteLog(log.id)}
+                        />
+                      ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Bottom Grid: Nutrient Progress + DRV Table | Today's Logs */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left: Nutrient Progress + DRV Table (2 cols) */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Nutrient Progress */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Nutrient Progress</CardTitle>
-                  <CardDescription>Daily intake from supplements taken today.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <NutrientProgressGrid progressData={nutrientProgress} showEmpty={false} />
-                </CardContent>
-              </Card>
-
-              {/* DRV Reference Table */}
-              <DRVReferenceTable profile={profile} nutrientTargets={nutrientTargets} />
-            </div>
-
-            {/* Right: Today's Logs (1 col) */}
-            <div className="space-y-6">
-              {todayLogs.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <History className="h-5 w-5 text-primary" />
-                      <CardTitle>Today&apos;s Logs</CardTitle>
-                    </div>
-                    <CardDescription>Supplements taken today with timestamps.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {todayLogs
-                        .filter((log) => log.taken)
-                        .map((log) => (
-                          <SupplementLogItem
-                            key={log.id}
-                            log={log}
-                            supplement={supplements.find((s) => s.id === log.supplementId)}
-                            onEdit={() => setEditingLog(log)}
-                            onDelete={() => handleDeleteLog(log.id)}
-                          />
-                        ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </div>
+          {/* Unified Nutrient Tracking Table */}
+          <NutrientTrackingTable progressData={nutrientProgress} />
         </TabsContent>
 
         {/* Templates Tab */}

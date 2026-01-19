@@ -1,6 +1,0 @@
-the Daily Stack vitamin cards are way too big. change the         
-  orientation of the card to wide and make it span the entire       
-  page across the top, beneath the tab menu. move the "1            
-  softgel" and "1c daily" to the top right side of the card 
-
-the nutrient progress bars are not properly calculating the DRV and overage percents. for example, vitamin C shows 1000.0 / 90mg (1111%) but the value over the bar says 200% and below the bar it says Over DRV by 100%. Once you solve that bug, Let's actually merge the Nutrient Progress dispay with the DRV display. we should have progress bars for every single value. the DRV line should be red and sit at about 95% of the way to the right of the progress bar, and any values that exceed it should fill the bar to 100% We can also just add a column that shows the "today's intake" amount. this chart should take up the entire width of the page. 

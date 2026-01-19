@@ -28,7 +28,8 @@ export type NutrientKey =
   | 'molybdenum'
   | 'iodine'
   | 'potassium'
-  | 'phosphorus';
+  | 'phosphorus'
+  | 'chloride';
 
 /**
  * Global color mapping for all 25 tracked nutrients.
@@ -63,6 +64,7 @@ export const NUTRIENT_COLORS: Record<NutrientKey, string> = {
   iodine: '#7c3aed', // violet-600 (purple)
   potassium: '#be123c', // rose-700
   phosphorus: '#fb923c', // orange-400
+  chloride: '#6b7280', // gray-500
 };
 
 /**
@@ -102,4 +104,5 @@ export const NUTRIENT_DISPLAY_NAMES: Record<NutrientKey, string> = {
   iodine: 'Iodine',
   potassium: 'Potassium',
   phosphorus: 'Phosphorus',
+  chloride: 'Chloride',
 };

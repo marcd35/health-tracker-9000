@@ -50,6 +50,36 @@ function runMigrations(database: Database.Database): void {
   if (!foodsColNames.includes('usda_fdc_id')) {
     database.exec('ALTER TABLE foods ADD COLUMN usda_fdc_id TEXT');
   }
+  if (!foodsColNames.includes('brand_name')) {
+    database.exec('ALTER TABLE foods ADD COLUMN brand_name TEXT');
+  }
+  if (!foodsColNames.includes('ingredients')) {
+    database.exec('ALTER TABLE foods ADD COLUMN ingredients TEXT');
+  }
+  if (!foodsColNames.includes('sugar')) {
+    database.exec('ALTER TABLE foods ADD COLUMN sugar REAL');
+  }
+  if (!foodsColNames.includes('calcium')) {
+    database.exec('ALTER TABLE foods ADD COLUMN calcium REAL');
+  }
+  if (!foodsColNames.includes('iron')) {
+    database.exec('ALTER TABLE foods ADD COLUMN iron REAL');
+  }
+  if (!foodsColNames.includes('sodium')) {
+    database.exec('ALTER TABLE foods ADD COLUMN sodium REAL');
+  }
+  if (!foodsColNames.includes('potassium')) {
+    database.exec('ALTER TABLE foods ADD COLUMN potassium REAL');
+  }
+  if (!foodsColNames.includes('vitamin_a')) {
+    database.exec('ALTER TABLE foods ADD COLUMN vitamin_a REAL');
+  }
+  if (!foodsColNames.includes('vitamin_c')) {
+    database.exec('ALTER TABLE foods ADD COLUMN vitamin_c REAL');
+  }
+  if (!foodsColNames.includes('vitamin_d')) {
+    database.exec('ALTER TABLE foods ADD COLUMN vitamin_d REAL');
+  }
 
   // Create index for USDA FDC ID lookups if it doesn't exist
   const indexes = database

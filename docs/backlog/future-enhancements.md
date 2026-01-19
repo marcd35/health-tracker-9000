@@ -59,3 +59,10 @@
 - [ ] Implement real-time sync
 - [ ] Keep personal data local, food data remote
 - [ ] Build admin panel for managing food database
+
+### Future Phase 9 (can be sooner): Meal Planning
+
+- [ ] Integrate a supplementary allergen database like:
+- [ ] FatSecret API - has allergen data
+- [ ] Open Food Facts - crowdsourced allergen labels
+- [ ] Thinkladder allergen database - comprehensive allergen info

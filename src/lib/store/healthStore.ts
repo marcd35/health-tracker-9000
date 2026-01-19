@@ -245,7 +245,6 @@ export const useHealthStore = create<HealthState>((set, get) => ({
         return data.food;
       } else {
         // Food was newly imported
-        toast.success(`${food.name} added to your food database`);
         return data.food;
       }
     } catch (err: any) {

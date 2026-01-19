@@ -12,7 +12,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, Database } from 'lucide-react';
+import { Upload, Database, Search } from 'lucide-react';
+import Link from 'next/link';
 
 export default function AdminPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -114,15 +115,39 @@ export default function AdminPage() {
 
         <Card>
           <CardHeader>
+            <div className="flex items-center gap-2">
+              <Search className="h-5 w-5 text-primary" />
+              <CardTitle>USDA Food Search</CardTitle>
+            </div>
+            <CardDescription>Test the USDA FoodData Central API integration</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Search for food items and inspect the raw JSON data returned by the USDA API. This
+              tool is used for debugging and mapping food data to our database schema.
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button asChild className="w-full gap-2" variant="outline">
+              <Link href="/test-food-search">
+                <Search className="h-4 w-4" />
+                Open Food Search Test
+              </Link>
+            </Button>
+          </CardFooter>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>Import Instructions</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4 text-sm">
               <ol className="list-decimal list-inside space-y-2">
                 <li>Prepare your JSON file with the required data structure</li>
-                <li>Click "Choose File" and select your JSON file</li>
+                <li>Click &quot;Choose File&quot; and select your JSON file</li>
                 <li>Review the selected file details</li>
-                <li>Click "Import Data" to begin the import process</li>
+                <li>Click &quot;Import Data&quot; to begin the import process</li>
                 <li>The system will validate and update the database</li>
               </ol>
               <div className="mt-4 p-3 bg-blue-50 rounded-md">
