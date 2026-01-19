@@ -1,13 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { SupplementCheckbox } from '@/components/forms/SupplementCheckbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pill } from 'lucide-react';
 import { useHealthStore } from '@/lib/store/healthStore';
 import { SupplementsSkeleton } from '@/components/supplements/SupplementsSkeleton';
-
-import { toast } from 'sonner';
 
 export default function SupplementsPage() {
   const {
@@ -19,7 +17,7 @@ export default function SupplementsPage() {
     toggleSupplement,
   } = useHealthStore();
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
 
   useEffect(() => {
     fetchAllSupplements();
@@ -33,12 +31,8 @@ export default function SupplementsPage() {
   const handleToggle = async (id: string, taken: boolean) => {
     const supp = allSupplements.find((s) => s.id === id);
     if (!supp) return;
-    try {
-      await toggleSupplement(id, supp.name, today, taken);
-      toast.success(`${supp.name} marked as ${taken ? 'taken' : 'not taken'}`);
-    } catch (error) {
-      toast.error(`Failed to update ${supp.name}`);
-    }
+    // Toast is already handled in the store's toggleSupplement
+    await toggleSupplement(id, supp.name, today, taken);
   };
 
   const supplementsWithStatus = allSupplements.map((supp) => {
