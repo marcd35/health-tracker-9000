@@ -49,6 +49,7 @@ export interface Food {
   brand?: string;
   ingredients?: string;
   allergens?: string[];
+  rawUSDAData?: any;
 }
 
 export interface NutritionalValues {

@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { USDAClient, USDAMapper } from '@/lib/services/usda';
+import { USDAClient, USDAMapper } from '@/lib/services/usda/index';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

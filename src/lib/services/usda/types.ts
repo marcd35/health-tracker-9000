@@ -8,7 +8,10 @@ export interface USDASearchResponse {
   totalHits: number;
   currentPage: number;
   totalPages: number;
+  pageList?: number[]; // Added for legacy support
 }
+
+export type UsdaSearchResponse = USDASearchResponse; // Legacy alias
 
 export interface USDAFoodItem {
   fdcId: number;
@@ -16,12 +19,16 @@ export interface USDAFoodItem {
   dataType: string;
   publicationDate?: string;
   brandOwner?: string;
+  brandName?: string; // Added for legacy support
   ingredients?: string;
+  foodCode?: string; // Added for legacy support
   servingSize?: number;
   servingSizeUnit?: string;
   householdServingFullText?: string;
   foodNutrients: USDAFoodNutrient[];
 }
+
+export type UsdaFoodSearchResult = USDAFoodItem; // Legacy alias
 
 export interface USDAFoodNutrient {
   nutrientId: number;

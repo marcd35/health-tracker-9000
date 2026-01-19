@@ -1,6 +1,6 @@
 'use server';
 
-import { searchFoods, getFoodDetails, UsdaSearchResponse } from '@/lib/services/usda';
+import { searchFoods, getFoodDetails, UsdaSearchResponse } from '@/lib/services/usda/index';
 
 const API_KEY = process.env.USDA_API_KEY || 'DEMO_KEY';
 

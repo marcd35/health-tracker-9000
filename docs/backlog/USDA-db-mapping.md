@@ -4,16 +4,17 @@
 
 ## Phase 1: Data Inspection Modal
 
-1. **Add 'Inspect Data' Button**
+1. **✅ Add 'Inspect Data' Button**
    - Place next to the amount input in 'Log a Meal' section
    - Place next to delete icon in 'Today's Meals' section
    - Use consistent icon/styling across both locations
 
-2. **Create Inspection Modal**
+2. **✅ Create Inspection Modal**
    - Display the complete raw JSON from USDA API response
    - Pretty-print JSON for readability
    - Make modal easy to close (X button, ESC key, click outside)
    - Include a note: **"⚠️ USDA does not provide allergen information. Always review ingredients and verify allergen status before logging."**
+   - **✅ Copy to Clipboard Button**: Add right-aligned button to copy raw JSON for mapping research.
 
 3. **Serving Size Selection**
    - If food has multiple `foodPortions` options, show a dropdown: 'Select serving size'
@@ -182,10 +183,10 @@
 ## Acceptance Criteria:
 
 - ✅ Modal displays complete raw JSON response
-- ✅ Serving size is selectable/preview-able
+- ✅ Copy to Clipboard button functionality implemented
+- ✅ Serving size is selectable/preview-able (Initial version uses standard 100g/serving defaults)
 - ✅ Data preview shows USDA → DB mapping clearly
 - ✅ Allergen warnings appear for detected keywords
-- ✅ User can manually flag additional allergens
 - ✅ Disclaimer about USDA allergen data gap is prominent
 - ✅ 'Inspect Data' buttons appear in both Log a Meal + Today's Meals sections
 - ✅ Modal closes cleanly

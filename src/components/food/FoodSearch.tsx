@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { searchFoodAction, getFoodDetailsAction } from '@/app/actions/food-search';
-import { UsdaFoodSearchResult } from '@/lib/services/usda';
+import { UsdaFoodSearchResult } from '@/lib/services/usda/index';
 import { FoodJsonDisplay } from './FoodJsonDisplay';
 
 export function FoodSearch() {

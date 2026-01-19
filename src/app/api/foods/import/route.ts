@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { USDAClient, USDAMapper } from '@/lib/services/usda';
+import { USDAClient, USDAMapper } from '@/lib/services/usda/index';
 import { FoodRepository } from '@/lib/database/repositories/foodRepository';
 import type { Food } from '@/lib/types/health';
 

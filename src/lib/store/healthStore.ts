@@ -29,6 +29,7 @@ interface HealthState {
   searchFoods: (query: string) => Promise<Food[]>;
   searchUSDAFoods: (query: string) => Promise<Food[]>;
   importUSDAFood: (food: Food & { usdaFdcId: number }) => Promise<Food | null>;
+  fetchFoodById: (id: string) => Promise<Food | null>;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }
@@ -250,6 +251,22 @@ export const useHealthStore = create<HealthState>((set, get) => ({
     } catch (err: any) {
       console.error('Import food error:', err);
       toast.error(err.message || 'Failed to import food');
+      return null;
+    }
+  },
+  fetchFoodById: async (id) => {
+    try {
+      const response = await fetch(`/api/foods/${id}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        // Prefer details if available, otherwise error, otherwise default
+        const message = errorData.details || errorData.error || 'Failed to fetch food details';
+        throw new Error(message);
+      }
+      return await response.json();
+    } catch (err: any) {
+      console.error('Fetch food error:', err);
+      toast.error(err.message || 'Failed to fetch food details');
       return null;
     }
   },

@@ -23,6 +23,7 @@ export class USDAMapper {
       nutritionPer100g,
       allergens: allergens.length > 0 ? allergens : undefined,
       usdaFdcId: usdaFood.fdcId,
+      rawUSDAData: usdaFood, // Include raw response for inspection
     };
   }
 

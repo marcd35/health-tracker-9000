@@ -19,11 +19,14 @@ import { checkFoodForAllergens } from '@/lib/utils/allergenChecker';
 import { useEffect } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
+import { FoodInspectionModal } from '../modals/FoodInspectionModal';
+import { Search } from 'lucide-react';
 
 export function MealLogForm() {
   const [mealType, setMealType] = useState('breakfast');
   const [selectedFoods, setSelectedFoods] = useState<any[]>([]);
   const { addMeal, profile, fetchProfile, isLoading } = useHealthStore();
+  const [inspectingFood, setInspectingFood] = useState<any | null>(null);
 
   useEffect(() => {
     if (!profile) {
@@ -117,9 +120,8 @@ export function MealLogForm() {
             {selectedFoods.map((food, index) => (
               <div
                 key={index}
-                className={`flex items-center gap-4 p-3 rounded-lg border ${
-                  errors[index] ? 'border-destructive bg-destructive/5' : 'bg-muted/50'
-                }`}
+                className={`flex items-center gap-4 p-3 rounded-lg border ${errors[index] ? 'border-destructive bg-destructive/5' : 'bg-muted/50'
+                  }`}
               >
                 <div className="flex-1">
                   <p className="text-sm font-medium">{food.name}</p>
@@ -171,6 +173,17 @@ export function MealLogForm() {
                   />
                   <span className="text-sm text-muted-foreground">g</span>
                 </div>
+                {food.rawUSDAData && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-primary"
+                    onClick={() => setInspectingFood(food)}
+                    title="Inspect raw data"
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -183,6 +196,15 @@ export function MealLogForm() {
             ))}
           </div>
         </div>
+
+        {inspectingFood && (
+          <FoodInspectionModal
+            isOpen={!!inspectingFood}
+            onClose={() => setInspectingFood(null)}
+            foodName={inspectingFood.name}
+            rawJson={inspectingFood.rawUSDAData}
+          />
+        )}
       </CardContent>
       <CardFooter className="flex justify-end gap-3 border-t pt-6">
         <Button variant="outline" onClick={() => setSelectedFoods([])} disabled={isLoading}>

@@ -43,7 +43,7 @@ export const USDA_CONFIG = {
   API_KEY: process.env.USDA_API_KEY || '',
   DEFAULT_PAGE_SIZE: 20,
   MAX_PAGE_SIZE: 50,
-  REQUEST_TIMEOUT_MS: 10000, // 10 seconds
+  REQUEST_TIMEOUT_MS: 25000, // 25 seconds
 } as const;
 
 /**
