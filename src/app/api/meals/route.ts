@@ -17,8 +17,18 @@ export async function POST(request: Request) {
     const { date, mealType, foods } = body;
 
     // Calculate nutrition for each food in the meal
+    // Handle USDA foods that might not be in database yet
     const mealNutrients = foods.map((f: any) => {
-      const food = foodRepo.getFoodById(f.foodId);
+      let food = foodRepo.getFoodById(f.foodId);
+
+      // If food not found and it's a USDA food (ID starts with "usda-"),
+      // it might be from search results - use the provided data
+      if (!food && f.foodId.startsWith('usda-')) {
+        console.log(`USDA food not in DB yet: ${f.foodName}, using provided data`);
+        // Use the food data from the request (passed from form)
+        food = f.foodData;
+      }
+
       if (!food) throw new Error(`Food not found: ${f.foodId}`);
       return calculateNutrition(food, f.amount);
     });

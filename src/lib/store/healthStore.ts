@@ -9,6 +9,8 @@ interface HealthState {
   allSupplements: Supplement[];
   isLoading: boolean;
   error: string | null;
+  usdaSearchLoading: boolean;
+  usdaSearchError: string | null;
 
   // Actions
   fetchProfile: () => Promise<void>;
@@ -25,6 +27,8 @@ interface HealthState {
     taken: boolean
   ) => Promise<void>;
   searchFoods: (query: string) => Promise<Food[]>;
+  searchUSDAFoods: (query: string) => Promise<Food[]>;
+  importUSDAFood: (food: Food & { usdaFdcId: number }) => Promise<Food | null>;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }
@@ -36,6 +40,8 @@ export const useHealthStore = create<HealthState>((set, get) => ({
   allSupplements: [],
   isLoading: false,
   error: null,
+  usdaSearchLoading: false,
+  usdaSearchError: null,
 
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (error) => set({ error }),
@@ -178,6 +184,74 @@ export const useHealthStore = create<HealthState>((set, get) => ({
       console.error(err);
       toast.error('Failed to search foods');
       return [];
+    }
+  },
+
+  searchUSDAFoods: async (query: string) => {
+    if (!query) return [];
+    set({ usdaSearchLoading: true, usdaSearchError: null });
+    try {
+      const response = await fetch(
+        `/api/foods/usda-search?q=${encodeURIComponent(query)}&limit=20`
+      );
+
+      if (response.status === 429) {
+        const data = await response.json();
+        toast.error(data.error || 'USDA API rate limit exceeded');
+        set({ usdaSearchLoading: false, usdaSearchError: data.error });
+        return [];
+      }
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to search USDA foods');
+      }
+
+      const data = await response.json();
+      set({ usdaSearchLoading: false });
+      return data.foods || [];
+    } catch (err: any) {
+      console.error('USDA search error:', err);
+      const errorMessage = err.message || 'Failed to search USDA foods';
+      toast.error(errorMessage);
+      set({ usdaSearchLoading: false, usdaSearchError: errorMessage });
+      return [];
+    }
+  },
+
+  importUSDAFood: async (food: Food & { usdaFdcId: number }) => {
+    try {
+      const response = await fetch('/api/foods/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ food }),
+      });
+
+      if (response.status === 429) {
+        const data = await response.json();
+        toast.error(data.error || 'USDA API rate limit exceeded');
+        return null;
+      }
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to import food');
+      }
+
+      const data = await response.json();
+
+      if (data.cached) {
+        // Food was already cached, silently return it
+        return data.food;
+      } else {
+        // Food was newly imported
+        toast.success(`${food.name} added to your food database`);
+        return data.food;
+      }
+    } catch (err: any) {
+      console.error('Import food error:', err);
+      toast.error(err.message || 'Failed to import food');
+      return null;
     }
   },
 }));

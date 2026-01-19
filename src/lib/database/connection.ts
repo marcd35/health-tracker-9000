@@ -9,9 +9,9 @@ let db: Database.Database | null = null;
 
 function runMigrations(database: Database.Database): void {
   // Migration: Add new columns to supplements table
-  const supplementsCols = database
-    .prepare("PRAGMA table_info(supplements)")
-    .all() as { name: string }[];
+  const supplementsCols = database.prepare('PRAGMA table_info(supplements)').all() as {
+    name: string;
+  }[];
   const supplementsColNames = supplementsCols.map((c) => c.name);
 
   if (!supplementsColNames.includes('color')) {
@@ -28,13 +28,35 @@ function runMigrations(database: Database.Database): void {
   }
 
   // Migration: Add taken_at column to supplement_logs table
-  const logsCols = database
-    .prepare("PRAGMA table_info(supplement_logs)")
-    .all() as { name: string }[];
+  const logsCols = database.prepare('PRAGMA table_info(supplement_logs)').all() as {
+    name: string;
+  }[];
   const logsColNames = logsCols.map((c) => c.name);
 
   if (!logsColNames.includes('taken_at')) {
     database.exec('ALTER TABLE supplement_logs ADD COLUMN taken_at TEXT');
+  }
+  if (!logsColNames.includes('is_duplicate_warning')) {
+    database.exec('ALTER TABLE supplement_logs ADD COLUMN is_duplicate_warning INTEGER DEFAULT 0');
+  }
+
+  // Migration: Add USDA columns to foods table
+  const foodsCols = database.prepare('PRAGMA table_info(foods)').all() as { name: string }[];
+  const foodsColNames = foodsCols.map((c) => c.name);
+
+  if (!foodsColNames.includes('source')) {
+    database.exec("ALTER TABLE foods ADD COLUMN source TEXT DEFAULT 'manual'");
+  }
+  if (!foodsColNames.includes('usda_fdc_id')) {
+    database.exec('ALTER TABLE foods ADD COLUMN usda_fdc_id TEXT');
+  }
+
+  // Create index for USDA FDC ID lookups if it doesn't exist
+  const indexes = database
+    .prepare("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_foods_usda_fdc_id'")
+    .all();
+  if (indexes.length === 0) {
+    database.exec('CREATE INDEX idx_foods_usda_fdc_id ON foods(usda_fdc_id)');
   }
 }
 

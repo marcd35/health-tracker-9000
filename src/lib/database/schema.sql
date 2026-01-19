@@ -73,8 +73,13 @@ CREATE TABLE IF NOT EXISTS foods (
   fiber REAL,
   -- Add all other nutrients as columns
   allergens TEXT, -- JSON array
+  source TEXT DEFAULT 'manual', -- 'manual' | 'mock' | 'usda'
+  usda_fdc_id TEXT, -- USDA FoodData Central ID
   created_at TEXT NOT NULL
 );
+
+-- Index for USDA food lookups
+CREATE INDEX IF NOT EXISTS idx_foods_usda_fdc_id ON foods(usda_fdc_id);
 
 -- User's Supplements
 CREATE TABLE IF NOT EXISTS supplements (

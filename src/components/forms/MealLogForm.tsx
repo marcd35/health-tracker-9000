@@ -77,12 +77,14 @@ export function MealLogForm() {
           foodId: f.id,
           foodName: f.name,
           amount: f.amount,
+          // Include full food data for USDA foods not yet in database
+          foodData: f.id.startsWith('usda-') ? f : undefined,
         })),
       });
       toast.success(`${mealType.charAt(0).toUpperCase() + mealType.slice(1)} logged successfully!`);
       setSelectedFoods([]);
       setErrors({});
-    } catch (error) {
+    } catch {
       toast.error('Failed to log meal. Please try again.');
     }
   };
@@ -116,8 +118,9 @@ export function MealLogForm() {
             {selectedFoods.map((food, index) => (
               <div
                 key={index}
-                className={`flex items-center gap-4 p-3 rounded-lg border ${errors[index] ? 'border-destructive bg-destructive/5' : 'bg-muted/50'
-                  }`}
+                className={`flex items-center gap-4 p-3 rounded-lg border ${
+                  errors[index] ? 'border-destructive bg-destructive/5' : 'bg-muted/50'
+                }`}
               >
                 <div className="flex-1">
                   <p className="text-sm font-medium">{food.name}</p>

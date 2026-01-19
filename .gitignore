@@ -47,6 +47,7 @@ next-env.d.ts
 *.sqlite
 *.sqlite3
 !/USDA
+*.env.local
 
 # backups
 /backups/USDA/
