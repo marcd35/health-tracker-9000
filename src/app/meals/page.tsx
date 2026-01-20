@@ -2,18 +2,23 @@
 
 import { useEffect, useState } from 'react';
 import { useHealthStore } from '@/lib/store/healthStore';
+import { useCalorieTrackerStore } from '@/lib/store/calorieTrackerStore';
 import { MealsSkeleton } from '@/components/meals/MealsSkeleton';
 import { MealsHeroHeader } from '@/components/meals/MealsHeroHeader';
 import { MealLogModal } from '@/components/meals/MealLogModal';
 import { TodaysMealsList } from '@/components/meals/TodaysMealsList';
 import { HistoricalLogCard } from '@/components/meals/HistoricalLogCard';
 import { FavoriteMealsSection } from '@/components/meals/FavoriteMealsSection';
+import { CalorieProgressCard } from '@/components/calories/CalorieProgressCard';
+import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import type { MealLog } from '@/lib/types/health';
 import type { MealFavorite } from '@/lib/database/repositories/mealFavoritesRepository';
 
 export default function MealsPage() {
   const { dailyLog, profile, isLoading, fetchDailyLog, fetchProfile, addMeal } = useHealthStore();
+  const { todayTracking, currentGoal, fetchDailyTracking: fetchCalorieTracking, fetchCurrentGoal } =
+    useCalorieTrackerStore();
   const today = new Date().toISOString().split('T')[0];
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -25,10 +30,12 @@ export default function MealsPage() {
 
   useEffect(() => {
     fetchDailyLog(today);
+    fetchCalorieTracking(today);
+    fetchCurrentGoal();
     if (!profile) {
       fetchProfile();
     }
-  }, [fetchDailyLog, fetchProfile, today, profile]);
+  }, [fetchDailyLog, fetchProfile, fetchCalorieTracking, fetchCurrentGoal, today, profile]);
 
   const handleLogMeal = () => {
     setEditingMeal(null);
@@ -128,6 +135,14 @@ export default function MealsPage() {
         targets={targets}
         onLogMeal={handleLogMeal}
       />
+
+      {/* Calorie Progress Card - Show if user has a calorie goal */}
+      {currentGoal && todayTracking && (
+        <div>
+          <h2 className="text-lg font-semibold mb-3">Daily Calorie Progress</h2>
+          <CalorieProgressCard tracking={todayTracking} goalType={currentGoal.goalType} />
+        </div>
+      )}
 
       {/* Favorite Meals Quick-Add */}
       <FavoriteMealsSection

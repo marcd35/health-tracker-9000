@@ -4,6 +4,7 @@ import { FoodRepository } from '@/lib/database/repositories/foodRepository';
 import { calculateNutrition, sumNutrition } from '@/lib/utils/nutrition';
 import { DailySummaryRepository } from '@/lib/database/repositories/dailySummaryRepository';
 import { ProfileRepository } from '@/lib/database/repositories/profileRepository';
+import { CalorieTrackerRepository } from '@/lib/database/repositories/calorieTrackerRepository';
 import { calculateHealthScore } from '@/lib/utils/healthScoring';
 import { getDatabase } from '@/lib/database/connection';
 
@@ -11,6 +12,8 @@ export async function POST(request: Request) {
   const mealRepo = new MealLogRepository();
   const foodRepo = new FoodRepository();
   const summaryRepo = new DailySummaryRepository();
+  const profileRepo = new ProfileRepository();
+  const calorieTrackerRepo = new CalorieTrackerRepository();
 
   try {
     const body = await request.json();
@@ -87,6 +90,12 @@ export async function POST(request: Request) {
       });
     }
 
+    // Update calorie tracking if user has a calorie goal
+    const profile = profileRepo.getProfile();
+    if (profile) {
+      calorieTrackerRepo.updateDailyTracking(profile.id, date);
+    }
+
     return NextResponse.json(newMeal);
   } catch (error: any) {
     console.error('API Error:', error);
@@ -102,6 +111,8 @@ export async function DELETE(request: Request) {
 
   const mealRepo = new MealLogRepository();
   const summaryRepo = new DailySummaryRepository();
+  const profileRepo = new ProfileRepository();
+  const calorieTrackerRepo = new CalorieTrackerRepository();
 
   try {
     // Get date before deleting to update summary
@@ -131,6 +142,12 @@ export async function DELETE(request: Request) {
           totalNutrition: dailyTotals,
           healthScore: scoreBreakdown.total,
         });
+      }
+
+      // Update calorie tracking if user has a calorie goal
+      const profile = profileRepo.getProfile();
+      if (profile) {
+        calorieTrackerRepo.updateDailyTracking(profile.id, date);
       }
     }
 

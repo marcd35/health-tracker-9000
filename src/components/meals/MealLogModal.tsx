@@ -26,6 +26,7 @@ import { checkFoodForAllergens } from '@/lib/utils/allergenChecker';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { FoodInspectionModal } from '@/components/modals/FoodInspectionModal';
+import { useCalorieTrackerStore } from '@/lib/store/calorieTrackerStore';
 import type { MealLog, Food } from '@/lib/types/health';
 
 interface SelectedFood extends Food {
@@ -48,6 +49,7 @@ export function MealLogModal({ isOpen, onClose, editMeal, defaultMealType }: Mea
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { addMeal, updateMeal, profile, fetchProfile, fetchFoodById, isLoading } = useHealthStore();
+  const fetchDailyTracking = useCalorieTrackerStore((state) => state.fetchDailyTracking);
 
   const isEditMode = !!editMeal;
 
@@ -153,6 +155,10 @@ export function MealLogModal({ isOpen, onClose, editMeal, defaultMealType }: Mea
           foods: foodsPayload,
         });
       }
+
+      // Update calorie tracking after meal is logged
+      await fetchDailyTracking(today);
+
       onClose();
     } catch {
       // Error is handled by store actions
