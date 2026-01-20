@@ -11,12 +11,14 @@ import {
   BarChart3,
   HeartPulse,
   Shield,
+  Flame,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Meals', href: '/meals', icon: Utensils },
+  { name: 'Calories', href: '/calories', icon: Flame },
   { name: 'Supplements', href: '/supplements', icon: Pill },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'History', href: '/history', icon: History },
