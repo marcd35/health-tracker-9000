@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Link from 'next/link';
 import { Flame, TrendingDown, TrendingUp, Trophy } from 'lucide-react';
+import { toast } from 'sonner';
 import { useCalorieTrackerStore } from '@/lib/store/calorieTrackerStore';
 import { CalorieGoalOnboarding } from '@/components/calories/CalorieGoalOnboarding';
 import { CalorieProgressCard } from '@/components/calories/CalorieProgressCard';
@@ -20,6 +21,7 @@ export default function CaloriesPage() {
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1,
   });
+  const [isResettingProfile, setIsResettingProfile] = useState(false);
 
   const currentGoal = useCalorieTrackerStore((state) => state.currentGoal);
   const todayTracking = useCalorieTrackerStore((state) => state.todayTracking);
@@ -72,6 +74,34 @@ export default function CaloriesPage() {
       setOnboardingOpen(true);
     }
   }, [currentGoal, onboardingDismissedForever, mounted]);
+
+  // Handle profile reset for debugging
+  const handleResetProfile = async (profileType: 'weight_loss' | 'maintenance' | 'weight_gain') => {
+    setIsResettingProfile(true);
+    try {
+      const response = await fetch('/api/debug/reset-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileType }),
+      });
+
+      if (!response.ok) throw new Error('Failed to reset profile');
+
+      toast.success(`Profile reset to ${profileType.replace('_', ' ')}. Reloading data...`);
+
+      // Reload all data
+      await Promise.all([
+        fetchCurrentGoal(),
+        fetchDailyTracking(),
+        fetchWeeklyTracking(),
+        fetchStreakData(),
+      ]);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to reset profile');
+    } finally {
+      setIsResettingProfile(false);
+    }
+  };
 
   if (!mounted) {
     return null;
@@ -247,7 +277,7 @@ export default function CaloriesPage() {
         )}
 
         {/* Goal Info Card */}
-        <Card className="p-4 bg-blue-50 border-blue-200">
+        <Card className="p-4 bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="font-medium">Current Goal</span>
@@ -296,6 +326,40 @@ export default function CaloriesPage() {
               </div>
             </Link>
           </Button>
+        </div>
+
+        {/* Debug Panel - Mock Profile Switcher */}
+        <div className="mt-8 pt-6 border-t border-muted">
+          <p className="text-xs font-semibold text-muted-foreground mb-3">DEBUG: Load Mock Profile</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleResetProfile('weight_loss')}
+              disabled={isResettingProfile}
+              className="text-xs"
+            >
+              {isResettingProfile ? 'Resetting...' : 'Weight Loss'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleResetProfile('maintenance')}
+              disabled={isResettingProfile}
+              className="text-xs"
+            >
+              {isResettingProfile ? 'Resetting...' : 'Maintenance'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleResetProfile('weight_gain')}
+              disabled={isResettingProfile}
+              className="text-xs"
+            >
+              {isResettingProfile ? 'Resetting...' : 'Weight Gain'}
+            </Button>
+          </div>
         </div>
       </div>
 

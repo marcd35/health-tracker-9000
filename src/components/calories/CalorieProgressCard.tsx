@@ -11,8 +11,21 @@ interface CalorieProgressCardProps {
   goalType: GoalType;
 }
 
+interface MealTypeCalories {
+  breakfast: number;
+  lunch: number;
+  dinner: number;
+  snacks: number;
+}
+
 export function CalorieProgressCard({ tracking, goalType }: CalorieProgressCardProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [mealTypeCalories, setMealTypeCalories] = useState<MealTypeCalories>({
+    breakfast: 0,
+    lunch: 0,
+    dinner: 0,
+    snacks: 0,
+  });
 
   useEffect(() => {
     setIsDarkMode(document.documentElement.classList.contains('dark'));
@@ -23,46 +36,93 @@ export function CalorieProgressCard({ tracking, goalType }: CalorieProgressCardP
     return () => observer.disconnect();
   }, []);
 
+  // Fetch meal data grouped by meal type
+  useEffect(() => {
+    const fetchMealData = async () => {
+      try {
+        const response = await fetch(`/api/meals?date=${tracking.date}`);
+        if (!response.ok) return;
+        const meals = await response.json();
+
+        const totals: MealTypeCalories = {
+          breakfast: 0,
+          lunch: 0,
+          dinner: 0,
+          snacks: 0,
+        };
+
+        meals.forEach((meal: any) => {
+          const mealType = (meal.mealType || 'snacks').toLowerCase() as keyof MealTypeCalories;
+          const calories = meal.totalNutrition?.calories || 0;
+          if (mealType in totals) {
+            totals[mealType] += calories;
+          }
+        });
+
+        setMealTypeCalories(totals);
+      } catch (error) {
+        console.error('Failed to fetch meal data:', error);
+      }
+    };
+
+    if (tracking.date) {
+      fetchMealData();
+    }
+  }, [tracking.date]);
+
   const consumed = tracking.caloriesConsumed;
   const target = tracking.caloriesTarget;
   const remaining = target - consumed;
 
-  // Calculate percentage for visualization
+  // Calculate percentage for visualization (allow >100%)
   let percentageOfGoal = 0;
   let status: 'on-track' | 'close' | 'over' = 'on-track';
 
   if (goalType === 'weight_loss') {
     // For weight loss, we want to be BELOW target
-    percentageOfGoal = Math.min((consumed / target) * 100, 100);
+    percentageOfGoal = (consumed / target) * 100;
     if (consumed > target) status = 'over';
     else if (consumed > target * 0.85) status = 'close';
     else status = 'on-track';
   } else if (goalType === 'gain') {
     // For weight gain, we want to be ABOVE target
-    percentageOfGoal = Math.min((consumed / target) * 100, 100);
+    percentageOfGoal = (consumed / target) * 100;
     if (consumed < target) status = 'close';
     else status = 'on-track';
   } else {
     // For maintenance, we want to be close to target
-    percentageOfGoal = Math.min((consumed / target) * 100, 100);
+    percentageOfGoal = (consumed / target) * 100;
     const diff = Math.abs(consumed - target);
     if (diff <= 50) status = 'on-track';
     else if (diff <= 150) status = 'close';
     else status = 'over';
   }
 
+  // Format percentage display: "95%" or "100% + 14%"
+  let displayPercentage = '';
+  if (percentageOfGoal <= 100) {
+    displayPercentage = `${percentageOfGoal.toFixed(0)}%`;
+  } else {
+    const overage = percentageOfGoal - 100;
+    displayPercentage = `100% + ${overage.toFixed(0)}%`;
+  }
+
   // Get the remaining color based on theme (light gray for light, dark gray for dark)
   const remainingColor = isDarkMode ? '#404040' : '#d1d5db';
 
+  // Build pie chart data from meal types
   const chartData = [
-    { name: 'Consumed', value: consumed, color: '#3b82f6' },
+    { name: 'Breakfast', value: mealTypeCalories.breakfast, color: '#fbbf24' },
+    { name: 'Lunch', value: mealTypeCalories.lunch, color: '#60a5fa' },
+    { name: 'Dinner', value: mealTypeCalories.dinner, color: '#f87171' },
+    { name: 'Snacks', value: mealTypeCalories.snacks, color: '#a78bfa' },
     { name: 'Remaining', value: Math.max(0, remaining), color: remainingColor },
-  ];
+  ].filter((item) => item.value > 0);
 
   const statusColors = {
-    'on-track': 'bg-green-50 text-green-800 border-green-200 dark:bg-green-950 dark:text-green-100 dark:border-green-800',
-    'close': 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-100 dark:border-amber-800',
-    'over': 'bg-red-50 text-red-800 border-red-200 dark:bg-red-950 dark:text-red-100 dark:border-red-800',
+    'on-track': 'bg-green-900/5 text-foreground border-green-200/50 dark:border-green-800/30',
+    'close': 'bg-amber-900/5 text-foreground border-amber-200/50 dark:border-amber-800/30',
+    'over': 'bg-red-900/5 text-foreground border-red-200/50 dark:border-red-800/30',
   };
 
   const statusMessages = {
@@ -97,7 +157,7 @@ export function CalorieProgressCard({ tracking, goalType }: CalorieProgressCardP
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <p className="text-2xl font-bold mt-4 text-center">{percentageOfGoal.toFixed(0)}%</p>
+          <p className="text-2xl font-bold mt-4 text-center">{displayPercentage}</p>
         </div>
 
         {/* Right side: Details */}
