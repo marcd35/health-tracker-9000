@@ -8,7 +8,7 @@ import { USDAClient } from './client';
 /**
  * Legacy wrapper for searching foods
  */
-export async function searchFoods(query: string, _apiKey: string) {
+export async function searchFoods(query: string) {
   const client = new USDAClient();
   return {
     foods: await client.searchFoods(query),
@@ -21,7 +21,7 @@ export async function searchFoods(query: string, _apiKey: string) {
 /**
  * Legacy wrapper for getting food details
  */
-export async function getFoodDetails(fdcId: number, _apiKey: string) {
+export async function getFoodDetails(fdcId: number) {
   const client = new USDAClient();
   return await client.getFoodById(fdcId);
 }

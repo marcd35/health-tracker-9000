@@ -3,21 +3,25 @@
 "Build a food data inspection and mapping system for the meal logging page that allows users to review USDA API data before database insertion.
 
 ## Phase 1: Data Inspection Modal ✅
-## Phase 2: Data Extraction & Mapping Configuration ✅
-## Phase 3: Allergen Detection (MVP) ✅
-   - Scan `ingredients` field for common allergen keywords:
-     - Big 9: milk, eggs, peanuts, tree nuts, fish, shellfish, soy, wheat, sesame
-     - Common additives: sulfites, dyes, MSG, artificial sweeteners
-   - For each detected allergen, display a warning in the modal:
-     - 'Detected allergen: [allergen]' (orange/warning styling)
-     - Show the ingredient snippet where it was found
-   - Include disclaimer: "This is keyword-based detection. Always verify actual allergen statements on packaging."
 
-10. **Manual Allergen Flagging (Deferred to Future Phase 10)**
+## Phase 2: Data Extraction & Mapping Configuration ✅
+
+## Phase 3: Allergen Detection (MVP) ✅
+
+- ✅ Scan `ingredients` field for common allergen keywords:
+  - ✅ Big 9: milk, eggs, peanuts, tree nuts, fish, shellfish, soy, wheat, sesame
+  - ✅ Common additives: sulfites, dyes, MSG, artificial sweeteners
+- ✅ For each detected allergen, display a warning in the modal:
+  - ✅ 'Detected allergen: [allergen]' (orange/warning styling)
+  - ✅ Show the ingredient snippet where it was found
+- ✅ Include disclaimer: "This is keyword-based detection. Always verify actual allergen statements on packaging."
+
+10. **Manual Allergen Flagging ✅** (Implemented in Phase 3 optimization)
 
 ---
 
 **[MOVED TO docs/backlog/future-enhancements.md]**
+
 - Phase 4: Allergen Mapping Table
 - External Allergen Database Integration
 - Edge Case & Unique Foods Handling

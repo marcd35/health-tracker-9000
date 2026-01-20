@@ -87,6 +87,8 @@ export class USDAMapper {
   /**
    * Extract potential allergens from ingredients string
    * Note: USDA allergen data may be incomplete. This is a best-effort extraction.
+   * [PHASE 4: External Allergen Database Integration]
+   * Future: Integrate with FatSecret API or Open Food Facts for more accurate allergen data.
    */
   private static extractAllergens(usdaFood: USDAFoodItem): string[] {
     if (!usdaFood.ingredients) return [];
@@ -170,4 +172,10 @@ export class USDAMapper {
     if (micros.length <= 3) return micros.join(', ');
     return `${micros.length} micronutrients`;
   }
+
+  /**
+   * [PHASE 4: Edge Case & Unique Foods Handling]
+   * Future: Implement logic to detect and surface 'edge case' foods
+   * (e.g. sugar alcohols, high-FODMAP, certified vegan/halal).
+   */
 }

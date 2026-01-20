@@ -41,6 +41,8 @@ export interface NutrientInfo {
   unit: 'mg' | 'mcg' | 'IU';
   rdaDefault: number;
   category: 'vitamin' | 'mineral';
+  warningLevel?: number; // Level to trigger warning (yellow)
+  toxicLevel?: number; // Upper Limit (UL) - maximum safe intake
 }
 
 // Metadata for custom nutrients (user creates these)

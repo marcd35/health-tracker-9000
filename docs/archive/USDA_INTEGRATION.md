@@ -9,10 +9,12 @@ The USDA integration allows users to search 100,000+ foods with comprehensive mi
 ## Features
 
 - **Toggle Search Mode**: Switch between local database and USDA API with a single button click
+- **Data Inspection Modal**: Advanced review of raw USDA JSON before importing
+- **Manual Allergen Flagging**: User-verified allergen checklists for high-accuracy tracking
+- **Granular Persistence**: Allergen data stored with source/confidence in `food_allergens` table
 - **Auto-Import**: USDA foods are automatically saved to local database when selected
 - **Offline Capable**: Cached USDA foods work offline after first import
 - **Micronutrient Data**: Complete vitamin and mineral information for accurate health tracking
-- **Allergen Detection**: Basic allergen detection from USDA ingredients data
 - **Rate Limit Handling**: User-friendly error messages when API limits are reached
 
 ## Setup

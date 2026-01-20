@@ -1,5 +1,5 @@
 interface FoodJsonDisplayProps {
-  data: any;
+  data: unknown;
 }
 
 export function FoodJsonDisplay({ data }: FoodJsonDisplayProps) {

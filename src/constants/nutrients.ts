@@ -9,6 +9,8 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mcg',
     rdaDefault: 900,
     category: 'vitamin',
+    warningLevel: 1950,
+    toxicLevel: 3000,
   },
   vitaminD: {
     key: 'vitaminD',
@@ -16,6 +18,8 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mcg',
     rdaDefault: 20,
     category: 'vitamin',
+    warningLevel: 35,
+    toxicLevel: 50,
   },
   vitaminE: {
     key: 'vitaminE',
@@ -23,6 +27,8 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mg',
     rdaDefault: 15,
     category: 'vitamin',
+    warningLevel: 507.5,
+    toxicLevel: 1000,
   },
   vitaminK: {
     key: 'vitaminK',
@@ -30,6 +36,7 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mcg',
     rdaDefault: 120,
     category: 'vitamin',
+    // No established toxicity level
   },
   vitaminC: {
     key: 'vitaminC',
@@ -37,6 +44,8 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mg',
     rdaDefault: 90,
     category: 'vitamin',
+    warningLevel: 1045,
+    toxicLevel: 2000,
   },
   thiamin: {
     key: 'thiamin',
@@ -44,6 +53,7 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mg',
     rdaDefault: 1.2,
     category: 'vitamin',
+    // No established toxicity level
   },
   riboflavin: {
     key: 'riboflavin',
@@ -51,6 +61,7 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mg',
     rdaDefault: 1.3,
     category: 'vitamin',
+    // No established toxicity level
   },
   niacin: {
     key: 'niacin',
@@ -58,6 +69,8 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mg',
     rdaDefault: 16,
     category: 'vitamin',
+    warningLevel: 25.5,
+    toxicLevel: 35,
   },
   pantothenicAcid: {
     key: 'pantothenicAcid',
@@ -65,6 +78,7 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mg',
     rdaDefault: 5,
     category: 'vitamin',
+    // No established toxicity level
   },
   vitaminB6: {
     key: 'vitaminB6',
@@ -72,6 +86,8 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mg',
     rdaDefault: 1.7,
     category: 'vitamin',
+    warningLevel: 50.85,
+    toxicLevel: 100,
   },
   biotin: {
     key: 'biotin',
@@ -79,6 +95,7 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mcg',
     rdaDefault: 30,
     category: 'vitamin',
+    // No established toxicity level
   },
   folate: {
     key: 'folate',
@@ -86,6 +103,8 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mcg',
     rdaDefault: 400,
     category: 'vitamin',
+    warningLevel: 700,
+    toxicLevel: 1000,
   },
   vitaminB12: {
     key: 'vitaminB12',
@@ -93,6 +112,7 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mcg',
     rdaDefault: 2.4,
     category: 'vitamin',
+    // No established toxicity level
   },
 
   // Minerals (12 - extended set)
@@ -102,6 +122,8 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mg',
     rdaDefault: 1300,
     category: 'mineral',
+    warningLevel: 1900,
+    toxicLevel: 2500,
   },
   iron: {
     key: 'iron',
@@ -109,6 +131,8 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mg',
     rdaDefault: 18,
     category: 'mineral',
+    warningLevel: 31.5,
+    toxicLevel: 45,
   },
   magnesium: {
     key: 'magnesium',
@@ -116,6 +140,7 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mg',
     rdaDefault: 420,
     category: 'mineral',
+    toxicLevel: 350, // Special case: toxicLevel < RDA
   },
   zinc: {
     key: 'zinc',
@@ -123,6 +148,8 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mg',
     rdaDefault: 11,
     category: 'mineral',
+    warningLevel: 25.5,
+    toxicLevel: 40,
   },
   potassium: {
     key: 'potassium',
@@ -130,6 +157,7 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mg',
     rdaDefault: 4700,
     category: 'mineral',
+    // No established toxicity level for food sources
   },
   selenium: {
     key: 'selenium',
@@ -137,6 +165,8 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mcg',
     rdaDefault: 55,
     category: 'mineral',
+    warningLevel: 227.5,
+    toxicLevel: 400,
   },
   copper: {
     key: 'copper',
@@ -144,6 +174,8 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mg',
     rdaDefault: 0.9,
     category: 'mineral',
+    warningLevel: 5.45,
+    toxicLevel: 10,
   },
   manganese: {
     key: 'manganese',
@@ -151,6 +183,8 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mg',
     rdaDefault: 2.3,
     category: 'mineral',
+    warningLevel: 6.65,
+    toxicLevel: 11,
   },
   chromium: {
     key: 'chromium',
@@ -158,6 +192,7 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mcg',
     rdaDefault: 35,
     category: 'mineral',
+    // No established toxicity level
   },
   iodine: {
     key: 'iodine',
@@ -165,6 +200,8 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mcg',
     rdaDefault: 150,
     category: 'mineral',
+    warningLevel: 625,
+    toxicLevel: 1100,
   },
   phosphorus: {
     key: 'phosphorus',
@@ -172,6 +209,8 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mg',
     rdaDefault: 1250,
     category: 'mineral',
+    warningLevel: 2625,
+    toxicLevel: 4000,
   },
   sodium: {
     key: 'sodium',
@@ -179,6 +218,7 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mg',
     rdaDefault: 2300,
     category: 'mineral',
+    // No established toxicity level
   },
   chloride: {
     key: 'chloride',
@@ -186,6 +226,7 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mg',
     rdaDefault: 2300,
     category: 'mineral',
+    // No established toxicity level
   },
   molybdenum: {
     key: 'molybdenum',
@@ -193,6 +234,8 @@ export const NUTRIENTS: Record<NutrientKey, NutrientInfo> = {
     unit: 'mcg',
     rdaDefault: 45,
     category: 'mineral',
+    warningLevel: 1022.5,
+    toxicLevel: 2000,
   },
 };
 
