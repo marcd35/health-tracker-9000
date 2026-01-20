@@ -70,4 +70,37 @@ export class MealLogRepository {
     const stmt = this.db.prepare('DELETE FROM meal_logs WHERE id = ?');
     stmt.run(id);
   }
+
+  getRecentFoods(limit: number = 10): Array<{ foodId: string; foodName: string; count: number }> {
+    // Get all meals from the last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const cutoffDate = thirtyDaysAgo.toISOString().split('T')[0];
+
+    const stmt = this.db.prepare(`
+      SELECT foods FROM meal_logs WHERE date >= ? ORDER BY created_at DESC
+    `);
+    const rows = stmt.all(cutoffDate) as any[];
+
+    // Count food occurrences
+    const foodCounts: Map<string, { foodName: string; count: number }> = new Map();
+
+    rows.forEach((row) => {
+      const foods = JSON.parse(row.foods);
+      foods.forEach((food: { foodId: string; foodName: string }) => {
+        const existing = foodCounts.get(food.foodId);
+        if (existing) {
+          existing.count++;
+        } else {
+          foodCounts.set(food.foodId, { foodName: food.foodName, count: 1 });
+        }
+      });
+    });
+
+    // Sort by count and return top N
+    return Array.from(foodCounts.entries())
+      .map(([foodId, data]) => ({ foodId, foodName: data.foodName, count: data.count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit);
+  }
 }

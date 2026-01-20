@@ -2,8 +2,6 @@
 
 import { searchFoods, getFoodDetails, UsdaSearchResponse } from '@/lib/services/usda/index';
 
-const API_KEY = process.env.USDA_API_KEY || 'DEMO_KEY';
-
 export type SearchActionState = {
   success: boolean;
   data?: UsdaSearchResponse;
@@ -16,7 +14,7 @@ export async function searchFoodAction(query: string): Promise<SearchActionState
   }
 
   try {
-    const data = await searchFoods(query, API_KEY);
+    const data = await searchFoods(query);
     return { success: true, data };
   } catch (error) {
     console.error('Food search error:', error);
@@ -26,7 +24,7 @@ export async function searchFoodAction(query: string): Promise<SearchActionState
 
 export async function getFoodDetailsAction(fdcId: number) {
   try {
-    const data = await getFoodDetails(fdcId, API_KEY);
+    const data = await getFoodDetails(fdcId);
     return { success: true, data };
   } catch (error) {
     console.error('Food details error:', error);

@@ -373,7 +373,7 @@ export const useSupplementStore = create<SupplementState>((set, get) => ({
         unit: info.unit,
         target,
         total,
-        percentage: target > 0 ? Math.min(200, (total / target) * 100) : 0,
+        percentage: target > 0 ? (total / target) * 100 : 0,
         contributions,
       });
     });
@@ -426,9 +426,7 @@ export const useSupplementStore = create<SupplementState>((set, get) => ({
         unit: metadata.unit,
         target: metadata.userDefinedTarget || null,
         total,
-        percentage: metadata.userDefinedTarget
-          ? Math.min(200, (total / metadata.userDefinedTarget) * 100)
-          : 0,
+        percentage: metadata.userDefinedTarget ? (total / metadata.userDefinedTarget) * 100 : 0,
         contributions,
       };
     });
