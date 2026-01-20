@@ -112,3 +112,76 @@ export interface WeeklyTrackingResponse {
   weekEnd: string;
   data: WeeklyProgressData;
 }
+
+// Phase 2: Weekly Enhancement Types
+export interface WeeklyMetrics {
+  weekStart: string;
+  weekEnd: string;
+  days: DailyCalorieTracking[];
+  weeklyConsumed: number;
+  weeklyTarget: number;
+  weeklyDeficitSurplus: number;
+  daysMetGoal: number;
+  daysTotal: number;
+  averageConsumed: number;
+  trend: 'up' | 'down' | 'stable';
+  projection: number; // projected total if trend continues
+  onPacePercentage: number;
+}
+
+export interface StreakInfo {
+  currentStreak: number;
+  bestStreak: number;
+  isActive: boolean;
+  streakStartDate: string;
+  lastActivityDate: string;
+  streakPercentage: number; // days met goal / total days in streak
+}
+
+// Phase 2: Monthly Tracking Types
+export interface MonthlyCalorieData {
+  year: number;
+  month: number;
+  weeks: WeeklyMetrics[];
+  monthlyConsumed: number;
+  monthlyTarget: number;
+  monthlyDeficitSurplus: number;
+  daysMetGoal: number;
+  daysTotal: number;
+  averageConsumed: number;
+  trend: 'up' | 'down' | 'stable';
+  onPacePercentage: number;
+}
+
+export interface MonthlyTrackingResponse {
+  year: number;
+  month: number;
+  data: MonthlyCalorieData;
+}
+
+// Phase 2: Encouragement & UI Types
+export interface EncouragementMessage {
+  type: 'milestone' | 'progress' | 'recovery' | 'motivation' | 'challenge';
+  message: string;
+  icon: string;
+  color: 'green' | 'blue' | 'amber' | 'purple';
+}
+
+export interface CalendarHeatmapData {
+  date: string;
+  goalMet: boolean;
+  caloriesConsumed: number;
+  caloriesTarget: number;
+  percentage: number;
+  intensity: 'low' | 'medium' | 'high' | 'full'; // for color intensity
+}
+
+export interface DailyIndicatorData {
+  date: string;
+  status: 'over' | 'on-track' | 'under' | 'perfect';
+  caloriesConsumed: number;
+  caloriesTarget: number;
+  remaining: number;
+  goalMet: boolean;
+  message: string;
+}

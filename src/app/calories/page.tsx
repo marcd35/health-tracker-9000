@@ -8,14 +8,24 @@ import { Flame, TrendingDown, TrendingUp, Trophy } from 'lucide-react';
 import { useCalorieTrackerStore } from '@/lib/store/calorieTrackerStore';
 import { CalorieGoalOnboarding } from '@/components/calories/CalorieGoalOnboarding';
 import { CalorieProgressCard } from '@/components/calories/CalorieProgressCard';
+import { WeeklyProgressChart } from '@/components/calories/WeeklyProgressChart';
+import { WeeklyEncouragementCard } from '@/components/calories/WeeklyEncouragementCard';
+import { CalorieStreakCard } from '@/components/calories/CalorieStreakCard';
+import { CalendarHeatmap } from '@/components/calories/CalendarHeatmap';
 
 export default function CaloriesPage() {
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState({
+    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1,
+  });
 
   const currentGoal = useCalorieTrackerStore((state) => state.currentGoal);
   const todayTracking = useCalorieTrackerStore((state) => state.todayTracking);
   const weeklyTracking = useCalorieTrackerStore((state) => state.weeklyTracking);
+  const monthlyData = useCalorieTrackerStore((state) => state.monthlyData);
+  const streakInfo = useCalorieTrackerStore((state) => state.streakInfo);
   const currentStreak = useCalorieTrackerStore((state) => state.currentStreak);
   const bestStreak = useCalorieTrackerStore((state) => state.bestStreak);
   const isLoading = useCalorieTrackerStore((state) => state.isLoading);
@@ -24,6 +34,7 @@ export default function CaloriesPage() {
   const fetchCurrentGoal = useCalorieTrackerStore((state) => state.fetchCurrentGoal);
   const fetchDailyTracking = useCalorieTrackerStore((state) => state.fetchDailyTracking);
   const fetchWeeklyTracking = useCalorieTrackerStore((state) => state.fetchWeeklyTracking);
+  const fetchMonthlyData = useCalorieTrackerStore((state) => state.fetchMonthlyData);
   const fetchStreakData = useCalorieTrackerStore((state) => state.fetchStreakData);
 
   useEffect(() => {
@@ -44,11 +55,16 @@ export default function CaloriesPage() {
     if (!currentGoal) return;
 
     const loadTracking = async () => {
-      await Promise.all([fetchDailyTracking(), fetchWeeklyTracking(), fetchStreakData()]);
+      await Promise.all([
+        fetchDailyTracking(),
+        fetchWeeklyTracking(),
+        fetchMonthlyData(currentMonth.year, currentMonth.month),
+        fetchStreakData(),
+      ]);
     };
 
     loadTracking();
-  }, [currentGoal, fetchDailyTracking, fetchWeeklyTracking, fetchStreakData]);
+  }, [currentGoal, currentMonth, fetchDailyTracking, fetchWeeklyTracking, fetchMonthlyData, fetchStreakData]);
 
   // Show onboarding if no goal and not dismissed forever
   useEffect(() => {
@@ -204,6 +220,31 @@ export default function CaloriesPage() {
             </Card>
           )}
         </div>
+
+        {/* Phase 2: Weekly Progress Chart */}
+        {weeklyTracking && (
+          <div>
+            <WeeklyProgressChart data={weeklyTracking} goalType={currentGoal.goalType} />
+          </div>
+        )}
+
+        {/* Phase 2: Weekly Encouragement */}
+        {weeklyTracking && (
+          <WeeklyEncouragementCard weeklyData={weeklyTracking} goalType={currentGoal.goalType} />
+        )}
+
+        {/* Phase 2: Streak Card */}
+        <CalorieStreakCard streakInfo={streakInfo} />
+
+        {/* Phase 2: Monthly Calendar Heatmap */}
+        {monthlyData && (
+          <CalendarHeatmap
+            monthlyData={monthlyData}
+            onMonthChange={(year, month) => {
+              setCurrentMonth({ year, month });
+            }}
+          />
+        )}
 
         {/* Goal Info Card */}
         <Card className="p-4 bg-blue-50 border-blue-200">

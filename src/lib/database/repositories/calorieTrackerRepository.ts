@@ -1,6 +1,6 @@
 import { getDatabase } from '../connection';
 import { v4 as uuidv4 } from 'uuid';
-import type { DailyCalorieTracking, WeeklyProgressData, CalorieStreak } from '@/lib/types/calorieTracking';
+import type { DailyCalorieTracking, WeeklyProgressData, CalorieStreak, MonthlyCalorieData, WeeklyMetrics, StreakInfo } from '@/lib/types/calorieTracking';
 import { MealLogRepository } from './mealLogRepository';
 import { CalorieGoalRepository } from './calorieGoalRepository';
 import { DailySummaryRepository } from './dailySummaryRepository';
@@ -222,6 +222,220 @@ export class CalorieTrackerRepository {
 
     const row = stmt.get(profileId) as any;
     return row?.best || 0;
+  }
+
+  /**
+   * Get monthly tracking data with week-by-week breakdown
+   */
+  getMonthlyTracking(profileId: string, year: number, month: number): MonthlyCalorieData {
+    // Get first and last day of the month
+    const firstDay = new Date(year, month - 1, 1);
+    const lastDay = new Date(year, month, 0);
+
+    // Get all days in the month
+    const monthDays: string[] = [];
+    const currentDate = new Date(firstDay);
+    while (currentDate <= lastDay) {
+      monthDays.push(currentDate.toISOString().split('T')[0]);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // Group days into weeks
+    const weeks: WeeklyMetrics[] = [];
+    let currentWeek: string[] = [];
+    let currentWeekStart: string | null = null;
+
+    for (const day of monthDays) {
+      const dayOfWeek = new Date(day).getDay();
+
+      if (dayOfWeek === 0 && currentWeek.length > 0) {
+        // End of week (Saturday -> Sunday)
+        weeks.push(this.buildWeeklyMetrics(profileId, currentWeekStart!, currentWeek));
+        currentWeek = [];
+        currentWeekStart = null;
+      }
+
+      if (currentWeekStart === null) {
+        currentWeekStart = day;
+      }
+      currentWeek.push(day);
+    }
+
+    // Don't forget the last partial week
+    if (currentWeek.length > 0 && currentWeekStart) {
+      weeks.push(this.buildWeeklyMetrics(profileId, currentWeekStart, currentWeek));
+    }
+
+    // Aggregate all weeks
+    let monthlyConsumed = 0;
+    let monthlyTarget = 0;
+    let daysMetGoal = 0;
+    const allDayTracking: DailyCalorieTracking[] = [];
+
+    for (const week of weeks) {
+      monthlyConsumed += week.weeklyConsumed;
+      monthlyTarget += week.weeklyTarget;
+      daysMetGoal += week.daysMetGoal;
+      allDayTracking.push(...week.days);
+    }
+
+    const daysTotal = monthDays.length;
+    const averageConsumed = daysTotal > 0 ? Math.round(monthlyConsumed / daysTotal) : 0;
+
+    // Calculate overall trend
+    const trend = this.calculateMonthlyTrend(allDayTracking);
+
+    // Calculate on-pace percentage
+    const goal = this.goalRepo.getCurrentGoal(profileId);
+    const onPacePercentage = goal
+      ? this.calculateOnPacePercentage(goal.goalType, monthlyConsumed, monthlyTarget * daysTotal, daysTotal)
+      : 0;
+
+    return {
+      year,
+      month,
+      weeks,
+      monthlyConsumed,
+      monthlyTarget: monthlyTarget * daysTotal,
+      monthlyDeficitSurplus: monthlyConsumed - (monthlyTarget * daysTotal),
+      daysMetGoal,
+      daysTotal,
+      averageConsumed,
+      trend,
+      onPacePercentage,
+    };
+  }
+
+  /**
+   * Get streak information with percentage calculation
+   */
+  getStreakInfo(profileId: string): StreakInfo {
+    const currentStreak = this.getCurrentStreak(profileId);
+    const bestStreak = this.getBestStreak(profileId);
+
+    if (!currentStreak) {
+      return {
+        currentStreak: 0,
+        bestStreak,
+        isActive: false,
+        streakStartDate: '',
+        lastActivityDate: '',
+        streakPercentage: 0,
+      };
+    }
+
+    // Calculate streak percentage (days met goal / total days in streak)
+    const streakPercentage = currentStreak.daysCount > 0
+      ? Math.round((currentStreak.goalMetCount / currentStreak.daysCount) * 100)
+      : 0;
+
+    // Calculate last activity date (today or yesterday if streak ended)
+    const lastActivityDate = currentStreak.streakEndDate || new Date().toISOString().split('T')[0];
+
+    return {
+      currentStreak: currentStreak.daysCount,
+      bestStreak,
+      isActive: currentStreak.isActive,
+      streakStartDate: currentStreak.streakStartDate,
+      lastActivityDate,
+      streakPercentage,
+    };
+  }
+
+  /**
+   * Build weekly metrics for a given set of days
+   */
+  private buildWeeklyMetrics(profileId: string, weekStart: string, days: string[]): WeeklyMetrics {
+    let weeklyConsumed = 0;
+    let weeklyTarget = 0;
+    let daysMetGoal = 0;
+    const dayTrackings: DailyCalorieTracking[] = [];
+
+    for (const day of days) {
+      const tracking = this.getDailyTracking(profileId, day);
+      if (tracking) {
+        dayTrackings.push(tracking);
+        weeklyConsumed += tracking.caloriesConsumed;
+        weeklyTarget += tracking.caloriesTarget;
+        if (tracking.goalMet) daysMetGoal++;
+      }
+    }
+
+    const daysTotal = days.length;
+    const averageConsumed = daysTotal > 0 ? Math.round(weeklyConsumed / daysTotal) : 0;
+    const weeklyDeficitSurplus = weeklyConsumed - weeklyTarget;
+
+    // Calculate trend for the week
+    const trend = dayTrackings.length > 0 ? this.calculateTrendFromDays(dayTrackings) : 'stable';
+
+    // Calculate on-pace percentage
+    const goal = this.goalRepo.getCurrentGoal(profileId);
+    const onPacePercentage = goal
+      ? this.calculateOnPacePercentage(goal.goalType, weeklyConsumed, weeklyTarget, daysTotal)
+      : 0;
+
+    // Calculate projection (if trend continues for full 7-day week)
+    const projection = dayTrackings.length > 0
+      ? Math.round((weeklyConsumed / dayTrackings.length) * 7)
+      : 0;
+
+    const weekEnd = new Date(days[days.length - 1]);
+    weekEnd.setDate(weekEnd.getDate() + (6 - (days.length - 1)));
+
+    return {
+      weekStart,
+      weekEnd: weekEnd.toISOString().split('T')[0],
+      days: dayTrackings,
+      weeklyConsumed,
+      weeklyTarget: weeklyTarget * 7,
+      weeklyDeficitSurplus,
+      daysMetGoal,
+      daysTotal,
+      averageConsumed,
+      trend,
+      projection,
+      onPacePercentage,
+    };
+  }
+
+  /**
+   * Calculate monthly trend from all tracking data
+   */
+  private calculateMonthlyTrend(dayTrackings: DailyCalorieTracking[]): 'up' | 'down' | 'stable' {
+    if (dayTrackings.length < 3) return 'stable';
+
+    // Compare first third with last third
+    const thirdLength = Math.ceil(dayTrackings.length / 3);
+    const firstThird = dayTrackings.slice(0, thirdLength);
+    const lastThird = dayTrackings.slice(-thirdLength);
+
+    const firstThirdAvg =
+      firstThird.reduce((sum, d) => sum + d.caloriesConsumed, 0) / firstThird.length;
+    const lastThirdAvg =
+      lastThird.reduce((sum, d) => sum + d.caloriesConsumed, 0) / lastThird.length;
+
+    const diff = lastThirdAvg - firstThirdAvg;
+
+    if (diff > 100) return 'up';
+    if (diff < -100) return 'down';
+    return 'stable';
+  }
+
+  /**
+   * Calculate trend from array of day trackings
+   */
+  private calculateTrendFromDays(
+    dayTrackings: DailyCalorieTracking[]
+  ): 'up' | 'down' | 'stable' {
+    if (dayTrackings.length < 2) return 'stable';
+
+    const firstDayCalories = dayTrackings[0].caloriesConsumed;
+    const lastDayCalories = dayTrackings[dayTrackings.length - 1].caloriesConsumed;
+    const diff = lastDayCalories - firstDayCalories;
+
+    if (diff > 100) return 'up';
+    if (diff < -100) return 'down';
+    return 'stable';
   }
 
   /**

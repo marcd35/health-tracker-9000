@@ -6,6 +6,9 @@ import type {
   DailyCalorieTracking,
   WeeklyProgressData,
   CalorieStreak,
+  MonthlyCalorieData,
+  StreakInfo,
+  WeeklyMetrics,
 } from '@/lib/types/calorieTracking';
 
 interface CalorieTrackerState {
@@ -15,6 +18,10 @@ interface CalorieTrackerState {
   // Daily tracking
   todayTracking: DailyCalorieTracking | null;
   weeklyTracking: WeeklyProgressData | null;
+
+  // Phase 2: Monthly and Streak tracking
+  monthlyData: MonthlyCalorieData | null;
+  streakInfo: StreakInfo | null;
 
   // Streaks
   currentStreak: CalorieStreak | null;
@@ -38,6 +45,7 @@ interface CalorieTrackerState {
   }) => Promise<void>;
   fetchDailyTracking: (date?: string) => Promise<void>;
   fetchWeeklyTracking: (endDate?: string) => Promise<void>;
+  fetchMonthlyData: (year?: number, month?: number) => Promise<void>;
   fetchStreakData: () => Promise<void>;
   fetchGoalHistory: () => Promise<void>;
   dismissOnboarding: (forever?: boolean) => void;
@@ -49,6 +57,8 @@ export const useCalorieTrackerStore = create<CalorieTrackerState>((set, get) => 
   currentGoal: null,
   todayTracking: null,
   weeklyTracking: null,
+  monthlyData: null,
+  streakInfo: null,
   currentStreak: null,
   bestStreak: 0,
   goalHistory: [],
@@ -141,6 +151,26 @@ export const useCalorieTrackerStore = create<CalorieTrackerState>((set, get) => 
       const data = await response.json();
 
       set({ weeklyTracking: data, isLoading: false });
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+    }
+  },
+
+  fetchMonthlyData: async (year?: number, month?: number) => {
+    set({ isLoading: true, error: null });
+    try {
+      const now = new Date();
+      const queryYear = year || now.getFullYear();
+      const queryMonth = month || now.getMonth() + 1;
+
+      const response = await fetch(
+        `/api/calorie-tracking/month?year=${queryYear}&month=${queryMonth}`
+      );
+
+      if (!response.ok) throw new Error('Failed to fetch monthly data');
+      const data = await response.json();
+
+      set({ monthlyData: data.data, isLoading: false });
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
     }
