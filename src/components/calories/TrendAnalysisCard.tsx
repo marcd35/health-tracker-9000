@@ -24,12 +24,26 @@ export function TrendAnalysisCard({ monthlyData }: TrendAnalysisCardProps) {
     const firstHalfWeeks = monthlyData.weeks.slice(0, midpoint);
     const secondHalfWeeks = monthlyData.weeks.slice(midpoint);
 
+    if (firstHalfWeeks.length === 0 || secondHalfWeeks.length === 0) {
+      return { direction: 'stable' as const, percentageChange: 0 };
+    }
+
     const firstHalfAvg =
       firstHalfWeeks.reduce((sum, week) => sum + week.weeklyConsumed, 0) / firstHalfWeeks.length;
     const secondHalfAvg =
       secondHalfWeeks.reduce((sum, week) => sum + week.weeklyConsumed, 0) / secondHalfWeeks.length;
 
+    // Guard against division by zero
+    if (firstHalfAvg === 0) {
+      return { direction: 'stable' as const, percentageChange: 0 };
+    }
+
     const percentageChange = ((secondHalfAvg - firstHalfAvg) / firstHalfAvg) * 100;
+
+    // Guard against Infinity and NaN
+    if (!isFinite(percentageChange)) {
+      return { direction: 'stable' as const, percentageChange: 0 };
+    }
 
     if (percentageChange > 5) {
       return { direction: 'up' as const, percentageChange: Math.round(percentageChange) };
