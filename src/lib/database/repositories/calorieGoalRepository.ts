@@ -89,49 +89,92 @@ export class CalorieGoalRepository {
   }
 
   /**
-   * Update an existing goal
+   * Update an existing goal (Phase 3: creates new goal, archives old one - forward-only)
+   * This ensures goal changes apply only to future dates without recalculating past tracking
    */
   updateGoal(
-    goalId: string,
+    profileId: string,
     goalType: GoalType,
     weeklyCalorieTarget: number,
     activityLevel: ActivityLevel,
     changeReason?: string
   ): CalorieGoal {
-    const currentGoal = this.db.prepare('SELECT * FROM calorie_goals WHERE id = ?').get(goalId) as any;
-    if (!currentGoal) throw new Error('Goal not found');
+    const currentGoal = this.getCurrentGoal(profileId);
+    if (!currentGoal) throw new Error('No current goal found');
 
     const profile = this.profileRepo.getProfile();
     if (!profile) throw new Error('Profile not found');
 
-    const previousDailyTarget = currentGoal.daily_calorie_target;
+    // Archive the current goal (end it today)
+    const today = new Date().toISOString().split('T')[0];
+    const archiveStmt = this.db.prepare(`
+      UPDATE calorie_goals SET end_date = ? WHERE id = ?
+    `);
+    archiveStmt.run(today, currentGoal.id);
+
+    // Record the archival in history
+    this.recordGoalChange(profileId, currentGoal.id, 'archived', currentGoal.dailyCalorieTarget, null, changeReason);
+
+    // Create a new goal with the updated parameters (starting tomorrow)
+    const newGoalId = uuidv4();
     const tdee = calculateTDEE(profile);
     const dailyCalorieTarget = Math.round(tdee + weeklyCalorieTarget / 7);
     const now = new Date().toISOString();
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]; // tomorrow
 
-    const stmt = this.db.prepare(`
-      UPDATE calorie_goals SET
-        goal_type = ?,
-        weekly_calorie_target = ?,
-        daily_calorie_target = ?,
-        activity_level = ?,
-        updated_at = ?
-      WHERE id = ?
-    `);
-
-    stmt.run(
+    const newGoal: CalorieGoal = {
+      id: newGoalId,
+      profileId,
       goalType,
       weeklyCalorieTarget,
       dailyCalorieTarget,
       activityLevel,
-      now,
-      goalId
+      startDate: tomorrow,
+      endDate: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    // Insert new goal
+    const insertStmt = this.db.prepare(`
+      INSERT INTO calorie_goals (
+        id, profile_id, goal_type, weekly_calorie_target,
+        daily_calorie_target, activity_level, start_date, end_date, created_at, updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    insertStmt.run(
+      newGoal.id,
+      newGoal.profileId,
+      newGoal.goalType,
+      newGoal.weeklyCalorieTarget,
+      newGoal.dailyCalorieTarget,
+      newGoal.activityLevel,
+      newGoal.startDate,
+      newGoal.endDate,
+      newGoal.createdAt,
+      newGoal.updatedAt
     );
 
-    // Record in history
-    this.recordGoalChange(currentGoal.profile_id, goalId, 'updated', previousDailyTarget, dailyCalorieTarget, changeReason);
+    // Record the new goal creation in history
+    this.recordGoalChange(profileId, newGoalId, 'created', null, dailyCalorieTarget, changeReason);
 
-    return this.getCurrentGoal(currentGoal.profile_id)!;
+    return newGoal;
+  }
+
+  /**
+   * Check if there's an active streak that would be affected by goal change
+   */
+  hasActiveStreak(profileId: string): boolean {
+    const stmt = this.db.prepare(`
+      SELECT * FROM calorie_streaks
+      WHERE profile_id = ? AND is_active = 1
+      LIMIT 1
+    `);
+
+    const row = stmt.get(profileId) as any;
+    return !!row;
   }
 
   /**

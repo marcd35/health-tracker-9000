@@ -13,6 +13,11 @@ import { WeeklyProgressChart } from '@/components/calories/WeeklyProgressChart';
 import { WeeklyEncouragementCard } from '@/components/calories/WeeklyEncouragementCard';
 import { CalorieStreakCard } from '@/components/calories/CalorieStreakCard';
 import { CalendarHeatmap } from '@/components/calories/CalendarHeatmap';
+import { MonthlyTrendChart } from '@/components/calories/MonthlyTrendChart';
+import { TrendAnalysisCard } from '@/components/calories/TrendAnalysisCard';
+import { GoalModificationModal } from '@/components/calories/GoalModificationModal';
+import { GoalHistoryTimeline } from '@/components/calories/GoalHistoryTimeline';
+import { Edit } from 'lucide-react';
 
 export default function CaloriesPage() {
   const [onboardingOpen, setOnboardingOpen] = useState(false);
@@ -22,6 +27,7 @@ export default function CaloriesPage() {
     month: new Date().getMonth() + 1,
   });
   const [isResettingProfile, setIsResettingProfile] = useState(false);
+  const [goalModificationOpen, setGoalModificationOpen] = useState(false);
 
   const currentGoal = useCalorieTrackerStore((state) => state.currentGoal);
   const todayTracking = useCalorieTrackerStore((state) => state.todayTracking);
@@ -30,6 +36,7 @@ export default function CaloriesPage() {
   const streakInfo = useCalorieTrackerStore((state) => state.streakInfo);
   const currentStreak = useCalorieTrackerStore((state) => state.currentStreak);
   const bestStreak = useCalorieTrackerStore((state) => state.bestStreak);
+  const goalHistory = useCalorieTrackerStore((state) => state.goalHistory);
   const isLoading = useCalorieTrackerStore((state) => state.isLoading);
   const onboardingDismissedForever = useCalorieTrackerStore((state) => state.onboardingDismissedForever);
 
@@ -38,6 +45,8 @@ export default function CaloriesPage() {
   const fetchWeeklyTracking = useCalorieTrackerStore((state) => state.fetchWeeklyTracking);
   const fetchMonthlyData = useCalorieTrackerStore((state) => state.fetchMonthlyData);
   const fetchStreakData = useCalorieTrackerStore((state) => state.fetchStreakData);
+  const fetchGoalHistory = useCalorieTrackerStore((state) => state.fetchGoalHistory);
+  const updateGoal = useCalorieTrackerStore((state) => state.updateGoal);
 
   useEffect(() => {
     setMounted(true);
@@ -100,6 +109,19 @@ export default function CaloriesPage() {
       toast.error(error.message || 'Failed to reset profile');
     } finally {
       setIsResettingProfile(false);
+    }
+  };
+
+  // Handle goal modification
+  const handleUpdateGoal = async (weeklyTarget: number, reason: string) => {
+    const result = await updateGoal({
+      weeklyCalorieTarget: weeklyTarget,
+      reason,
+    });
+
+    if (result && result.streakResetRequired) {
+      // Refetch goal history after change
+      await fetchGoalHistory();
     }
   };
 
@@ -276,14 +298,33 @@ export default function CaloriesPage() {
           />
         )}
 
+        {/* Phase 3: Monthly Trend Chart */}
+        {monthlyData && <MonthlyTrendChart data={monthlyData} />}
+
+        {/* Phase 3: Trend Analysis */}
+        {monthlyData && <TrendAnalysisCard monthlyData={monthlyData} />}
+
+        {/* Phase 3: Goal History Timeline */}
+        {goalHistory.length > 0 && <GoalHistoryTimeline history={goalHistory} />}
+
         {/* Goal Info Card */}
         <Card className="p-4 bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="font-medium">Current Goal</span>
-              <span className="capitalize text-sm font-semibold text-blue-700">
-                {currentGoal.goalType.replace('_', ' ')}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="capitalize text-sm font-semibold text-blue-700">
+                  {currentGoal.goalType.replace('_', ' ')}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setGoalModificationOpen(true)}
+                  className="h-7 w-7 p-0"
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Weekly Target</span>
@@ -364,6 +405,17 @@ export default function CaloriesPage() {
       </div>
 
       <CalorieGoalOnboarding open={onboardingOpen} onOpenChange={setOnboardingOpen} />
+
+      {/* Phase 3: Goal Modification Modal */}
+      {currentGoal && (
+        <GoalModificationModal
+          open={goalModificationOpen}
+          onOpenChange={setGoalModificationOpen}
+          currentGoal={currentGoal}
+          hasActiveStreak={!!currentStreak?.isActive}
+          onConfirm={handleUpdateGoal}
+        />
+      )}
     </>
   );
 }

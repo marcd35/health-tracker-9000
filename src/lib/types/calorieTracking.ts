@@ -185,3 +185,30 @@ export interface DailyIndicatorData {
   goalMet: boolean;
   message: string;
 }
+
+// Phase 3: Goal Modification & Trend Analysis Types
+export interface GoalChangeRequest {
+  weeklyCalorieTarget: number;
+  reason: string; // e.g., "increase activity", "adjust for lifestyle"
+}
+
+export interface GoalChangeResponse {
+  success: boolean;
+  newGoal: CalorieGoal;
+  streakResetRequired: boolean; // client handles confirmation prompt
+  message: string;
+}
+
+export interface TrendAnalysis {
+  direction: 'up' | 'down' | 'stable';
+  percentageChange: number;
+  daysOnTrack: number;
+  daysTotal: number;
+  goalAchievementRate: number; // 0-100
+  bestWeek: WeeklyMetrics;
+  projection: string; // e.g., "Meet goal by 15%"
+  comparison?: {
+    previousMonth: number; // % change from last month
+    trend: 'improving' | 'declining' | 'stable';
+  };
+}

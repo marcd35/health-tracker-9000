@@ -9,6 +9,8 @@ import type {
   MonthlyCalorieData,
   StreakInfo,
   WeeklyMetrics,
+  GoalChangeRequest,
+  GoalChangeResponse,
 } from '@/lib/types/calorieTracking';
 
 interface CalorieTrackerState {
@@ -43,6 +45,7 @@ interface CalorieTrackerState {
     weeklyCalorieTarget: number;
     activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
   }) => Promise<void>;
+  updateGoal: (data: GoalChangeRequest) => Promise<GoalChangeResponse | null>;
   fetchDailyTracking: (date?: string) => Promise<void>;
   fetchWeeklyTracking: (endDate?: string) => Promise<void>;
   fetchMonthlyData: (year?: number, month?: number) => Promise<void>;
@@ -123,6 +126,43 @@ export const useCalorieTrackerStore = create<CalorieTrackerState>((set, get) => 
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
       toast.error(err.message || 'Failed to create calorie goal');
+    }
+  },
+
+  updateGoal: async (data) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch('/api/calorie-tracking/goal-change', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update goal');
+      }
+
+      const result: GoalChangeResponse = await response.json();
+
+      // Update current goal
+      set({
+        currentGoal: result.newGoal,
+        isLoading: false,
+      });
+
+      toast.success(result.message || 'Goal updated successfully');
+
+      // Refetch tracking data after goal change
+      setTimeout(async () => {
+        await Promise.all([get().fetchDailyTracking(), get().fetchWeeklyTracking()]);
+      }, 500);
+
+      return result;
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      toast.error(err.message || 'Failed to update goal');
+      return null;
     }
   },
 
