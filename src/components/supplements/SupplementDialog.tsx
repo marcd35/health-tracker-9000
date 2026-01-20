@@ -33,7 +33,7 @@ export function SupplementDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:!max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{supplement ? 'Edit Supplement' : 'Add Supplement'}</DialogTitle>
           <DialogDescription>

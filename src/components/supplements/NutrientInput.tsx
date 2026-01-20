@@ -11,11 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Trash2 } from 'lucide-react';
+import { Trash2, GripVertical } from 'lucide-react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { VITAMINS, MINERALS } from '@/constants/nutrients';
 import type { NutrientKey } from '@/lib/types/supplements';
 
 interface NutrientInputProps {
+  id: string;
   nutrientKey: NutrientKey | '';
   amount: number;
   usedKeys: NutrientKey[];
@@ -25,6 +28,7 @@ interface NutrientInputProps {
 }
 
 export function NutrientInput({
+  id,
   nutrientKey,
   amount,
   usedKeys,
@@ -32,16 +36,37 @@ export function NutrientInput({
   onAmountChange,
   onRemove,
 }: NutrientInputProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    data: { type: 'nutrient' },
+  });
+
   const selectedNutrient = nutrientKey
     ? [...VITAMINS, ...MINERALS].find((n) => n.key === nutrientKey)
     : null;
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
-    <div className="flex items-center gap-2">
-      <Select
-        value={nutrientKey}
-        onValueChange={(val) => onNutrientChange(val as NutrientKey)}
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-2 ${isDragging ? 'opacity-50' : ''}`}
+    >
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="cursor-grab hover:cursor-grabbing text-muted-foreground"
+        {...attributes}
+        {...listeners}
       >
+        <GripVertical className="h-4 w-4" />
+      </Button>
+      <Select value={nutrientKey} onValueChange={(val) => onNutrientChange(val as NutrientKey)}>
         <SelectTrigger className="w-[200px]">
           <SelectValue placeholder="Select nutrient" />
         </SelectTrigger>
@@ -84,9 +109,7 @@ export function NutrientInput({
           placeholder="Amount"
         />
         {selectedNutrient && (
-          <span className="text-sm text-muted-foreground w-10">
-            {selectedNutrient.unit}
-          </span>
+          <span className="text-sm text-muted-foreground w-10">{selectedNutrient.unit}</span>
         )}
       </div>
 

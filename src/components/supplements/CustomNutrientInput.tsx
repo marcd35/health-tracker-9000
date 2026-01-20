@@ -11,10 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Trash2 } from 'lucide-react';
+import { Trash2, GripVertical } from 'lucide-react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import type { CustomNutrientMetadata } from '@/lib/types/supplements';
 
 interface CustomNutrientInputProps {
+  id: string;
   nutrientKey: string;
   amount: number;
   availableNutrients: CustomNutrientMetadata[];
@@ -25,6 +28,7 @@ interface CustomNutrientInputProps {
 }
 
 export function CustomNutrientInput({
+  id,
   nutrientKey,
   amount,
   availableNutrients,
@@ -33,6 +37,11 @@ export function CustomNutrientInput({
   onAmountChange,
   onRemove,
 }: CustomNutrientInputProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    data: { type: 'custom-nutrient' },
+  });
+
   const selectedNutrient = availableNutrients.find((n) => n.key === nutrientKey);
 
   // Group nutrients by category
@@ -48,8 +57,27 @@ export function CustomNutrientInput({
     {} as Record<string, CustomNutrientMetadata[]>
   );
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
-    <div className="flex items-center gap-2">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-2 ${isDragging ? 'opacity-50' : ''}`}
+    >
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="cursor-grab hover:cursor-grabbing text-muted-foreground"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" />
+      </Button>
       <Select value={nutrientKey} onValueChange={onNutrientChange}>
         <SelectTrigger className="w-[200px]">
           <SelectValue placeholder="Select nutrient" />

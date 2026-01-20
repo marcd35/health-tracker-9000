@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { USDAClient } from '@/lib/services/usda/client';
 
-export async function GET(request: Request, { params }: { params: Promise<{ fdcId: string }> }) {
+export async function GET(_request: Request, { params }: { params: Promise<{ fdcId: string }> }) {
   try {
     const { fdcId } = await params;
 

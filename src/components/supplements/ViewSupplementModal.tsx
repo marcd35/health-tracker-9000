@@ -37,7 +37,7 @@ export function ViewSupplementModal({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:!max-w-6xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">{supplement.name}</DialogTitle>
           <DialogDescription>{supplement.brand}</DialogDescription>
@@ -90,6 +90,7 @@ export function ViewSupplementModal({
                     </thead>
                     <tbody className="divide-y">
                       {nutrientEntries
+                        .sort(([a], [b]) => NUTRIENTS[a].name.localeCompare(NUTRIENTS[b].name))
                         .map(([key, value]) => {
                           const nutrientInfo = NUTRIENTS[key];
                           return nutrientInfo ? (
