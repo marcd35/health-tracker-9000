@@ -203,6 +203,15 @@ export function MealLogForm() {
             onClose={() => setInspectingFood(null)}
             foodName={inspectingFood.name}
             rawJson={inspectingFood.rawUSDAData}
+            onSave={(manualAllergens) => {
+              const index = selectedFoods.findIndex(f => f.id === inspectingFood.id);
+              if (index !== -1) {
+                const newFoods = [...selectedFoods];
+                newFoods[index] = { ...newFoods[index], allergens: manualAllergens };
+                setSelectedFoods(newFoods);
+                toast.success(`Updated allergens for ${inspectingFood.name}`);
+              }
+            }}
           />
         )}
       </CardContent>

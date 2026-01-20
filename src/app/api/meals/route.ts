@@ -24,9 +24,32 @@ export async function POST(request: Request) {
       // If food not found and it's a USDA food (ID starts with "usda-"),
       // it might be from search results - use the provided data
       if (!food && f.foodId.startsWith('usda-')) {
-        console.log(`USDA food not in DB yet: ${f.foodName}, using provided data`);
-        // Use the food data from the request (passed from form)
-        food = f.foodData;
+        console.log(`USDA food not in DB yet: ${f.foodName}, importing...`);
+        // Persist to DB so it can be referenced next time
+        const importedId = foodRepo.createFoodFromUSDA(
+          f.foodData.name,
+          f.foodData.servingSize,
+          f.foodData.servingUnit,
+          f.foodData.nutritionPer100g,
+          f.foodData.allergens,
+          f.foodData.usdaFdcId,
+          f.foodData.brand,
+          f.foodData.ingredients
+        );
+
+        // Save allergens if present
+        if (f.foodData.allergens && f.foodData.allergens.length > 0) {
+          foodRepo.saveFoodAllergens(
+            importedId,
+            f.foodData.allergens.map((a: string) => ({
+              allergenType: a,
+              source: 'user_flagged',
+              confidenceLevel: 'high'
+            }))
+          );
+        }
+
+        food = foodRepo.getFoodById(importedId);
       }
 
       if (!food) throw new Error(`Food not found: ${f.foodId}`);

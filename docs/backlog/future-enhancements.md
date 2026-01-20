@@ -66,3 +66,23 @@
 - [ ] FatSecret API - has allergen data
 - [ ] Open Food Facts - crowdsourced allergen labels
 - [ ] Thinkladder allergen database - comprehensive allergen info
+
+### Future Phase 10: USDA Integration Expansions
+
+- [ ] **Manual Allergen Flagging**
+  - Allow user to manually check/uncheck allergens in a checklist
+  - Store manually-flagged allergens separately from auto-detected ones
+  - Save flags to the `food_allergens` mapping table (Future Phase 11)
+
+- [ ] **Allergen Reference Mapping Table**
+  - Build a `food_allergens` lookup table in database (food_id, allergen_type, source, confidence, notes)
+  - Pre-populate allergen warnings based on this table
+  - Allow users to contribute/correct allergen data
+
+- [ ] **External Allergen Database Integration**
+  - Integrate with external sources (FatSecret, Open Food Facts) for deeper allergen coverage
+  - Async lookup to avoid blocking modal display
+
+- [ ] **Edge Case & Unique Foods Handling**
+  - Create a supplementary lookup table for 'edge case' foods (sugar alcohols, high-FODMAP, certified claims)
+  - Surface relevant metadata in inspection modal

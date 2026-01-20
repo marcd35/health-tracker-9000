@@ -252,7 +252,7 @@ See `docs/roadmap.md` for detailed project phases and progress.
 - ❌ Don't access database directly from components - use API routes + repositories
 - ❌ Don't commit `health.db` - it's gitignored for privacy
 - ❌ Don't skip pre-commit hooks - they enforce code quality
-- ❌ Don't modify schema without migration strategy - data loss risk
+- ❌ Don't modify `src/lib/database/schema.sql` directly for existing tables - ALWAYS use migrations in `src/lib/database/migrations/`
 - ❌ Don't add cloud sync features - privacy-first is a core principle
 - ❌ Don't ignore ESLint/TypeScript errors - fix them before committing
 

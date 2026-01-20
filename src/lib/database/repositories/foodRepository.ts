@@ -1,5 +1,5 @@
 import { getDatabase } from '../connection';
-import type { Food, NutritionalValues } from '@/lib/types/health';
+import type { Food, NutritionalValues, FoodAllergen } from '@/lib/types/health';
 import { v4 as uuidv4 } from 'uuid';
 
 export class FoodRepository {
@@ -245,5 +245,62 @@ export class FoodRepository {
       allergens ? JSON.stringify(allergens) : null,
       foodId
     );
+  }
+
+  /**
+   * [PHASE 4: Allergen Mapping Table Integration]
+   * Future: Implement support for saving individual allergen flags to a separate 
+   * 'food_allergens' table for more granular tracking.
+   */
+  getFoodAllergens(foodId: string): FoodAllergen[] {
+    const stmt = this.db.prepare('SELECT * FROM food_allergens WHERE food_id = ?');
+    const rows = stmt.all(foodId) as any[];
+
+    return rows.map((row) => ({
+      id: row.id,
+      foodId: row.food_id,
+      allergenType: row.allergen_type,
+      source: row.source,
+      confidenceLevel: row.confidence_level,
+      notes: row.notes,
+      createdAt: row.created_at,
+    }));
+  }
+
+  saveFoodAllergens(
+    foodId: string,
+    allergens: Array<{
+      allergenType: string;
+      source: 'auto_detected' | 'user_flagged' | 'external_db';
+      confidenceLevel?: 'high' | 'medium' | 'low';
+      notes?: string;
+    }>
+  ): void {
+    const now = new Date().toISOString();
+
+    // First delete existing for this food to avoid duplicates if re-inspecting/re-saving
+    this.db.prepare('DELETE FROM food_allergens WHERE food_id = ?').run(foodId);
+
+    const stmt = this.db.prepare(`
+      INSERT INTO food_allergens (
+        id, food_id, allergen_type, source, confidence_level, notes, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const transaction = this.db.transaction((items) => {
+      for (const item of items) {
+        stmt.run(
+          uuidv4(),
+          foodId,
+          item.allergenType,
+          item.source,
+          item.confidenceLevel || 'medium',
+          item.notes || null,
+          now
+        );
+      }
+    });
+
+    transaction(allergens);
   }
 }

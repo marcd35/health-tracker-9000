@@ -31,5 +31,7 @@ Example: `feat: implement meal logging repository`
 ## Database Management
 
 - The project uses SQLite via `better-sqlite3`.
-- Schema is defined in `src/lib/database/schema.sql`.
+- Initial schema is defined in `src/lib/database/schema.sql`.
+- **CRITICAL**: Do NOT modify `schema.sql` for existing databases. All schema changes must be implemented as migrations in `src/lib/database/migrations/`.
+- Migrations follow the `00X_description.sql` naming convention and run automatically on startup.
 - Use the Repository pattern for database operations to decouple business logic from data access.

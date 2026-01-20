@@ -53,6 +53,16 @@ export interface Food {
   usdaFdcId?: number;
 }
 
+export interface FoodAllergen {
+  id: string;
+  foodId: string;
+  allergenType: string;
+  source: 'auto_detected' | 'user_flagged' | 'external_db';
+  confidenceLevel: 'high' | 'medium' | 'low';
+  notes?: string;
+  createdAt: string;
+}
+
 export interface NutritionalValues {
   calories: number;
   protein: number;

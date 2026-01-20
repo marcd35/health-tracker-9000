@@ -13,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertTriangle, Download, Info, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { CopyButton } from '../common/CopyButton';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -36,13 +37,27 @@ interface FoodInspectionModalProps {
   onClose: () => void;
   foodName: string;
   rawJson: any;
+  onSave?: (manualAllergens: string[]) => void;
 }
+
+const BIG_9_ALLERGENS = [
+  'Milk',
+  'Eggs',
+  'Fish',
+  'Shellfish',
+  'Tree Nuts',
+  'Peanuts',
+  'Wheat',
+  'Soy',
+  'Sesame',
+];
 
 export function FoodInspectionModal({
   isOpen,
   onClose,
   foodName,
   rawJson,
+  onSave,
 }: FoodInspectionModalProps) {
   // Debug logging
   useEffect(() => {
@@ -77,6 +92,30 @@ export function FoodInspectionModal({
     });
     return allergens;
   }, [ingredients]);
+
+  const [manualAllergens, setManualAllergens] = useState<string[]>([]);
+
+  // Initialize manual allergens from detected ones when modal opens or rawJson changes
+  useEffect(() => {
+    if (isOpen && detectedAllergens.length > 0) {
+      // Map detected keywords to Big 9 names if possible, or just keep as is
+      const normalized = detectedAllergens.map(d => {
+        const found = BIG_9_ALLERGENS.find(b => b.toLowerCase().includes(d.toLowerCase()));
+        return found || d;
+      });
+      setManualAllergens(Array.from(new Set(normalized)));
+    } else if (isOpen) {
+      setManualAllergens([]);
+    }
+  }, [isOpen, detectedAllergens]);
+
+  const toggleAllergen = (allergen: string) => {
+    setManualAllergens(prev =>
+      prev.includes(allergen)
+        ? prev.filter(a => a !== allergen)
+        : [...prev, allergen]
+    );
+  };
 
   const selectedPortion = useMemo(() => {
     if (selectedPortionId === 'default') {
@@ -194,8 +233,49 @@ export function FoodInspectionModal({
                       ))}
                     </div>
                   )}
+                  {/* [PHASE 4: Manual Allergen Flagging]
+                      Future: Add a checklist of allergens for user to manually verify and save. 
+                  */}
+                  <div className="pt-4 border-t border-amber-500/10 space-y-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-amber-700/70 dark:text-amber-400/70">
+                      Manual Allergen Checklist
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {BIG_9_ALLERGENS.map((allergen) => (
+                        <div key={allergen} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`allergen-${allergen}`}
+                            checked={manualAllergens.includes(allergen)}
+                            onCheckedChange={() => toggleAllergen(allergen)}
+                            className="border-amber-500/30 data-[state=checked]:bg-amber-500 data-[state=checked]:text-white"
+                          />
+                          <label
+                            htmlFor={`allergen-${allergen}`}
+                            className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-amber-900/80 dark:text-amber-100/80 cursor-pointer"
+                          >
+                            {allergen}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              {/* [PHASE 4: Edge Case Lookup Surface] */}
+              {rawJson?.ingredients?.toLowerCase().includes('syrup') && (
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex items-start gap-4">
+                  <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-sm text-blue-700 dark:text-blue-400 font-medium">
+                      Edge Case: Potential High-Fructose Corn Syrup
+                    </p>
+                    <p className="text-[11px] text-blue-600/70 dark:text-blue-300/70">
+                      Detected 'syrup' in ingredients. Review for HFCS if sensitive.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
@@ -328,13 +408,23 @@ export function FoodInspectionModal({
           )}
         </div>
 
-        <div className="p-6 border-t border-muted-foreground/10 bg-muted/20 flex justify-end">
+        <div className="p-6 border-t border-muted-foreground/10 bg-muted/20 flex justify-end gap-3">
           <Button
             onClick={onClose}
+            variant="outline"
+            className="rounded-full px-6 h-10 font-medium"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              onSave?.(manualAllergens);
+              onClose();
+            }}
             variant="default"
             className="rounded-full px-8 h-10 font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95 transition-all"
           >
-            Done
+            {onSave ? 'Confirm & Apply' : 'Done'}
           </Button>
         </div>
       </DialogContent>

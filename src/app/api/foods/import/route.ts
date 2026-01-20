@@ -74,6 +74,18 @@ async function importByFdcId(fdcId: number) {
 
     const savedFood = repo.getFoodById(foodId);
 
+    // Persist granular allergens if present
+    if (mappedFood.allergens && mappedFood.allergens.length > 0) {
+      repo.saveFoodAllergens(
+        foodId,
+        mappedFood.allergens.map((a: string) => ({
+          allergenType: a,
+          source: 'auto_detected',
+          confidenceLevel: 'medium',
+        }))
+      );
+    }
+
     return NextResponse.json({
       food: savedFood,
       cached: false,
@@ -133,6 +145,18 @@ async function importMappedFood(food: Food & { usdaFdcId: number }) {
     food.brand,
     food.ingredients
   );
+
+  // Persist granular allergens if present
+  if (food.allergens && food.allergens.length > 0) {
+    repo.saveFoodAllergens(
+      foodId,
+      food.allergens.map((a: string) => ({
+        allergenType: a,
+        source: 'user_flagged', // If coming from mapped food import, assume user confirmed
+        confidenceLevel: 'high',
+      }))
+    );
+  }
 
   const savedFood = repo.getFoodById(foodId);
 
