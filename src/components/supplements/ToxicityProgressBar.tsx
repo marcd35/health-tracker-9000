@@ -1,10 +1,62 @@
 'use client';
 
-import { AlertCircle, Check, AlertTriangle } from 'lucide-react';
+import { AlertCircle, Check, AlertTriangle } from 'lucide-react'; // Used by getToxicityStatus
 import type { NutrientProgress } from '@/lib/types/supplements';
 import type { NutrientInfo } from '@/lib/types/supplements';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+export interface ToxicityStatus {
+  status: 'safe' | 'warning' | 'toxic';
+  icon: typeof Check | typeof AlertTriangle | typeof AlertCircle;
+  color: string;
+  title: string;
+}
+
+// Helper function to determine toxicity status
+export function getToxicityStatus(
+  nutrient: NutrientProgress,
+  nutrientInfo: NutrientInfo
+): ToxicityStatus {
+  const { total } = nutrient;
+  const { warningLevel, toxicLevel } = nutrientInfo;
+
+  // If no toxicity tracking, default to safe
+  if (!toxicLevel) {
+    return {
+      status: 'safe',
+      icon: Check,
+      color: 'text-green-600',
+      title: 'Within safe range',
+    };
+  }
+
+  // Determine status based on toxicity levels
+  if (total > toxicLevel) {
+    return {
+      status: 'toxic',
+      icon: AlertCircle,
+      color: 'text-red-600',
+      title: 'Exceeds toxic limit!',
+    };
+  }
+
+  if (warningLevel && total > warningLevel) {
+    return {
+      status: 'warning',
+      icon: AlertTriangle,
+      color: 'text-yellow-600',
+      title: 'Approaching toxic limits',
+    };
+  }
+
+  return {
+    status: 'safe',
+    icon: Check,
+    color: 'text-green-600',
+    title: 'Within safe range',
+  };
+}
 
 interface ToxicityProgressBarProps {
   nutrient: NutrientProgress;
@@ -18,101 +70,98 @@ export function ToxicityProgressBar({ nutrient, nutrientInfo }: ToxicityProgress
   // Calculate percentage of target (0-100% = reaching daily goal)
   const percentageOfTarget = target > 0 ? (total / target) * 100 : 0;
 
-  // Calculate percentage of toxic level (for the overage zone)
-  const percentageOfToxic = toxicLevel && toxicLevel > 0 ? (total / toxicLevel) * 100 : 0;
+  // Determine toxicity status for color-coding the progress bar
+  const toxicityStatus = getToxicityStatus(nutrient, nutrientInfo);
 
-  // Progress bar dimensions:
-  // - Top 90% for reaching daily goal
-  // - Bottom 10% for overage/toxicity zone
-  const goalZonePercent = Math.min(100, (percentageOfTarget / 100) * 90); // Cap at 90%
-  const overageZoneFill = toxicLevel ? Math.min(100, (percentageOfToxic / 100) * 90) : 0; // Show overage fill
-
-  // Determine goal zone color
-  let goalZoneColor = 'bg-red-900'; // Empty
-  if (total > 0 && total < target) {
-    goalZoneColor = 'bg-yellow-500'; // Partial
-  } else if (percentageOfTarget >= 100) {
-    goalZoneColor = 'bg-green-500'; // Goal met
-  }
-
-  // Determine overage zone color based on proximity to warning/toxic levels
-  let overageZoneColor = 'bg-green-500'; // Safe zone (below warning)
-  let overageStatus = 'Safe';
-  let statusIcon = Check;
-
-  if (toxicLevel) {
-    if (total > toxicLevel) {
-      overageZoneColor = 'bg-red-600'; // Toxic
-      overageStatus = 'TOXIC';
-      statusIcon = AlertCircle;
-    } else if (warningLevel && total > warningLevel) {
-      overageZoneColor = 'bg-yellow-600'; // Warning
-      overageStatus = 'Warning';
-      statusIcon = AlertTriangle;
+  // Get progress bar color based on toxicity status
+  const getProgressColor = (status: 'safe' | 'warning' | 'toxic'): string => {
+    switch (status) {
+      case 'toxic':
+        return 'bg-red-600';
+      case 'warning':
+        return 'bg-yellow-600';
+      case 'safe':
+      default:
+        return 'bg-green-500';
     }
-  }
+  };
 
-  const StatusIcon = statusIcon;
+  // Get RGB color for gradients (inline styles require actual color values)
+  const getGradientColor = (status: 'safe' | 'warning' | 'toxic'): string => {
+    switch (status) {
+      case 'toxic':
+        return 'rgb(220 38 38)'; // red-600
+      case 'warning':
+        return 'rgb(202 138 4)'; // yellow-600
+      case 'safe':
+      default:
+        return 'rgb(34 197 94)'; // green-500
+    }
+  };
+
+  const progressColor = getProgressColor(toxicityStatus.status);
+
+  // Segment rendering helper
+  const renderGoalZoneSegments = () => {
+    // When 100% goal is reached, show solid fill instead of segments
+    if (percentageOfTarget >= 100) {
+      return (
+        <div
+          className={cn('h-full w-full transition-all duration-500 rounded-none', progressColor)}
+        />
+      );
+    }
+
+    // Show segmented progress for < 100%
+    const TOTAL_SEGMENTS = 10;
+    const segmentSize = 100 / TOTAL_SEGMENTS; // 10% per segment
+
+    return Array.from({ length: TOTAL_SEGMENTS }, (_, index) => {
+      const segmentStartPercent = index * segmentSize;
+      const segmentEndPercent = (index + 1) * segmentSize;
+
+      const isFilled = percentageOfTarget >= segmentEndPercent;
+      const isPartial =
+        percentageOfTarget > segmentStartPercent && percentageOfTarget < segmentEndPercent;
+      const isEmpty = percentageOfTarget <= segmentStartPercent;
+
+      // Calculate partial fill percentage for gradient
+      const partialFillPercent = isPartial
+        ? ((percentageOfTarget - segmentStartPercent) / segmentSize) * 100
+        : 0;
+
+      return (
+        <div
+          key={index}
+          className={cn(
+            'h-full flex-1 rounded-none transition-all duration-500 border border-white/20',
+            {
+              [progressColor]: isFilled,
+              'bg-slate-100 dark:bg-slate-700': isEmpty,
+            }
+          )}
+          style={
+            isPartial
+              ? {
+                  background: `linear-gradient(to right, ${getGradientColor(toxicityStatus.status)} ${partialFillPercent}%, rgb(241 245 250) ${partialFillPercent}%)`,
+                }
+              : undefined
+          }
+        />
+      );
+    });
+  };
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="space-y-2">
-            {/* Main progress bar container */}
-            <div className="relative h-8 w-full bg-secondary/30 rounded-md overflow-hidden flex">
-              {/* Goal zone (90% of bar width) */}
-              <div className="relative flex-1 flex items-stretch">
-                <div
-                  className={cn('h-full transition-all duration-500', goalZoneColor)}
-                  style={{ width: `${goalZonePercent}%` }}
-                />
-                {/* Target marker at 100% */}
-                <div
-                  className="absolute top-0 bottom-0 w-0.5 bg-blue-600 z-10"
-                  style={{ left: '100%', transform: 'translateX(-1px)' }}
-                  title="100% Daily Goal"
-                />
-              </div>
-
-              {/* Overage zone (10% of bar width) - always visible for toxicity awareness */}
-              <div className="relative w-[10%] flex items-stretch border-l border-dashed border-muted-foreground/50">
-                <div
-                  className={cn('h-full transition-all duration-500', overageZoneColor)}
-                  style={{ width: `${Math.min(100, (overageZoneFill * 100) / 90)}%` }}
-                />
-                {/* Toxic level marker */}
-                {toxicLevel && (
-                  <div
-                    className="absolute top-0 bottom-0 w-0.5 bg-red-700 z-10"
-                    style={{ left: '100%', transform: 'translateX(-1px)' }}
-                    title={`Toxic Limit: ${toxicLevel} ${nutrient.unit}`}
-                  />
-                )}
-              </div>
+          {/* Main progress bar container */}
+          <div className="relative h-4 w-full bg-secondary/30 overflow-hidden flex">
+            {/* Goal zone (full width) - 10 segments */}
+            <div className="relative w-full flex gap-0.5 items-stretch">
+              {renderGoalZoneSegments()}
             </div>
-
-            {/* Status indicator */}
-            {total > target && toxicLevel && (
-              <div className="flex items-center gap-1.5">
-                <StatusIcon
-                  className={cn('h-4 w-4', {
-                    'text-green-600': overageStatus === 'Safe',
-                    'text-yellow-600': overageStatus === 'Warning',
-                    'text-red-600': overageStatus === 'TOXIC',
-                  })}
-                />
-                <span
-                  className={cn('text-xs font-medium', {
-                    'text-green-600': overageStatus === 'Safe',
-                    'text-yellow-600': overageStatus === 'Warning',
-                    'text-red-600': overageStatus === 'TOXIC',
-                  })}
-                >
-                  {overageStatus}
-                </span>
-              </div>
-            )}
           </div>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs">

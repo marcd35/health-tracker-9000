@@ -19,6 +19,13 @@ interface HealthState {
   fetchWeeklySummary: (endDate: string) => Promise<void>;
   fetchAllSupplements: () => Promise<void>;
   addMeal: (meal: Omit<MealLog, 'id' | 'createdAt' | 'totalNutrition'>) => Promise<void>;
+  updateMeal: (
+    id: string,
+    updates: {
+      foods?: Array<{ foodId: string; foodName: string; amount: number; foodData?: any }>;
+      mealType?: string;
+    }
+  ) => Promise<void>;
   deleteMeal: (id: string) => Promise<void>;
   toggleSupplement: (
     supplementId: string,
@@ -135,6 +142,27 @@ export const useHealthStore = create<HealthState>((set, get) => ({
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
       toast.error(err.message || 'Failed to add meal');
+    }
+  },
+
+  updateMeal: async (id, updates) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch(`/api/meals/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      if (!response.ok) throw new Error('Failed to update meal');
+
+      // Refresh daily log to get updated nutrition and score
+      if (get().dailyLog) {
+        await get().fetchDailyLog(get().dailyLog!.date);
+      }
+      toast.success('Meal updated successfully');
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      toast.error(err.message || 'Failed to update meal');
     }
   },
 
