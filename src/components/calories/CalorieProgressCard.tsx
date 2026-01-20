@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
@@ -11,6 +12,17 @@ interface CalorieProgressCardProps {
 }
 
 export function CalorieProgressCard({ tracking, goalType }: CalorieProgressCardProps) {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    setIsDarkMode(document.documentElement.classList.contains('dark'));
+    const observer = new MutationObserver(() => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true });
+    return () => observer.disconnect();
+  }, []);
+
   const consumed = tracking.caloriesConsumed;
   const target = tracking.caloriesTarget;
   const remaining = target - consumed;
@@ -39,15 +51,18 @@ export function CalorieProgressCard({ tracking, goalType }: CalorieProgressCardP
     else status = 'over';
   }
 
+  // Get the remaining color based on theme (light gray for light, dark gray for dark)
+  const remainingColor = isDarkMode ? '#404040' : '#d1d5db';
+
   const chartData = [
     { name: 'Consumed', value: consumed, color: '#3b82f6' },
-    { name: 'Remaining', value: Math.max(0, remaining), color: '#e5e7eb' },
+    { name: 'Remaining', value: Math.max(0, remaining), color: remainingColor },
   ];
 
   const statusColors = {
-    'on-track': 'bg-green-50 text-green-800 border-green-200',
-    'close': 'bg-amber-50 text-amber-800 border-amber-200',
-    'over': 'bg-red-50 text-red-800 border-red-200',
+    'on-track': 'bg-green-50 text-green-800 border-green-200 dark:bg-green-950 dark:text-green-100 dark:border-green-800',
+    'close': 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-100 dark:border-amber-800',
+    'over': 'bg-red-50 text-red-800 border-red-200 dark:bg-red-950 dark:text-red-100 dark:border-red-800',
   };
 
   const statusMessages = {
