@@ -81,8 +81,8 @@ export function WeeklyProgressChart({ data, goalType }: WeeklyProgressChartProps
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-            <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+            <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" tick={{ fill: '#a1a1aa' }} />
+            <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fill: '#a1a1aa' }} />
             <Tooltip
               formatter={(value: number) => `${Math.round(value)} cal`}
               contentStyle={{

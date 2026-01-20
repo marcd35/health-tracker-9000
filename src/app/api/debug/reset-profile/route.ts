@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getDatabase } from '@/lib/database/connection';
 import { ProfileRepository } from '@/lib/database/repositories/profileRepository';
 import { CalorieGoalRepository } from '@/lib/database/repositories/calorieGoalRepository';
 import { MealLogRepository } from '@/lib/database/repositories/mealLogRepository';
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
     const profileId = existingProfile?.id || mockProfile.profileData.id;
 
     // Update profile with mock data
-    const db = require('@/lib/database/connection').getDatabase();
+    const db = getDatabase();
     const updateProfileStmt = db.prepare(`
       UPDATE profile SET
         age = ?,

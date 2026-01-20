@@ -40,9 +40,16 @@ export function CalorieProgressCard({ tracking, goalType }: CalorieProgressCardP
   useEffect(() => {
     const fetchMealData = async () => {
       try {
-        const response = await fetch(`/api/meals?date=${tracking.date}`);
-        if (!response.ok) return;
+        // Fetch meals for the specific date
+        const response = await fetch(`/api/meals`);
+        if (!response.ok) {
+          console.warn('Failed to fetch meals');
+          return;
+        }
         const meals = await response.json();
+
+        // Filter meals for the tracking date
+        const filteredMeals = meals.filter((meal: any) => meal.date === tracking.date);
 
         const totals: MealTypeCalories = {
           breakfast: 0,
@@ -51,7 +58,7 @@ export function CalorieProgressCard({ tracking, goalType }: CalorieProgressCardP
           snacks: 0,
         };
 
-        meals.forEach((meal: any) => {
+        filteredMeals.forEach((meal: any) => {
           const mealType = (meal.mealType || 'snacks').toLowerCase() as keyof MealTypeCalories;
           const calories = meal.totalNutrition?.calories || 0;
           if (mealType in totals) {
@@ -62,13 +69,14 @@ export function CalorieProgressCard({ tracking, goalType }: CalorieProgressCardP
         setMealTypeCalories(totals);
       } catch (error) {
         console.error('Failed to fetch meal data:', error);
+        // Fall back to empty meal totals - pie will show just consumed + remaining
       }
     };
 
     if (tracking.date) {
       fetchMealData();
     }
-  }, [tracking.date]);
+  }, [tracking.date, tracking.caloriesConsumed]);
 
   const consumed = tracking.caloriesConsumed;
   const target = tracking.caloriesTarget;
@@ -111,13 +119,27 @@ export function CalorieProgressCard({ tracking, goalType }: CalorieProgressCardP
   const remainingColor = isDarkMode ? '#404040' : '#d1d5db';
 
   // Build pie chart data from meal types
-  const chartData = [
-    { name: 'Breakfast', value: mealTypeCalories.breakfast, color: '#fbbf24' },
-    { name: 'Lunch', value: mealTypeCalories.lunch, color: '#60a5fa' },
-    { name: 'Dinner', value: mealTypeCalories.dinner, color: '#f87171' },
-    { name: 'Snacks', value: mealTypeCalories.snacks, color: '#a78bfa' },
-    { name: 'Remaining', value: Math.max(0, remaining), color: remainingColor },
-  ].filter((item) => item.value > 0);
+  // If no meal data yet, show consumed + remaining
+  const totalMeals =
+    mealTypeCalories.breakfast + mealTypeCalories.lunch + mealTypeCalories.dinner + mealTypeCalories.snacks;
+
+  let chartData: any[] = [];
+  if (totalMeals > 0) {
+    // Show meal breakdown
+    chartData = [
+      { name: 'Breakfast', value: mealTypeCalories.breakfast, color: '#fbbf24' },
+      { name: 'Lunch', value: mealTypeCalories.lunch, color: '#60a5fa' },
+      { name: 'Dinner', value: mealTypeCalories.dinner, color: '#f87171' },
+      { name: 'Snacks', value: mealTypeCalories.snacks, color: '#a78bfa' },
+      { name: 'Remaining', value: Math.max(0, remaining), color: remainingColor },
+    ].filter((item) => item.value > 0);
+  } else {
+    // Fallback: show simple consumed + remaining
+    chartData = [
+      { name: 'Consumed', value: consumed, color: '#3b82f6' },
+      { name: 'Remaining', value: Math.max(0, remaining), color: remainingColor },
+    ];
+  }
 
   const statusColors = {
     'on-track': 'bg-green-900/5 text-foreground border-green-200/50 dark:border-green-800/30',
