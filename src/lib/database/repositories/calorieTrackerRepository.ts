@@ -174,9 +174,9 @@ export class CalorieTrackerRepository {
 
     const weeklyAverage = Math.round(weeklyConsumed / 7);
     const goal = this.goalRepo.getCurrentGoal(profileId);
-    const weeklyTarget = goal ? goal.weeklyCalorieTarget + goal.dailyCalorieTarget * 7 : weeklyTarget;
+    const weeklyTargetValue = goal ? goal.weeklyCalorieTarget + goal.dailyCalorieTarget * 7 : weeklyTarget;
     const onPacePercentage = goal
-      ? this.calculateOnPacePercentage(goal.goalType, weeklyConsumed, weeklyTarget, 7)
+      ? this.calculateOnPacePercentage(goal.goalType, weeklyConsumed, weeklyTargetValue, 7)
       : 0;
 
     // Calculate projection (what week total will be if trend continues for all 7 days)
@@ -187,7 +187,7 @@ export class CalorieTrackerRepository {
       weekStart: weekData.days[0],
       days,
       weeklyAverage,
-      weeklyTarget,
+      weeklyTarget: weeklyTargetValue,
       weeklyConsumed,
       onPacePercentage,
       daysMetGoal,
