@@ -21,7 +21,19 @@ export class FoodRepository {
         carbs: row.carbs,
         fat: row.fat,
         fiber: row.fiber,
+        sugar: row.sugar,
+        sodium: row.sodium,
+        calcium: row.calcium,
+        iron: row.iron,
+        potassium: row.potassium,
+        vitaminA: row.vitamin_a,
+        vitaminC: row.vitamin_c,
+        vitaminD: row.vitamin_d,
       },
+      brand: row.brand_name,
+      ingredients: row.ingredients,
+      allergens: row.allergens ? JSON.parse(row.allergens) : undefined,
+      usdaFdcId: row.usda_fdc_id ? Number(row.usda_fdc_id) : undefined,
     }));
   }
 
@@ -43,7 +55,19 @@ export class FoodRepository {
         carbs: row.carbs,
         fat: row.fat,
         fiber: row.fiber,
+        sugar: row.sugar,
+        sodium: row.sodium,
+        calcium: row.calcium,
+        iron: row.iron,
+        potassium: row.potassium,
+        vitaminA: row.vitamin_a,
+        vitaminC: row.vitamin_c,
+        vitaminD: row.vitamin_d,
       },
+      brand: row.brand_name,
+      ingredients: row.ingredients,
+      allergens: row.allergens ? JSON.parse(row.allergens) : undefined,
+      usdaFdcId: row.usda_fdc_id ? Number(row.usda_fdc_id) : undefined,
     };
   }
 
@@ -71,7 +95,9 @@ export class FoodRepository {
     servingUnit: string,
     nutritionPer100g: NutritionalValues,
     allergens: string[] | undefined,
-    usdaFdcId: number
+    usdaFdcId: number,
+    brand?: string,
+    ingredients?: string
   ): string {
     const id = uuidv4();
     const now = new Date().toISOString();
@@ -79,8 +105,9 @@ export class FoodRepository {
     const stmt = this.db.prepare(`
       INSERT INTO foods (
         id, name, serving_size, serving_unit, calories, protein, carbs, fat, fiber,
-        allergens, source, usda_fdc_id, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        sugar, sodium, calcium, iron, potassium, vitamin_a, vitamin_c, vitamin_d,
+        brand_name, ingredients, allergens, source, usda_fdc_id, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -93,6 +120,16 @@ export class FoodRepository {
       nutritionPer100g.carbs,
       nutritionPer100g.fat,
       nutritionPer100g.fiber || 0,
+      nutritionPer100g.sugar || 0,
+      nutritionPer100g.sodium || 0,
+      nutritionPer100g.calcium || 0,
+      nutritionPer100g.iron || 0,
+      nutritionPer100g.potassium || 0,
+      nutritionPer100g.vitaminA || 0,
+      nutritionPer100g.vitaminC || 0,
+      nutritionPer100g.vitaminD || 0,
+      brand || null,
+      ingredients || null,
       allergens ? JSON.stringify(allergens) : null,
       'usda',
       usdaFdcId.toString(),
@@ -123,8 +160,19 @@ export class FoodRepository {
         carbs: row.carbs,
         fat: row.fat,
         fiber: row.fiber,
+        sugar: row.sugar,
+        sodium: row.sodium,
+        calcium: row.calcium,
+        iron: row.iron,
+        potassium: row.potassium,
+        vitaminA: row.vitamin_a,
+        vitaminC: row.vitamin_c,
+        vitaminD: row.vitamin_d,
       },
+      brand: row.brand_name,
+      ingredients: row.ingredients,
       allergens: row.allergens ? JSON.parse(row.allergens) : undefined,
+      usdaFdcId: row.usda_fdc_id ? Number(row.usda_fdc_id) : undefined,
     };
   }
 
@@ -147,8 +195,19 @@ export class FoodRepository {
         carbs: row.carbs,
         fat: row.fat,
         fiber: row.fiber,
+        sugar: row.sugar,
+        sodium: row.sodium,
+        calcium: row.calcium,
+        iron: row.iron,
+        potassium: row.potassium,
+        vitaminA: row.vitamin_a,
+        vitaminC: row.vitamin_c,
+        vitaminD: row.vitamin_d,
       },
+      brand: row.brand_name,
+      ingredients: row.ingredients,
       allergens: row.allergens ? JSON.parse(row.allergens) : undefined,
+      usdaFdcId: row.usda_fdc_id ? Number(row.usda_fdc_id) : undefined,
     }));
   }
 
@@ -162,7 +221,10 @@ export class FoodRepository {
   ): void {
     const stmt = this.db.prepare(`
       UPDATE foods
-      SET calories = ?, protein = ?, carbs = ?, fat = ?, fiber = ?, allergens = ?
+      SET calories = ?, protein = ?, carbs = ?, fat = ?, fiber = ?,
+          sugar = ?, sodium = ?, calcium = ?, iron = ?, potassium = ?,
+          vitamin_a = ?, vitamin_c = ?, vitamin_d = ?,
+          allergens = ?
       WHERE id = ?
     `);
 
@@ -172,6 +234,14 @@ export class FoodRepository {
       nutritionPer100g.carbs,
       nutritionPer100g.fat,
       nutritionPer100g.fiber || 0,
+      nutritionPer100g.sugar || 0,
+      nutritionPer100g.sodium || 0,
+      nutritionPer100g.calcium || 0,
+      nutritionPer100g.iron || 0,
+      nutritionPer100g.potassium || 0,
+      nutritionPer100g.vitaminA || 0,
+      nutritionPer100g.vitaminC || 0,
+      nutritionPer100g.vitaminD || 0,
       allergens ? JSON.stringify(allergens) : null,
       foodId
     );

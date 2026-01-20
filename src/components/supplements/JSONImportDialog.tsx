@@ -27,18 +27,16 @@ interface ParsedSupplement {
   brand: string;
   servingSize: string;
   nutrients?: Record<string, number>;
+  customNutrients?: Record<string, number>;
   notes?: string;
   color?: string;
   dosageFrequency?: 'daily' | 'weekly';
   dosageQuantity?: number;
   dosageNotes?: string;
+  supplementType?: 'nutrient' | 'custom';
 }
 
-export function JSONImportDialog({
-  open,
-  onOpenChange,
-  onImport,
-}: JSONImportDialogProps) {
+export function JSONImportDialog({ open, onOpenChange, onImport }: JSONImportDialogProps) {
   const [jsonText, setJsonText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [parsedData, setParsedData] = useState<SupplementFormData[] | null>(null);
@@ -76,11 +74,13 @@ export function JSONImportDialog({
             brand: item.brand,
             servingSize: item.servingSize,
             nutrients: validNutrients,
+            customNutrients: item.customNutrients || {},
             notes: item.notes || '',
             color: item.color || '#6366f1',
             dosageFrequency: item.dosageFrequency || 'daily',
             dosageQuantity: item.dosageQuantity || 1,
             dosageNotes: item.dosageNotes || '',
+            supplementType: item.supplementType || 'nutrient',
           };
         }
       );
@@ -210,9 +210,7 @@ export function JSONImportDialog({
               onClick={() => fileInputRef.current?.click()}
             >
               <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                Click to upload or drag and drop
-              </p>
+              <p className="text-sm text-muted-foreground">Click to upload or drag and drop</p>
               <p className="text-xs text-muted-foreground mt-1">JSON files only</p>
             </div>
           </TabsContent>
@@ -229,8 +227,8 @@ export function JSONImportDialog({
           <Alert>
             <CheckCircle className="h-4 w-4 text-green-600" />
             <AlertDescription>
-              Found {parsedData.length} supplement{parsedData.length !== 1 ? 's' : ''}{' '}
-              ready to import:
+              Found {parsedData.length} supplement{parsedData.length !== 1 ? 's' : ''} ready to
+              import:
               <ul className="mt-2 list-disc list-inside text-sm">
                 {parsedData.map((s, i) => (
                   <li key={i}>

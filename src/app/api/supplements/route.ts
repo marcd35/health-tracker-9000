@@ -79,11 +79,13 @@ export async function POST(request: Request) {
       brand: body.brand,
       servingSize: body.servingSize,
       nutrients: body.nutrients || {},
+      customNutrients: body.customNutrients || {},
       notes: body.notes,
       color: body.color || '#6366f1',
       dosageFrequency: body.dosageFrequency || 'daily',
       dosageQuantity: body.dosageQuantity || 1,
       dosageNotes: body.dosageNotes,
+      supplementType: body.supplementType || 'nutrient',
     });
 
     return NextResponse.json(newSupplement, { status: 201 });

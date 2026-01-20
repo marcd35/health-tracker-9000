@@ -26,6 +26,16 @@ export interface USDAFoodItem {
   servingSizeUnit?: string;
   householdServingFullText?: string;
   foodNutrients: USDAFoodNutrient[];
+  foodPortions?: USDAFoodPortion[];
+}
+
+export interface USDAFoodPortion {
+  id: number;
+  measureUnitName: string;
+  modifier: string;
+  gramWeight: number;
+  sequenceNumber: number;
+  amount?: number;
 }
 
 export type UsdaFoodSearchResult = USDAFoodItem; // Legacy alias

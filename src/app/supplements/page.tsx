@@ -10,7 +10,6 @@ import { SupplementCard } from '@/components/supplements/SupplementCard';
 import { SupplementDialog } from '@/components/supplements/SupplementDialog';
 import { SupplementLogItem } from '@/components/supplements/SupplementLogItem';
 import { EditLogDialog } from '@/components/supplements/EditLogDialog';
-import { NutrientTrackingTable } from '@/components/supplements/NutrientTrackingTable';
 import { TemplateSelector } from '@/components/supplements/TemplateSelector';
 import { JSONImportDialog } from '@/components/supplements/JSONImportDialog';
 import { NutrientTargetsEditor } from '@/components/supplements/NutrientTargetsEditor';
@@ -18,7 +17,17 @@ import { SupplementsSkeleton } from '@/components/supplements/SupplementsSkeleto
 import { ViewSupplementModal } from '@/components/supplements/ViewSupplementModal';
 import { TakeEarlierDialog } from '@/components/supplements/TakeEarlierDialog';
 import { DuplicateWarningDialog } from '@/components/supplements/DuplicateWarningDialog';
-import type { Supplement, SupplementFormData, SupplementLog } from '@/lib/types/supplements';
+import { VitaminProgressCard } from '@/components/supplements/VitaminProgressCard';
+import { MineralProgressCard } from '@/components/supplements/MineralProgressCard';
+import { CustomSupplementsCard } from '@/components/supplements/CustomSupplementsCard';
+import { CustomNutrientManager } from '@/components/supplements/CustomNutrientManager';
+import { AddSupplementTypeDialog } from '@/components/supplements/AddSupplementTypeDialog';
+import type {
+  Supplement,
+  SupplementFormData,
+  SupplementLog,
+  SupplementType,
+} from '@/lib/types/supplements';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,10 +46,12 @@ export default function SupplementsPage() {
     supplements,
     todayLogs,
     nutrientTargets,
+    customNutrientMetadata,
     isLoading,
     fetchSupplements,
     fetchTodayLogs,
     fetchNutrientTargets,
+    fetchCustomNutrients,
     createSupplement,
     updateSupplement,
     deleteSupplement,
@@ -51,11 +62,15 @@ export default function SupplementsPage() {
     updateNutrientTarget,
     deleteNutrientTarget,
     calculateNutrientProgress,
+    calculateCustomNutrientProgress,
+    getCustomSupplements,
   } = useSupplementStore();
 
   // Dialog states
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false);
+  const [selectedSupplementType, setSelectedSupplementType] = useState<SupplementType | null>(null);
   const [editingSupplement, setEditingSupplement] = useState<Supplement | undefined>();
   const [editingLog, setEditingLog] = useState<SupplementLog | null>(null);
   const [deletingSupplementId, setDeletingSupplementId] = useState<string | null>(null);
@@ -72,10 +87,11 @@ export default function SupplementsPage() {
       fetchSupplements();
       fetchTodayLogs(today);
       fetchNutrientTargets();
+      fetchCustomNutrients();
     };
 
     fetchData();
-  }, [fetchSupplements, fetchTodayLogs, fetchNutrientTargets, today]);
+  }, [fetchSupplements, fetchTodayLogs, fetchNutrientTargets, fetchCustomNutrients, today]);
 
   // Calculate taken counts per supplement
   const takenCounts = useMemo(() => {
@@ -95,11 +111,25 @@ export default function SupplementsPage() {
     [todayLogs, supplements, nutrientTargets]
   );
 
+  // Calculate custom nutrient progress
+  const customNutrientProgress = useMemo(
+    () => calculateCustomNutrientProgress(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [todayLogs, supplements, customNutrientMetadata]
+  );
+
   // Handlers
+  const handleSelectSupplementType = (type: SupplementType) => {
+    setSelectedSupplementType(type);
+    setIsTypeDialogOpen(false);
+    setIsFormOpen(true);
+  };
+
   const handleCreateSupplement = async (data: SupplementFormData) => {
     await createSupplement(data);
     setIsFormOpen(false);
     setEditingSupplement(undefined);
+    setSelectedSupplementType(null);
   };
 
   const handleUpdateSupplement = async (data: SupplementFormData) => {
@@ -107,6 +137,7 @@ export default function SupplementsPage() {
       await updateSupplement(editingSupplement.id, data);
       setIsFormOpen(false);
       setEditingSupplement(undefined);
+      setSelectedSupplementType(null);
     }
   };
 
@@ -200,7 +231,7 @@ export default function SupplementsPage() {
             Manage your daily supplement routine and track nutrient intake.
           </p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)}>
+        <Button onClick={() => setIsTypeDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add Supplement
         </Button>
@@ -224,6 +255,10 @@ export default function SupplementsPage() {
           <TabsTrigger value="targets" className="gap-2">
             <Settings className="h-4 w-4" />
             Targets
+          </TabsTrigger>
+          <TabsTrigger value="custom-nutrients" className="gap-2">
+            <Layers className="h-4 w-4" />
+            Custom Nutrients
           </TabsTrigger>
         </TabsList>
 
@@ -288,8 +323,19 @@ export default function SupplementsPage() {
             </CardContent>
           </Card>
 
-          {/* Unified Nutrient Tracking Table */}
-          <NutrientTrackingTable progressData={nutrientProgress} />
+          {/* Custom Supplements Card */}
+          <CustomSupplementsCard
+            customSupplements={getCustomSupplements()}
+            todayLogs={todayLogs}
+            customNutrientProgress={customNutrientProgress}
+            onTake={handleTake}
+          />
+
+          {/* Vitamin and Mineral Progress Cards - Side by Side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <VitaminProgressCard progressData={nutrientProgress} />
+            <MineralProgressCard progressData={nutrientProgress} />
+          </div>
         </TabsContent>
 
         {/* Templates Tab */}
@@ -340,16 +386,41 @@ export default function SupplementsPage() {
             onReset={handleNutrientTargetReset}
           />
         </TabsContent>
+
+        {/* Custom Nutrients Tab */}
+        <TabsContent value="custom-nutrients">
+          <Card>
+            <CardHeader>
+              <CardTitle>Manage Custom Nutrients</CardTitle>
+              <CardDescription>
+                Define custom nutrients like omega-3s or probiotics and set daily targets.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CustomNutrientManager />
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Dialogs */}
+      <AddSupplementTypeDialog
+        open={isTypeDialogOpen}
+        onOpenChange={setIsTypeDialogOpen}
+        onSelectType={handleSelectSupplementType}
+      />
+
       <SupplementDialog
         open={isFormOpen}
         onOpenChange={(open) => {
           setIsFormOpen(open);
-          if (!open) setEditingSupplement(undefined);
+          if (!open) {
+            setEditingSupplement(undefined);
+            setSelectedSupplementType(null);
+          }
         }}
         supplement={editingSupplement}
+        supplementType={selectedSupplementType || undefined}
         onSubmit={editingSupplement ? handleUpdateSupplement : handleCreateSupplement}
         isLoading={isLoading}
       />

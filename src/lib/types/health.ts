@@ -50,6 +50,7 @@ export interface Food {
   ingredients?: string;
   allergens?: string[];
   rawUSDAData?: any;
+  usdaFdcId?: number;
 }
 
 export interface NutritionalValues {
@@ -58,6 +59,14 @@ export interface NutritionalValues {
   carbs: number;
   fat: number;
   fiber: number;
+  sugar?: number;
+  sodium?: number;
+  calcium?: number;
+  iron?: number;
+  potassium?: number;
+  vitaminA?: number;
+  vitaminC?: number;
+  vitaminD?: number;
   // All vitamins and minerals same as targets
   [key: string]: number | undefined;
 }

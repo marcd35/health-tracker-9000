@@ -3,6 +3,7 @@ import type {
   Supplement,
   SupplementLog,
   SupplementNutrientTarget,
+  CustomNutrientMetadata,
   NutrientKey,
 } from '@/lib/types/supplements';
 import { v4 as uuidv4 } from 'uuid';
@@ -30,8 +31,8 @@ export class SupplementRepository {
 
     const stmt = this.db.prepare(`
       INSERT INTO supplements
-      (id, name, brand, serving_size, nutrients, notes, color, dosage_frequency, dosage_quantity, dosage_notes, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, name, brand, serving_size, nutrients, custom_nutrients, notes, color, dosage_frequency, dosage_quantity, dosage_notes, supplement_type, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -40,11 +41,13 @@ export class SupplementRepository {
       data.brand,
       data.servingSize,
       JSON.stringify(data.nutrients),
+      JSON.stringify(data.customNutrients),
       data.notes || null,
       data.color,
       data.dosageFrequency,
       data.dosageQuantity,
       data.dosageNotes || null,
+      data.supplementType,
       createdAt
     );
 
@@ -59,12 +62,14 @@ export class SupplementRepository {
       ...existing,
       ...data,
       nutrients: data.nutrients ?? existing.nutrients,
+      customNutrients: data.customNutrients ?? existing.customNutrients,
+      supplementType: data.supplementType ?? existing.supplementType,
     };
 
     const stmt = this.db.prepare(`
       UPDATE supplements SET
-        name = ?, brand = ?, serving_size = ?, nutrients = ?, notes = ?,
-        color = ?, dosage_frequency = ?, dosage_quantity = ?, dosage_notes = ?
+        name = ?, brand = ?, serving_size = ?, nutrients = ?, custom_nutrients = ?, notes = ?,
+        color = ?, dosage_frequency = ?, dosage_quantity = ?, dosage_notes = ?, supplement_type = ?
       WHERE id = ?
     `);
 
@@ -73,11 +78,13 @@ export class SupplementRepository {
       updated.brand,
       updated.servingSize,
       JSON.stringify(updated.nutrients),
+      JSON.stringify(updated.customNutrients),
       updated.notes || null,
       updated.color,
       updated.dosageFrequency,
       updated.dosageQuantity,
       updated.dosageNotes || null,
+      updated.supplementType,
       id
     );
 
@@ -208,20 +215,116 @@ export class SupplementRepository {
       .run(nutrientKey);
   }
 
+  // ===== CUSTOM NUTRIENTS =====
+
+  getAllCustomNutrients(): CustomNutrientMetadata[] {
+    const stmt = this.db.prepare('SELECT * FROM custom_nutrient_metadata ORDER BY category, name');
+    const rows = stmt.all() as Record<string, unknown>[];
+    return rows.map(this.mapRowToCustomNutrient);
+  }
+
+  getCustomNutrientByKey(key: string): CustomNutrientMetadata | null {
+    const stmt = this.db.prepare('SELECT * FROM custom_nutrient_metadata WHERE nutrient_key = ?');
+    const row = stmt.get(key) as Record<string, unknown> | undefined;
+    return row ? this.mapRowToCustomNutrient(row) : null;
+  }
+
+  createCustomNutrient(
+    data: Omit<CustomNutrientMetadata, 'id' | 'createdAt' | 'updatedAt'>
+  ): CustomNutrientMetadata {
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    const stmt = this.db.prepare(`
+      INSERT INTO custom_nutrient_metadata
+      (id, nutrient_key, name, unit, category, user_defined_target, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      id,
+      data.key,
+      data.name,
+      data.unit,
+      data.category,
+      data.userDefinedTarget || null,
+      now,
+      now
+    );
+
+    return {
+      id,
+      key: data.key,
+      name: data.name,
+      unit: data.unit,
+      category: data.category,
+      userDefinedTarget: data.userDefinedTarget,
+      createdAt: now,
+      updatedAt: now,
+    };
+  }
+
+  updateCustomNutrient(
+    key: string,
+    data: Partial<Omit<CustomNutrientMetadata, 'id' | 'key' | 'createdAt' | 'updatedAt'>>
+  ): CustomNutrientMetadata {
+    const existing = this.getCustomNutrientByKey(key);
+    if (!existing) throw new Error('Custom nutrient not found');
+
+    const now = new Date().toISOString();
+
+    const stmt = this.db.prepare(`
+      UPDATE custom_nutrient_metadata
+      SET name = ?, unit = ?, category = ?, user_defined_target = ?, updated_at = ?
+      WHERE nutrient_key = ?
+    `);
+
+    stmt.run(
+      data.name ?? existing.name,
+      data.unit ?? existing.unit,
+      data.category ?? existing.category,
+      data.userDefinedTarget ?? existing.userDefinedTarget ?? null,
+      now,
+      key
+    );
+
+    return {
+      ...existing,
+      ...data,
+      updatedAt: now,
+    };
+  }
+
+  deleteCustomNutrient(key: string): void {
+    this.db.prepare('DELETE FROM custom_nutrient_metadata WHERE nutrient_key = ?').run(key);
+  }
+
   // ===== HELPERS =====
 
   private mapRowToSupplement(row: Record<string, unknown>): Supplement {
+    // Infer supplement type if not stored (for backwards compatibility)
+    let supplementType = (row.supplement_type as 'nutrient' | 'custom' | null) || 'nutrient';
+    const nutrients = JSON.parse((row.nutrients as string) || '{}');
+    const customNutrients = JSON.parse((row.custom_nutrients as string) || '{}');
+
+    // Auto-infer custom type if nutrients is empty
+    if (Object.keys(nutrients).length === 0) {
+      supplementType = 'custom';
+    }
+
     return {
       id: row.id as string,
       name: row.name as string,
       brand: row.brand as string,
       servingSize: row.serving_size as string,
-      nutrients: JSON.parse((row.nutrients as string) || '{}'),
+      nutrients,
+      customNutrients,
       notes: row.notes as string | undefined,
       color: (row.color as string) || '#6366f1',
       dosageFrequency: (row.dosage_frequency as 'daily' | 'weekly') || 'daily',
       dosageQuantity: (row.dosage_quantity as number) || 1,
       dosageNotes: row.dosage_notes as string | undefined,
+      supplementType,
       createdAt: row.created_at as string,
     };
   }
@@ -245,6 +348,19 @@ export class SupplementRepository {
       nutrientKey: row.nutrient_key as NutrientKey,
       targetValue: row.target_value as number,
       useRda: row.use_rda === 1,
+      createdAt: row.created_at as string,
+      updatedAt: row.updated_at as string,
+    };
+  }
+
+  private mapRowToCustomNutrient(row: Record<string, unknown>): CustomNutrientMetadata {
+    return {
+      id: row.id as string,
+      key: row.nutrient_key as string,
+      name: row.name as string,
+      unit: row.unit as string,
+      category: row.category as string,
+      userDefinedTarget: row.user_defined_target as number | undefined,
       createdAt: row.created_at as string,
       updatedAt: row.updated_at as string,
     };

@@ -3,6 +3,9 @@ import { getDatabase } from '@/lib/database/connection';
 import { setupTestDb, seedTestProfile } from '../test-db';
 import Database from 'better-sqlite3';
 
+// Mock uuid
+jest.mock('uuid', () => ({ v4: jest.fn(() => 'mock-uuid') }));
+
 // Mock the database connection module
 jest.mock('@/lib/database/connection', () => ({
   getDatabase: jest.fn(),

@@ -67,7 +67,9 @@ async function importByFdcId(fdcId: number) {
       mappedFood.servingUnit,
       mappedFood.nutritionPer100g,
       mappedFood.allergens,
-      fdcId
+      fdcId,
+      mappedFood.brand,
+      mappedFood.ingredients
     );
 
     const savedFood = repo.getFoodById(foodId);
@@ -127,7 +129,9 @@ async function importMappedFood(food: Food & { usdaFdcId: number }) {
     food.servingUnit,
     food.nutritionPer100g,
     food.allergens,
-    food.usdaFdcId
+    food.usdaFdcId,
+    food.brand,
+    food.ingredients
   );
 
   const savedFood = repo.getFoodById(foodId);

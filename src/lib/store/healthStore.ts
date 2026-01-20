@@ -30,6 +30,7 @@ interface HealthState {
   searchUSDAFoods: (query: string) => Promise<Food[]>;
   importUSDAFood: (food: Food & { usdaFdcId: number }) => Promise<Food | null>;
   fetchFoodById: (id: string) => Promise<Food | null>;
+  fetchRawUSDAFood: (fdcId: number) => Promise<any | null>;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }
@@ -267,6 +268,20 @@ export const useHealthStore = create<HealthState>((set, get) => ({
     } catch (err: any) {
       console.error('Fetch food error:', err);
       toast.error(err.message || 'Failed to fetch food details');
+      return null;
+    }
+  },
+
+  fetchRawUSDAFood: async (fdcId: number) => {
+    try {
+      const response = await fetch(`/api/foods/usda/${fdcId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch raw USDA data');
+      }
+      return await response.json();
+    } catch (err: any) {
+      console.error('Fetch raw USDA food error:', err);
+      toast.error('Failed to fetch raw USDA data for inspection');
       return null;
     }
   },

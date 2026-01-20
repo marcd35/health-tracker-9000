@@ -12,6 +12,9 @@ export const NUTRIENT_ID_MAP: Record<number, keyof NutritionalValues> = {
   1005: 'carbs', // Carbohydrate, by difference (g)
   1004: 'fat', // Total lipid (fat) (g)
   1079: 'fiber', // Fiber, total dietary (g)
+  2000: 'sugar', // Sugars, total (g) - Note: USDA ID for sugar varies, often 2000 or 1063
+  1063: 'sugar', // Sugars, total (g)
+  269: 'sugar', // Sugars, total including NLEA (g)
 
   // Vitamins
   1106: 'vitaminA', // Vitamin A, RAE (mcg)
@@ -33,6 +36,10 @@ export const NUTRIENT_ID_MAP: Record<number, keyof NutritionalValues> = {
   1092: 'potassium', // Potassium, K (mg)
   1095: 'zinc', // Zinc, Zn (mg)
   1103: 'selenium', // Selenium, Se (mcg)
+  1093: 'sodium', // Sodium, Na (mg)
+  1001: 'water', // Water (g)
+  1235: 'vitaminD3', // Vitamin D3 (mcg)
+  1110: 'vitaminD2', // Vitamin D2 (mcg)
 };
 
 /**

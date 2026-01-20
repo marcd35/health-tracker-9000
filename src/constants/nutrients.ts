@@ -203,7 +203,7 @@ export const MINERALS = Object.values(NUTRIENTS).filter((n) => n.category === 'm
 // All nutrient keys as an array
 export const NUTRIENT_KEYS = Object.keys(NUTRIENTS) as NutrientKey[];
 
-// Pre-built supplement templates
+// Pre-built nutrient supplement templates
 export const SUPPLEMENT_TEMPLATES: SupplementTemplate[] = [
   {
     id: 'template-multivitamin-men',
@@ -211,6 +211,7 @@ export const SUPPLEMENT_TEMPLATES: SupplementTemplate[] = [
     description: 'Complete daily multivitamin for adult men',
     defaultServingSize: '1 tablet',
     suggestedColor: '#6366f1',
+    supplementType: 'nutrient',
     nutrients: {
       vitaminA: 900,
       vitaminC: 90,
@@ -235,6 +236,7 @@ export const SUPPLEMENT_TEMPLATES: SupplementTemplate[] = [
     description: 'Complete daily multivitamin for adult women',
     defaultServingSize: '1 tablet',
     suggestedColor: '#ec4899',
+    supplementType: 'nutrient',
     nutrients: {
       vitaminA: 700,
       vitaminC: 75,
@@ -259,6 +261,7 @@ export const SUPPLEMENT_TEMPLATES: SupplementTemplate[] = [
     description: 'High-dose vitamin D for immune and bone health',
     defaultServingSize: '1 softgel',
     suggestedColor: '#f59e0b',
+    supplementType: 'nutrient',
     nutrients: {
       vitaminD: 50, // 2000 IU
     },
@@ -269,6 +272,7 @@ export const SUPPLEMENT_TEMPLATES: SupplementTemplate[] = [
     description: 'Antioxidant and immune support',
     defaultServingSize: '1 tablet',
     suggestedColor: '#ef4444',
+    supplementType: 'nutrient',
     nutrients: {
       vitaminC: 1000,
     },
@@ -279,6 +283,7 @@ export const SUPPLEMENT_TEMPLATES: SupplementTemplate[] = [
     description: 'All 8 B vitamins for energy metabolism',
     defaultServingSize: '1 capsule',
     suggestedColor: '#8b5cf6',
+    supplementType: 'nutrient',
     nutrients: {
       thiamin: 100,
       riboflavin: 100,
@@ -296,6 +301,7 @@ export const SUPPLEMENT_TEMPLATES: SupplementTemplate[] = [
     description: 'Highly absorbable magnesium for sleep and muscle recovery',
     defaultServingSize: '2 capsules',
     suggestedColor: '#10b981',
+    supplementType: 'nutrient',
     nutrients: {
       magnesium: 400,
     },
@@ -306,6 +312,7 @@ export const SUPPLEMENT_TEMPLATES: SupplementTemplate[] = [
     description: 'Immune support and wound healing',
     defaultServingSize: '1 tablet',
     suggestedColor: '#64748b',
+    supplementType: 'nutrient',
     nutrients: {
       zinc: 30,
     },
@@ -316,6 +323,7 @@ export const SUPPLEMENT_TEMPLATES: SupplementTemplate[] = [
     description: 'For blood health and energy',
     defaultServingSize: '1 tablet',
     suggestedColor: '#dc2626',
+    supplementType: 'nutrient',
     nutrients: {
       iron: 18,
     },
@@ -326,17 +334,68 @@ export const SUPPLEMENT_TEMPLATES: SupplementTemplate[] = [
     description: 'Calcium with vitamin D for bone health',
     defaultServingSize: '2 tablets',
     suggestedColor: '#f5f5f5',
+    supplementType: 'nutrient',
     nutrients: {
       calcium: 600,
       vitaminD: 25,
     },
   },
+];
+
+// Custom supplement templates (no FDA RDA tracking)
+export const CUSTOM_SUPPLEMENT_TEMPLATES: SupplementTemplate[] = [
   {
     id: 'template-fish-oil',
     name: 'Fish Oil (Omega-3)',
-    description: 'EPA/DHA for heart and brain health (nutrients not tracked)',
+    description: 'EPA/DHA for heart and brain health',
     defaultServingSize: '1 softgel',
     suggestedColor: '#3b82f6',
+    supplementType: 'custom',
+    nutrients: {},
+  },
+  {
+    id: 'template-coq10',
+    name: 'CoQ10',
+    description: 'Ubiquinone for heart health and energy production',
+    defaultServingSize: '1 capsule',
+    suggestedColor: '#f59e0b',
+    supplementType: 'custom',
+    nutrients: {},
+  },
+  {
+    id: 'template-probiotics',
+    name: 'Probiotics',
+    description: 'Live beneficial bacteria for gut health',
+    defaultServingSize: '1 capsule',
+    suggestedColor: '#10b981',
+    supplementType: 'custom',
+    nutrients: {},
+  },
+  {
+    id: 'template-ashwagandha',
+    name: 'Ashwagandha',
+    description: 'Adaptogenic herb for stress and sleep support',
+    defaultServingSize: '1 capsule',
+    suggestedColor: '#8b5cf6',
+    supplementType: 'custom',
+    nutrients: {},
+  },
+  {
+    id: 'template-creatine',
+    name: 'Creatine Monohydrate',
+    description: 'Amino acid for muscle strength and performance',
+    defaultServingSize: '1 scoop (5g)',
+    suggestedColor: '#ef4444',
+    supplementType: 'custom',
+    nutrients: {},
+  },
+  {
+    id: 'template-collagen',
+    name: 'Collagen Peptides',
+    description: 'Protein for joint, skin, and gut health',
+    defaultServingSize: '1 scoop (10g)',
+    suggestedColor: '#ec4899',
+    supplementType: 'custom',
     nutrients: {},
   },
 ];

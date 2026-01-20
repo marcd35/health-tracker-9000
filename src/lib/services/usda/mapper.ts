@@ -21,6 +21,8 @@ export class USDAMapper {
       servingSize: usdaFood.servingSize || 100,
       servingUnit: usdaFood.servingSizeUnit || 'g',
       nutritionPer100g,
+      brand: usdaFood.brandName || usdaFood.brandOwner,
+      ingredients: usdaFood.ingredients,
       allergens: allergens.length > 0 ? allergens : undefined,
       usdaFdcId: usdaFood.fdcId,
       rawUSDAData: usdaFood, // Include raw response for inspection
@@ -75,7 +77,7 @@ export class USDAMapper {
   private static roundNutrientValue(value: number, nutrientKey: string): number {
     if (nutrientKey === 'calories') {
       return Math.round(value);
-    } else if (['protein', 'carbs', 'fat', 'fiber'].includes(nutrientKey)) {
+    } else if (['protein', 'carbs', 'fat', 'fiber', 'sugar', 'sodium'].includes(nutrientKey)) {
       return Math.round(value * 10) / 10; // 1 decimal
     } else {
       return Math.round(value * 100) / 100; // 2 decimals

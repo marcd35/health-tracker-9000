@@ -43,8 +43,34 @@ export interface NutrientInfo {
   category: 'vitamin' | 'mineral';
 }
 
+// Metadata for custom nutrients (user creates these)
+export interface CustomNutrientMetadata {
+  id: string;
+  key: string; // e.g., "epa", "dha", "ala"
+  name: string; // e.g., "EPA (Omega-3)"
+  unit: string; // e.g., "mg"
+  category: string; // e.g., "omega3", "probiotic"
+  userDefinedTarget?: number; // Daily goal (optional)
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Progress data for a custom nutrient
+export interface CustomNutrientProgress {
+  nutrientKey: string;
+  name: string;
+  unit: string;
+  target: number | null; // null = no target set
+  total: number; // Today's intake
+  percentage: number; // 0 if no target
+  contributions: NutrientContribution[];
+}
+
 // Dosage frequency options
 export type DosageFrequency = 'daily' | 'weekly';
+
+// Supplement type discriminator
+export type SupplementType = 'nutrient' | 'custom';
 
 // Main supplement interface
 export interface Supplement {
@@ -53,11 +79,13 @@ export interface Supplement {
   brand: string;
   servingSize: string;
   nutrients: Partial<Record<NutrientKey, number>>;
+  customNutrients: Record<string, number>; // NEW: custom nutrients
   notes?: string;
   color: string;
   dosageFrequency: DosageFrequency;
   dosageQuantity: number;
   dosageNotes?: string;
+  supplementType: SupplementType;
   createdAt: string;
 }
 
@@ -93,7 +121,9 @@ export interface SupplementFormData {
   dosageQuantity: number;
   dosageNotes: string;
   nutrients: Partial<Record<NutrientKey, number>>;
+  customNutrients: Record<string, number>; // NEW: custom nutrients
   notes: string;
+  supplementType: SupplementType;
 }
 
 // Pre-built supplement template
@@ -105,6 +135,7 @@ export interface SupplementTemplate {
   defaultServingSize: string;
   nutrients: Partial<Record<NutrientKey, number>>;
   suggestedColor: string;
+  supplementType: SupplementType;
 }
 
 // Individual supplement contribution to a nutrient

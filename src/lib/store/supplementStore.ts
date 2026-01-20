@@ -6,6 +6,8 @@ import type {
   SupplementNutrientTarget,
   SupplementFormData,
   NutrientProgress,
+  CustomNutrientMetadata,
+  CustomNutrientProgress,
   NutrientKey,
 } from '@/lib/types/supplements';
 import { NUTRIENTS } from '@/constants/nutrients';
@@ -14,6 +16,7 @@ interface SupplementState {
   supplements: Supplement[];
   todayLogs: SupplementLog[];
   nutrientTargets: SupplementNutrientTarget[];
+  customNutrientMetadata: CustomNutrientMetadata[];
   isLoading: boolean;
   error: string | null;
 
@@ -45,14 +48,29 @@ interface SupplementState {
   ) => Promise<void>;
   deleteNutrientTarget: (nutrientKey: NutrientKey, date: string) => Promise<void>;
 
+  // Custom Nutrients
+  fetchCustomNutrients: () => Promise<void>;
+  createCustomNutrient: (
+    data: Omit<CustomNutrientMetadata, 'id' | 'createdAt' | 'updatedAt'>
+  ) => Promise<void>;
+  updateCustomNutrient: (
+    key: string,
+    data: Partial<Omit<CustomNutrientMetadata, 'id' | 'key' | 'createdAt' | 'updatedAt'>>
+  ) => Promise<void>;
+  deleteCustomNutrient: (key: string) => Promise<void>;
+
   // Computed
   calculateNutrientProgress: () => NutrientProgress[];
+  calculateCustomNutrientProgress: () => CustomNutrientProgress[];
+  getNutrientSupplements: () => Supplement[];
+  getCustomSupplements: () => Supplement[];
 }
 
 export const useSupplementStore = create<SupplementState>((set, get) => ({
   supplements: [],
   todayLogs: [],
   nutrientTargets: [],
+  customNutrientMetadata: [],
   isLoading: false,
   error: null,
 
@@ -250,6 +268,65 @@ export const useSupplementStore = create<SupplementState>((set, get) => ({
     }
   },
 
+  // ===== CUSTOM NUTRIENTS =====
+
+  fetchCustomNutrients: async () => {
+    try {
+      const res = await fetch('/api/supplements/custom-nutrients');
+      if (!res.ok) throw new Error('Failed to fetch custom nutrients');
+      const nutrients = await res.json();
+      set({ customNutrientMetadata: nutrients });
+    } catch (err) {
+      console.error(err);
+    }
+  },
+
+  createCustomNutrient: async (data) => {
+    try {
+      const res = await fetch('/api/supplements/custom-nutrients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Failed to create custom nutrient');
+      await get().fetchCustomNutrients();
+      toast.success(`${data.name} created`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create custom nutrient';
+      toast.error(message);
+    }
+  },
+
+  updateCustomNutrient: async (key, data) => {
+    try {
+      const res = await fetch('/api/supplements/custom-nutrients', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, ...data }),
+      });
+      if (!res.ok) throw new Error('Failed to update custom nutrient');
+      await get().fetchCustomNutrients();
+      toast.success('Custom nutrient updated');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to update custom nutrient';
+      toast.error(message);
+    }
+  },
+
+  deleteCustomNutrient: async (key) => {
+    try {
+      const res = await fetch(`/api/supplements/custom-nutrients?key=${key}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to delete custom nutrient');
+      await get().fetchCustomNutrients();
+      toast.success('Custom nutrient deleted');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to delete custom nutrient';
+      toast.error(message);
+    }
+  },
+
   // ===== COMPUTED =====
 
   calculateNutrientProgress: () => {
@@ -302,5 +379,72 @@ export const useSupplementStore = create<SupplementState>((set, get) => ({
     });
 
     return progress;
+  },
+
+  calculateCustomNutrientProgress: () => {
+    const { supplements, todayLogs, customNutrientMetadata } = get();
+
+    // Count how many times each supplement was taken today
+    const supplementTakenCount: Record<string, number> = {};
+    todayLogs.forEach((log) => {
+      if (log.taken) {
+        supplementTakenCount[log.supplementId] = (supplementTakenCount[log.supplementId] || 0) + 1;
+      }
+    });
+
+    // Calculate progress for each custom nutrient
+    return customNutrientMetadata.map((metadata) => {
+      let total = 0;
+      const contributions: CustomNutrientProgress['contributions'] = [];
+
+      // Find supplements with this custom nutrient
+      supplements.forEach((supp) => {
+        const amount = supp.customNutrients[metadata.key];
+        if (!amount) return;
+
+        // Count taken logs
+        const takenCount = supplementTakenCount[supp.id] || 0;
+        if (takenCount > 0) {
+          const totalAmount = amount * takenCount;
+          total += totalAmount;
+
+          contributions.push({
+            supplementId: supp.id,
+            supplementName: supp.name,
+            color: supp.color,
+            amount: totalAmount,
+            percentage: metadata.userDefinedTarget
+              ? (totalAmount / metadata.userDefinedTarget) * 100
+              : 0,
+          });
+        }
+      });
+
+      return {
+        nutrientKey: metadata.key,
+        name: metadata.name,
+        unit: metadata.unit,
+        target: metadata.userDefinedTarget || null,
+        total,
+        percentage: metadata.userDefinedTarget
+          ? Math.min(200, (total / metadata.userDefinedTarget) * 100)
+          : 0,
+        contributions,
+      };
+    });
+  },
+
+  getNutrientSupplements: () => {
+    const { supplements } = get();
+    return supplements.filter(
+      (s) => s.supplementType === 'nutrient' || Object.keys(s.nutrients).length > 0
+    );
+  },
+
+  getCustomSupplements: () => {
+    const { supplements } = get();
+    return supplements.filter(
+      (s) => s.supplementType === 'custom' || Object.keys(s.nutrients).length === 0
+    );
   },
 }));

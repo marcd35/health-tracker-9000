@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Utensils, Trash2, Plus, Info, Search } from 'lucide-react';
+import { Utensils, Trash2, Plus, Search } from 'lucide-react';
 import { useHealthStore } from '@/lib/store/healthStore';
 import { FoodInspectionModal } from '../modals/FoodInspectionModal';
 import {
@@ -47,16 +47,27 @@ interface TodaysMealsProps {
 }
 
 export function TodaysMeals({ meals }: TodaysMealsProps) {
-  const { deleteMeal, fetchFoodById } = useHealthStore();
+  const { deleteMeal, fetchFoodById, fetchRawUSDAFood } = useHealthStore();
   const [mealToDelete, setMealToDelete] = useState<string | null>(null);
   const [inspectingFood, setInspectingFood] = useState<any | null>(null);
   const [isFetchingFood, setIsFetchingFood] = useState(false);
 
   const handleInspect = async (foodId: string) => {
     setIsFetchingFood(true);
-    const fullFood = await fetchFoodById(foodId);
-    if (fullFood) {
-      setInspectingFood(fullFood);
+    try {
+      const fullFood = await fetchFoodById(foodId);
+      if (fullFood) {
+        // If it's a USDA food but missing raw data (because it's from DB), fetch it
+        if (fullFood.usdaFdcId && !fullFood.rawUSDAData) {
+          const rawData = await fetchRawUSDAFood(Number(fullFood.usdaFdcId));
+          if (rawData) {
+            fullFood.rawUSDAData = rawData;
+          }
+        }
+        setInspectingFood(fullFood);
+      }
+    } catch (error) {
+      console.error('Failed to inspect food:', error);
     }
     setIsFetchingFood(false);
   };
@@ -167,16 +178,14 @@ export function TodaysMeals({ meals }: TodaysMealsProps) {
         </DialogContent>
       </Dialog>
 
-      {
-        inspectingFood && (
-          <FoodInspectionModal
-            isOpen={!!inspectingFood}
-            onClose={() => setInspectingFood(null)}
-            foodName={inspectingFood.name}
-            rawJson={inspectingFood.rawUSDAData}
-          />
-        )
-      }
-    </Card >
+      {inspectingFood && (
+        <FoodInspectionModal
+          isOpen={!!inspectingFood}
+          onClose={() => setInspectingFood(null)}
+          foodName={inspectingFood.name}
+          rawJson={inspectingFood.rawUSDAData}
+        />
+      )}
+    </Card>
   );
 }

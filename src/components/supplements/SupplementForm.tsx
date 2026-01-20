@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Plus } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { Plus, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,11 +15,15 @@ import {
 } from '@/components/ui/select';
 import { ColorPicker } from './ColorPicker';
 import { NutrientInput } from './NutrientInput';
+import { CustomNutrientInput } from './CustomNutrientInput';
+import { PercentageCalculator } from './PercentageCalculator';
+import { useSupplementStore } from '@/lib/store/supplementStore';
 import type {
   Supplement,
   SupplementFormData,
   NutrientKey,
   DosageFrequency,
+  SupplementType,
 } from '@/lib/types/supplements';
 import { DEFAULT_SUPPLEMENT_COLOR } from '@/constants/nutrients';
 
@@ -28,8 +32,24 @@ interface NutrientEntry {
   amount: number;
 }
 
+interface CustomNutrientEntry {
+  key: string;
+  amount: number;
+}
+
+interface DatabaseSuggestion {
+  name: string;
+  brand: string;
+  servingSize: string;
+  servingCount: number;
+  nutrients: Record<string, number>;
+  customNutrients: Record<string, number>;
+  notes?: string;
+}
+
 interface SupplementFormProps {
   initialData?: Supplement;
+  supplementType?: SupplementType;
   onSubmit: (data: SupplementFormData) => void;
   onCancel: () => void;
   isLoading?: boolean;
@@ -46,14 +66,35 @@ function getInitialNutrients(initialData?: Supplement): NutrientEntry[] {
   return [{ key: '', amount: 0 }];
 }
 
+// Helper to convert initialData custom nutrients to entries
+function getInitialCustomNutrients(initialData?: Supplement): CustomNutrientEntry[] {
+  if (initialData?.customNutrients && Object.keys(initialData.customNutrients).length > 0) {
+    return Object.entries(initialData.customNutrients).map(([key, amount]) => ({
+      key,
+      amount: amount as number,
+    }));
+  }
+  return [];
+}
+
 export function SupplementForm({
   initialData,
+  supplementType,
   onSubmit,
   onCancel,
   isLoading,
 }: SupplementFormProps) {
+  const { customNutrientMetadata } = useSupplementStore();
+
   // Use useMemo for the initial nutrients to avoid recalculating
   const initialNutrients = useMemo(() => getInitialNutrients(initialData), [initialData]);
+  const initialCustomNutrients = useMemo(
+    () => getInitialCustomNutrients(initialData),
+    [initialData]
+  );
+
+  // Determine the type - prefer initialData type, then prop, then default to nutrient
+  const currentType: SupplementType = initialData?.supplementType || supplementType || 'nutrient';
 
   const [name, setName] = useState(initialData?.name || '');
   const [brand, setBrand] = useState(initialData?.brand || '');
@@ -62,16 +103,59 @@ export function SupplementForm({
   const [dosageFrequency, setDosageFrequency] = useState<DosageFrequency>(
     initialData?.dosageFrequency || 'daily'
   );
-  const [dosageQuantity, setDosageQuantity] = useState(
-    initialData?.dosageQuantity || 1
-  );
+  const [dosageQuantity, setDosageQuantity] = useState(initialData?.dosageQuantity || 1);
   const [dosageNotes, setDosageNotes] = useState(initialData?.dosageNotes || '');
   const [notes, setNotes] = useState(initialData?.notes || '');
   const [nutrients, setNutrients] = useState<NutrientEntry[]>(initialNutrients);
+  const [customNutrients, setCustomNutrients] =
+    useState<CustomNutrientEntry[]>(initialCustomNutrients);
+  const [databaseSuggestion, setDatabaseSuggestion] = useState<DatabaseSuggestion | null>(null);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const usedKeys = nutrients
-    .map((n) => n.key)
-    .filter((k): k is NutrientKey => k !== '');
+  const usedKeys = nutrients.map((n) => n.key).filter((k): k is NutrientKey => k !== '');
+
+  const usedCustomKeys = customNutrients.map((n) => n.key).filter((k) => k !== '');
+
+  // Debounced database search
+  useEffect(() => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    if (!name.trim() && !brand.trim()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDatabaseSuggestion(null);
+      return;
+    }
+
+    debounceTimeoutRef.current = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams();
+        if (name.trim()) params.append('name', name);
+        if (brand.trim()) params.append('brand', brand);
+        params.append('limit', '1');
+
+        const res = await fetch(`/api/supplements/database/search?${params}`);
+        if (res.ok) {
+          const results = await res.json();
+          if (results.length > 0) {
+            setDatabaseSuggestion(results[0]);
+          } else {
+            setDatabaseSuggestion(null);
+          }
+        }
+      } catch (err) {
+        console.error('Database search error:', err);
+        setDatabaseSuggestion(null);
+      }
+    }, 500);
+
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [name, brand]);
 
   const handleAddNutrient = () => {
     setNutrients([...nutrients, { key: '', amount: 0 }]);
@@ -97,14 +181,74 @@ export function SupplementForm({
     }
   };
 
+  const handleAddCustomNutrient = () => {
+    setCustomNutrients([...customNutrients, { key: '', amount: 0 }]);
+  };
+
+  const handleCustomNutrientChange = (index: number, key: string) => {
+    const updated = [...customNutrients];
+    updated[index] = { ...updated[index], key };
+    setCustomNutrients(updated);
+  };
+
+  const handleCustomAmountChange = (index: number, amount: number) => {
+    const updated = [...customNutrients];
+    updated[index] = { ...updated[index], amount };
+    setCustomNutrients(updated);
+  };
+
+  const handleRemoveCustomNutrient = (index: number) => {
+    setCustomNutrients(customNutrients.filter((_, i) => i !== index));
+  };
+
+  const handleAutoFill = () => {
+    if (!databaseSuggestion) return;
+
+    setServingSize(databaseSuggestion.servingSize);
+    setNotes(databaseSuggestion.notes || '');
+
+    // Fill regular nutrients
+    const nutrientsObj = databaseSuggestion.nutrients as Record<string, number>;
+    if (Object.keys(nutrientsObj).length > 0) {
+      const entries: NutrientEntry[] = Object.entries(nutrientsObj).map(([key, amount]) => ({
+        key: key as NutrientKey,
+        amount,
+      }));
+      setNutrients(entries.length > 0 ? entries : [{ key: '', amount: 0 }]);
+    }
+
+    // Fill custom nutrients
+    const customNutrientObj = databaseSuggestion.customNutrients as Record<string, number>;
+    if (Object.keys(customNutrientObj).length > 0) {
+      const entries: CustomNutrientEntry[] = Object.entries(customNutrientObj).map(
+        ([key, amount]) => ({
+          key,
+          amount,
+        })
+      );
+      setCustomNutrients(entries);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     // Convert nutrients array to object
+    // For custom supplements, always submit empty nutrients
     const nutrientsObj: Partial<Record<NutrientKey, number>> = {};
-    nutrients.forEach((n) => {
+    if (currentType === 'nutrient') {
+      nutrients.forEach((n) => {
+        if (n.key && n.amount > 0) {
+          nutrientsObj[n.key] = n.amount;
+        }
+      });
+    }
+
+    // Convert custom nutrients array to object
+    const customNutrientObj: Record<string, number> = {};
+    customNutrients.forEach((n) => {
       if (n.key && n.amount > 0) {
-        nutrientsObj[n.key] = n.amount;
+        customNutrientObj[n.key] = n.amount;
       }
     });
 
@@ -117,7 +261,9 @@ export function SupplementForm({
       dosageQuantity,
       dosageNotes,
       nutrients: nutrientsObj,
+      customNutrients: customNutrientObj,
       notes,
+      supplementType: currentType,
     });
   };
 
@@ -162,6 +308,31 @@ export function SupplementForm({
         <ColorPicker value={color} onChange={setColor} />
       </div>
 
+      {/* Database Suggestion Banner */}
+      {databaseSuggestion && (
+        <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 space-y-2">
+          <div className="flex items-start gap-2">
+            <Database className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                Found in supplement database
+              </p>
+              <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                {databaseSuggestion.brand} • {databaseSuggestion.servingSize}
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleAutoFill}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
+            Auto-fill Values
+          </Button>
+        </div>
+      )}
+
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label htmlFor="dosageQuantity">Quantity</Label>
@@ -200,33 +371,83 @@ export function SupplementForm({
         </div>
       </div>
 
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label>Nutrients</Label>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleAddNutrient}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Add Nutrient
-          </Button>
+      {currentType === 'nutrient' ? (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label>Nutrients</Label>
+            <Button type="button" variant="outline" size="sm" onClick={handleAddNutrient}>
+              <Plus className="h-4 w-4 mr-1" />
+              Add Nutrient
+            </Button>
+          </div>
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {nutrients.map((nutrient, index) => (
+              <NutrientInput
+                key={index}
+                nutrientKey={nutrient.key}
+                amount={nutrient.amount}
+                usedKeys={usedKeys}
+                onNutrientChange={(key) => handleNutrientChange(index, key)}
+                onAmountChange={(amount) => handleAmountChange(index, amount)}
+                onRemove={() => handleRemoveNutrient(index)}
+              />
+            ))}
+          </div>
         </div>
-        <div className="space-y-2 max-h-48 overflow-y-auto">
-          {nutrients.map((nutrient, index) => (
-            <NutrientInput
-              key={index}
-              nutrientKey={nutrient.key}
-              amount={nutrient.amount}
-              usedKeys={usedKeys}
-              onNutrientChange={(key) => handleNutrientChange(index, key)}
-              onAmountChange={(amount) => handleAmountChange(index, amount)}
-              onRemove={() => handleRemoveNutrient(index)}
+      ) : (
+        <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800">
+          <p className="text-sm text-purple-900 dark:text-purple-100">
+            <span className="font-medium">Custom Supplement</span> – Add custom nutrients to track
+            items like omega-3s or probiotics. This supplement will appear in your custom
+            supplements list.
+          </p>
+        </div>
+      )}
+
+      {currentType === 'custom' && customNutrientMetadata.length > 0 && (
+        <div className="space-y-3 border-t pt-4">
+          <div className="flex items-center justify-between">
+            <Label>Custom Nutrients</Label>
+            <Button type="button" variant="outline" size="sm" onClick={handleAddCustomNutrient}>
+              <Plus className="h-4 w-4 mr-1" />
+              Add Custom Nutrient
+            </Button>
+          </div>
+
+          {customNutrients.length > 0 && (
+            <PercentageCalculator
+              unit={
+                customNutrients[0]
+                  ? customNutrientMetadata.find((n) => n.key === customNutrients[0].key)?.unit ||
+                    'mg'
+                  : 'mg'
+              }
+              onApply={(value) => {
+                if (customNutrients.length > 0) {
+                  const updated = [...customNutrients];
+                  updated[0] = { ...updated[0], amount: value };
+                  setCustomNutrients(updated);
+                }
+              }}
             />
-          ))}
+          )}
+
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {customNutrients.map((nutrient, index) => (
+              <CustomNutrientInput
+                key={index}
+                nutrientKey={nutrient.key}
+                amount={nutrient.amount}
+                availableNutrients={customNutrientMetadata}
+                usedKeys={usedCustomKeys}
+                onNutrientChange={(key) => handleCustomNutrientChange(index, key)}
+                onAmountChange={(amount) => handleCustomAmountChange(index, amount)}
+                onRemove={() => handleRemoveCustomNutrient(index)}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="notes">Notes</Label>

@@ -61,9 +61,9 @@ export function seedDatabase() {
 
   // Insert supplements
   const insertSupplement = db.prepare(`
-    INSERT OR REPLACE INTO supplements 
-    (id, name, brand, serving_size, nutrients, notes, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT OR REPLACE INTO supplements
+    (id, name, brand, serving_size, nutrients, notes, color, dosage_frequency, dosage_quantity, dosage_notes, supplement_type, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   supplementsData.forEach((supp: any) => {
@@ -74,6 +74,11 @@ export function seedDatabase() {
       supp.servingSize,
       JSON.stringify(supp.nutrients),
       supp.notes || null,
+      supp.color || '#6366f1',
+      supp.dosageFrequency || 'daily',
+      supp.dosageQuantity || 1,
+      supp.dosageNotes || null,
+      supp.supplementType || 'nutrient',
       new Date().toISOString()
     );
   });
