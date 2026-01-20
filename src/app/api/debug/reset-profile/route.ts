@@ -61,15 +61,45 @@ export async function POST(request: Request) {
       mockProfile.goalData.activityLevel
     );
 
-    // Clear existing meals for the date range and add mock meals
-    const clearMealsStmt = db.prepare(`
-      DELETE FROM meal_logs WHERE date >= date('now', '-7 days')
-    `);
-    clearMealsStmt.run();
+    // Get the current goal to determine daily target
+    const currentGoal = calorieGoalRepo.getCurrentGoal(profileId);
+    if (!currentGoal) throw new Error('Failed to create calorie goal');
 
-    // Add mock meals
+    // Clear existing meals and tracking for the past 30 days
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+
+    const clearMealsStmt = db.prepare(`
+      DELETE FROM meal_logs WHERE date >= ?
+    `);
+    clearMealsStmt.run(thirtyDaysAgoStr);
+
+    const clearTrackingStmt = db.prepare(`
+      DELETE FROM daily_calorie_tracking WHERE date >= ?
+    `);
+    clearTrackingStmt.run(thirtyDaysAgoStr);
+
+    // Group meals by date and add meal logs
+    const mealsByDate = new Map<string, Array<{
+      mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+      name: string;
+      calories: number;
+    }>>();
+
     for (const meal of mockProfile.mealData) {
       const mealType = (meal.mealType === 'snacks' ? 'snack' : meal.mealType) as 'breakfast' | 'lunch' | 'dinner' | 'snack';
+      if (!mealsByDate.has(meal.date)) {
+        mealsByDate.set(meal.date, []);
+      }
+      mealsByDate.get(meal.date)!.push({
+        mealType,
+        name: meal.name,
+        calories: meal.calories,
+      });
+
+      // Add individual meal log
       mealLogRepo.addMealLog({
         date: meal.date,
         mealType: mealType,
@@ -89,10 +119,53 @@ export async function POST(request: Request) {
       });
     }
 
+    // Create daily_calorie_tracking entries
+    const insertDailyTrackingStmt = db.prepare(`
+      INSERT INTO daily_calorie_tracking (
+        id, date, profile_id, calories_consumed, calories_target,
+        calorie_deficit_surplus, goal_met, trend, created_at, updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    // Determine goal met logic based on goal type
+    const getGoalMet = (consumed: number, target: number, goalType: string): boolean => {
+      if (goalType === 'weight_loss') {
+        return consumed <= target;
+      } else if (goalType === 'gain') {
+        return consumed >= target;
+      } else {
+        // maintenance: within ±50 calories
+        return Math.abs(consumed - target) <= 50;
+      }
+    };
+
+    for (const [date, meals] of mealsByDate.entries()) {
+      const caloriesConsumed = meals.reduce((sum, m) => sum + m.calories, 0);
+      const caloriesTarget = currentGoal.dailyCalorieTarget;
+      const deficitSurplus = caloriesConsumed - caloriesTarget;
+      const goalMet = getGoalMet(caloriesConsumed, caloriesTarget, mockProfile.goalData.goalType);
+      const now = new Date().toISOString();
+
+      insertDailyTrackingStmt.run(
+        uuidv4(),
+        date,
+        profileId,
+        caloriesConsumed,
+        caloriesTarget,
+        deficitSurplus,
+        goalMet ? 1 : 0,
+        'stable', // Default trend
+        now,
+        now
+      );
+    }
+
     return NextResponse.json({
       success: true,
-      message: `Profile reset to ${profileType.replace('_', ' ')}`,
+      message: `Profile reset to ${profileType.replace('_', ' ')} with 30 days of meal data (${mockProfile.mealData.length} meals)`,
       profileType,
+      mealsLoaded: mockProfile.mealData.length,
     });
   } catch (error: any) {
     console.error('Debug API Error:', error);
