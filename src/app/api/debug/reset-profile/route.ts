@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '@/lib/database/connection';
 import { ProfileRepository } from '@/lib/database/repositories/profileRepository';
 import { CalorieGoalRepository } from '@/lib/database/repositories/calorieGoalRepository';
@@ -68,12 +69,17 @@ export async function POST(request: Request) {
 
     // Add mock meals
     for (const meal of mockProfile.mealData) {
-      mealLogRepo.createMeal({
+      const mealType = (meal.mealType === 'snacks' ? 'snack' : meal.mealType) as 'breakfast' | 'lunch' | 'dinner' | 'snack';
+      mealLogRepo.addMealLog({
         date: meal.date,
-        mealType: meal.mealType,
-        name: meal.name,
-        servingSize: '1 serving',
-        unit: 'serving',
+        mealType: mealType,
+        foods: [
+          {
+            foodId: uuidv4(),
+            foodName: meal.name,
+            amount: 100,
+          },
+        ],
         totalNutrition: {
           calories: meal.calories,
           carbs: Math.round(meal.calories * 0.5 / 4), // 50% carbs
