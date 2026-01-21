@@ -10,6 +10,7 @@ describe('Export API Routes', () => {
   // Basic smoke test - ensure routes don't throw on import
   it('should import export API routes without errors', () => {
     expect(() => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/export/route');
     }).not.toThrow();
   });

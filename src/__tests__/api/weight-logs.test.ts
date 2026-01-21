@@ -21,7 +21,9 @@ describe('Weight Logs API Routes', () => {
   // Basic smoke test - ensure routes don't throw on import
   it('should import all weight logs API routes without errors', () => {
     expect(() => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/weight-logs/route');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/weight-logs/latest/route');
     }).not.toThrow();
   });

@@ -45,11 +45,17 @@ describe('Foods API Routes', () => {
   // Basic smoke test - ensure routes don't throw on import
   it('should import all foods API routes without errors', () => {
     expect(() => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/foods/[id]/route');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/foods/import/route');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/foods/recent/route');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/foods/search/route');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/foods/usda/[fdcId]/route');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/foods/usda-search/route');
     }).not.toThrow();
   });

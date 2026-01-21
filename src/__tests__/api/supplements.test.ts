@@ -65,10 +65,15 @@ describe('Supplements API Routes', () => {
   // Basic smoke test - ensure routes don't throw on import
   it('should import all supplement API routes without errors', () => {
     expect(() => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/supplements/route');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/supplements/logs/route');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/supplements/targets/route');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/supplements/custom-nutrients/route');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/supplements/database/search/route');
     }).not.toThrow();
   });

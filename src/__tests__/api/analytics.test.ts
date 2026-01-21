@@ -10,6 +10,7 @@ describe('Analytics API Routes', () => {
   // Basic smoke test - ensure routes don't throw on import
   it('should import analytics API routes without errors', () => {
     expect(() => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/analytics/weekly/route');
     }).not.toThrow();
   });

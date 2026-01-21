@@ -10,6 +10,7 @@ describe('Daily Summary API Routes', () => {
   // Basic smoke test - ensure routes don't throw on import
   it('should import daily summary API routes without errors', () => {
     expect(() => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/daily-summary/[date]/route');
     }).not.toThrow();
   });

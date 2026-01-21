@@ -59,13 +59,21 @@ describe('Calorie Tracking API Routes', () => {
   // Basic smoke test - ensure routes don't throw on import
   it('should import all calorie tracking API routes without errors', () => {
     expect(() => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/calorie-tracking/route');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/calorie-tracking/current/route');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/calorie-tracking/goal-change/route');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/calorie-tracking/history/route');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/calorie-tracking/month/route');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/calorie-tracking/streaks/route');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/calorie-tracking/today/route');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/calorie-tracking/weekly/route');
     }).not.toThrow();
   });

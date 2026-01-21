@@ -12,6 +12,7 @@ describe('Profile API Routes', () => {
   // Basic smoke test - ensure routes don't throw on import
   it('should import profile API routes without errors', () => {
     expect(() => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@/app/api/profile/route');
     }).not.toThrow();
   });
