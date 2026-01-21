@@ -71,40 +71,82 @@ export class MealLogRepository {
     stmt.run(id);
   }
 
+  getMealLogsByDates(dates: string[]): MealLog[] {
+    if (dates.length === 0) return [];
+
+    const placeholders = dates.map(() => '?').join(',');
+    const stmt = this.db.prepare(
+      `SELECT * FROM meal_logs WHERE date IN (${placeholders}) ORDER BY date, created_at`
+    );
+    const rows = stmt.all(...dates) as any[];
+
+    return rows.map((row) => ({
+      id: row.id,
+      date: row.date,
+      mealType: row.meal_type,
+      foods: JSON.parse(row.foods),
+      totalNutrition: JSON.parse(row.total_nutrition),
+      createdAt: row.created_at,
+    }));
+  }
+
   getRecentFoods(limit: number = 10): Array<{ foodId: string; foodName: string; count: number }> {
-    // Get all meals from the last 30 days
+    // Get cutoff date for last 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const cutoffDate = thirtyDaysAgo.toISOString().split('T')[0];
 
+    // Use SQLite json_each() to aggregate food frequencies at database level
     const stmt = this.db.prepare(`
-      SELECT foods FROM meal_logs WHERE date >= ? ORDER BY created_at DESC
+      SELECT
+        json_extract(value, '$.foodId') as food_id,
+        json_extract(value, '$.foodName') as food_name,
+        COUNT(*) as frequency
+      FROM meal_logs,
+           json_each(meal_logs.foods)
+      WHERE date >= ?
+      GROUP BY food_id
+      ORDER BY frequency DESC, MAX(created_at) DESC
+      LIMIT ?
     `);
-    const rows = stmt.all(cutoffDate) as any[];
 
-    // Count food occurrences
-    const foodCounts: Map<string, { foodName: string; count: number }> = new Map();
+    const rows = stmt.all(cutoffDate, limit) as any[];
 
-    rows.forEach((row) => {
-      const foods = JSON.parse(row.foods);
-      foods.forEach((food: { foodId: string; foodName: string }) => {
-        const existing = foodCounts.get(food.foodId);
-        if (existing) {
-          existing.count++;
-        } else {
-          foodCounts.set(food.foodId, { foodName: food.foodName, count: 1 });
-        }
-      });
-    });
-
-    // Sort by count and return top N
-    return Array.from(foodCounts.entries())
-      .map(([foodId, data]) => ({ foodId, foodName: data.foodName, count: data.count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, limit);
+    return rows.map((row) => ({
+      foodId: row.food_id,
+      foodName: row.food_name,
+      count: row.frequency,
+    }));
   }
 
-  getAllMealLogs(startDate?: string, endDate?: string): MealLog[] {
+  getAllMealLogs(
+    startDate?: string,
+    endDate?: string,
+    limit: number = 100,
+    offset: number = 0
+  ): { data: MealLog[]; total: number } {
+    // First, get the total count
+    let countQuery = 'SELECT COUNT(*) as total FROM meal_logs';
+    const countParams: any[] = [];
+
+    if (startDate || endDate) {
+      const conditions: string[] = [];
+      if (startDate) {
+        conditions.push('date >= ?');
+        countParams.push(startDate);
+      }
+      if (endDate) {
+        conditions.push('date <= ?');
+        countParams.push(endDate);
+      }
+      countQuery += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    const countStmt = this.db.prepare(countQuery);
+    const countResult = countStmt.get(...countParams) as { total: number };
+    const total = countResult.total;
+
+    // Then get the paginated data
     let query = 'SELECT * FROM meal_logs';
     const params: any[] = [];
 
@@ -121,12 +163,13 @@ export class MealLogRepository {
       query += ' WHERE ' + conditions.join(' AND ');
     }
 
-    query += ' ORDER BY date DESC, created_at DESC';
+    query += ' ORDER BY date DESC, created_at DESC LIMIT ? OFFSET ?';
+    params.push(limit, offset);
 
     const stmt = this.db.prepare(query);
-    const rows = (params.length > 0 ? stmt.all(...params) : stmt.all()) as any[];
+    const rows = stmt.all(...params) as any[];
 
-    return rows.map((row) => ({
+    const data = rows.map((row) => ({
       id: row.id,
       date: row.date,
       mealType: row.meal_type,
@@ -134,5 +177,7 @@ export class MealLogRepository {
       totalNutrition: JSON.parse(row.total_nutrition),
       createdAt: row.created_at,
     }));
+
+    return { data, total };
   }
 }

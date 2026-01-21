@@ -88,15 +88,72 @@ export class DailySummaryRepository {
   }
 
   getWeeklySummary(endDate: string): DailyLog[] {
-    const summaries: DailyLog[] = [];
     const end = new Date(endDate);
+    const dates: string[] = [];
 
+    // Generate the 7 dates for the week
     for (let i = 6; i >= 0; i--) {
       const d = new Date(end);
       d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-      const s = this.getDailySummarySync(dateStr);
-      if (s) summaries.push(s);
+      dates.push(d.toISOString().split('T')[0]);
+    }
+
+    // Single query to get all summaries for the week
+    const placeholders = dates.map(() => '?').join(',');
+    const stmt = this.db.prepare(`SELECT * FROM daily_summary WHERE date IN (${placeholders})`);
+    const summaryRows = stmt.all(...dates) as any[];
+
+    // Batch fetch all meals and supplements for the week
+    const meals = this.mealRepo.getMealLogsByDates(dates);
+    const supplements = this.supplementRepo.getSupplementLogsByDates(dates);
+
+    // Group meals and supplements by date
+    const mealsByDate = new Map<string, any[]>();
+    const supplementsByDate = new Map<string, any[]>();
+
+    meals.forEach((meal) => {
+      if (!mealsByDate.has(meal.date)) {
+        mealsByDate.set(meal.date, []);
+      }
+      mealsByDate.get(meal.date)!.push(meal);
+    });
+
+    supplements.forEach((supplement) => {
+      if (!supplementsByDate.has(supplement.date)) {
+        supplementsByDate.set(supplement.date, []);
+      }
+      supplementsByDate.get(supplement.date)!.push(supplement);
+    });
+
+    // Build summaries for each date
+    const summaries: DailyLog[] = [];
+    const profile = this.profileRepo.getProfile();
+
+    for (const dateStr of dates) {
+      const summaryRow = summaryRows.find((row) => row.date === dateStr);
+      const dateMeals = mealsByDate.get(dateStr) || [];
+      const dateSupplements = supplementsByDate.get(dateStr) || [];
+
+      const summary: DailyLog = {
+        date: dateStr,
+        weight: summaryRow ? summaryRow.weight : profile?.weight || 0,
+        meals: dateMeals,
+        supplements: dateSupplements,
+        totalNutrition: summaryRow
+          ? JSON.parse(summaryRow.total_nutrition)
+          : this.calculateDailyTotals(dateMeals, dateSupplements),
+        healthScore: summaryRow ? summaryRow.health_score : 0,
+        notes: summaryRow ? summaryRow.notes : '',
+      };
+
+      if (profile) {
+        const targets = this.profileRepo.calculateNutritionalTargets();
+        const breakdown = calculateHealthScore(summary.totalNutrition, targets, summary);
+        summary.healthScoreBreakdown = breakdown;
+        summary.healthScore = breakdown.total;
+      }
+
+      summaries.push(summary);
     }
 
     return summaries;
@@ -132,7 +189,34 @@ export class DailySummaryRepository {
     return summary;
   }
 
-  getAllDailySummaries(startDate?: string, endDate?: string): DailyLog[] {
+  getAllDailySummaries(
+    startDate?: string,
+    endDate?: string,
+    limit: number = 100,
+    offset: number = 0
+  ): { data: DailyLog[]; total: number } {
+    // First, get the total count
+    let countQuery = 'SELECT COUNT(*) as total FROM daily_summary';
+    const countParams: any[] = [];
+
+    if (startDate || endDate) {
+      const conditions: string[] = [];
+      if (startDate) {
+        conditions.push('date >= ?');
+        countParams.push(startDate);
+      }
+      if (endDate) {
+        conditions.push('date <= ?');
+        countParams.push(endDate);
+      }
+      countQuery += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    const countStmt = this.db.prepare(countQuery);
+    const countResult = countStmt.get(...countParams) as { total: number };
+    const total = countResult.total;
+
+    // Then get the paginated data
     let query = 'SELECT * FROM daily_summary';
     const params: any[] = [];
 
@@ -149,20 +233,48 @@ export class DailySummaryRepository {
       query += ' WHERE ' + conditions.join(' AND ');
     }
 
-    query += ' ORDER BY date DESC';
+    query += ' ORDER BY date DESC LIMIT ? OFFSET ?';
+    params.push(limit, offset);
 
     const stmt = this.db.prepare(query);
-    const rows = (params.length > 0 ? stmt.all(...params) : stmt.all()) as any[];
+    const rows = stmt.all(...params) as any[];
 
-    return rows.map((row) => {
-      const meals = this.mealRepo.getMealLogsByDate(row.date);
-      const supplements = this.supplementRepo.getSupplementLogsByDate(row.date);
+    if (rows.length === 0) return { data: [], total };
+
+    // Extract all dates from the result set
+    const dates = rows.map((row) => row.date);
+
+    // Batch fetch all meals and supplements for these dates
+    const meals = this.mealRepo.getMealLogsByDates(dates);
+    const supplements = this.supplementRepo.getSupplementLogsByDates(dates);
+
+    // Group meals and supplements by date
+    const mealsByDate = new Map<string, any[]>();
+    const supplementsByDate = new Map<string, any[]>();
+
+    meals.forEach((meal) => {
+      if (!mealsByDate.has(meal.date)) {
+        mealsByDate.set(meal.date, []);
+      }
+      mealsByDate.get(meal.date)!.push(meal);
+    });
+
+    supplements.forEach((supplement) => {
+      if (!supplementsByDate.has(supplement.date)) {
+        supplementsByDate.set(supplement.date, []);
+      }
+      supplementsByDate.get(supplement.date)!.push(supplement);
+    });
+
+    const data = rows.map((row) => {
+      const dateMeals = mealsByDate.get(row.date) || [];
+      const dateSupplements = supplementsByDate.get(row.date) || [];
 
       const summary: DailyLog = {
         date: row.date,
         weight: row.weight,
-        meals,
-        supplements,
+        meals: dateMeals,
+        supplements: dateSupplements,
         totalNutrition: JSON.parse(row.total_nutrition || '{}'),
         healthScore: row.health_score || 0,
         notes: row.notes || '',
@@ -170,5 +282,7 @@ export class DailySummaryRepository {
 
       return summary;
     });
+
+    return { data, total };
   }
 }

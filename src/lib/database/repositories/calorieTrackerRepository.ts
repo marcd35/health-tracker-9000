@@ -657,8 +657,28 @@ export class CalorieTrackerRepository {
   getAllDailyTracking(
     profileId: string,
     startDate?: string,
-    endDate?: string
-  ): DailyCalorieTracking[] {
+    endDate?: string,
+    limit: number = 100,
+    offset: number = 0
+  ): { data: DailyCalorieTracking[]; total: number } {
+    // First, get the total count
+    let countQuery = 'SELECT COUNT(*) as total FROM daily_calorie_tracking WHERE profile_id = ?';
+    const countParams: any[] = [profileId];
+
+    if (startDate) {
+      countQuery += ' AND date >= ?';
+      countParams.push(startDate);
+    }
+    if (endDate) {
+      countQuery += ' AND date <= ?';
+      countParams.push(endDate);
+    }
+
+    const countStmt = this.db.prepare(countQuery);
+    const countResult = countStmt.get(...countParams) as { total: number };
+    const total = countResult.total;
+
+    // Then get the paginated data
     let query = 'SELECT * FROM daily_calorie_tracking WHERE profile_id = ?';
     const params: any[] = [profileId];
 
@@ -671,12 +691,14 @@ export class CalorieTrackerRepository {
       params.push(endDate);
     }
 
-    query += ' ORDER BY date DESC';
+    query += ' ORDER BY date DESC LIMIT ? OFFSET ?';
+    params.push(limit, offset);
 
     const stmt = this.db.prepare(query);
     const rows = stmt.all(...params) as any[];
+    const data = rows.map((row) => this.rowToDailyTracking(row));
 
-    return rows.map((row) => this.rowToDailyTracking(row));
+    return { data, total };
   }
 
   /**

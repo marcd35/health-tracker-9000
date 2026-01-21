@@ -2,20 +2,18 @@ import { NextResponse } from 'next/server';
 import { MealLogRepository } from '@/lib/database/repositories/mealLogRepository';
 import { FoodRepository } from '@/lib/database/repositories/foodRepository';
 import { calculateNutrition, sumNutrition } from '@/lib/utils/nutrition';
-import { DailySummaryRepository } from '@/lib/database/repositories/dailySummaryRepository';
 import { ProfileRepository } from '@/lib/database/repositories/profileRepository';
 import { CalorieTrackerRepository } from '@/lib/database/repositories/calorieTrackerRepository';
-import { calculateHealthScore } from '@/lib/utils/healthScoring';
 import { getDatabase } from '@/lib/database/connection';
 import { withErrorHandling } from '@/lib/utils/errorHandler';
 import { MealLogSchema } from '@/lib/validation/schemas';
 import { ValidationError } from '@/lib/errors/ApiError';
 import { flagConflicts } from '@/lib/utils/allergenChecker';
+import { updateDailySummaryForDate } from '@/lib/utils/dailySummary';
 
 export async function POST(request: Request) {
   const mealRepo = new MealLogRepository();
   const foodRepo = new FoodRepository();
-  const summaryRepo = new DailySummaryRepository();
   const profileRepo = new ProfileRepository();
   const calorieTrackerRepo = new CalorieTrackerRepository();
 
@@ -90,26 +88,8 @@ export async function POST(request: Request) {
       totalNutrition,
     });
 
-    // Update daily summary
-    const summary = await summaryRepo.getDailySummary(date);
-    if (summary) {
-      const targets = profileRepo.calculateNutritionalTargets();
-
-      const meals = mealRepo.getMealLogsByDate(date);
-      const dailyTotals = summaryRepo.calculateDailyTotals(meals, summary.supplements);
-
-      const scoreBreakdown = calculateHealthScore(dailyTotals, targets, {
-        ...summary,
-        meals,
-        totalNutrition: dailyTotals,
-      });
-
-      summaryRepo.saveDailySummary({
-        date,
-        totalNutrition: dailyTotals,
-        healthScore: scoreBreakdown.total,
-      });
-    }
+    // Update daily summary using utility function
+    await updateDailySummaryForDate(date);
 
     // Update calorie tracking if user has a calorie goal
     if (profile) {
@@ -130,7 +110,6 @@ export async function DELETE(request: Request) {
     }
 
     const mealRepo = new MealLogRepository();
-    const summaryRepo = new DailySummaryRepository();
     const profileRepo = new ProfileRepository();
     const calorieTrackerRepo = new CalorieTrackerRepository();
 
@@ -142,25 +121,8 @@ export async function DELETE(request: Request) {
     mealRepo.deleteMealLog(id);
 
     if (date) {
-      const summary = await summaryRepo.getDailySummary(date);
-      if (summary) {
-        const targets = profileRepo.calculateNutritionalTargets();
-
-        const meals = mealRepo.getMealLogsByDate(date);
-        const dailyTotals = summaryRepo.calculateDailyTotals(meals, summary.supplements);
-
-        const scoreBreakdown = calculateHealthScore(dailyTotals, targets, {
-          ...summary,
-          meals,
-          totalNutrition: dailyTotals,
-        });
-
-        summaryRepo.saveDailySummary({
-          date,
-          totalNutrition: dailyTotals,
-          healthScore: scoreBreakdown.total,
-        });
-      }
+      // Update daily summary using utility function
+      await updateDailySummaryForDate(date);
 
       // Update calorie tracking if user has a calorie goal
       const profile = profileRepo.getProfile();

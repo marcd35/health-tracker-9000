@@ -2,10 +2,8 @@ import { NextResponse } from 'next/server';
 import { MealLogRepository } from '@/lib/database/repositories/mealLogRepository';
 import { FoodRepository } from '@/lib/database/repositories/foodRepository';
 import { calculateNutrition, sumNutrition } from '@/lib/utils/nutrition';
-import { DailySummaryRepository } from '@/lib/database/repositories/dailySummaryRepository';
-import { ProfileRepository } from '@/lib/database/repositories/profileRepository';
-import { calculateHealthScore } from '@/lib/utils/healthScoring';
 import { getDatabase } from '@/lib/database/connection';
+import { updateDailySummaryForDate } from '@/lib/utils/dailySummary';
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -38,7 +36,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const mealRepo = new MealLogRepository();
   const foodRepo = new FoodRepository();
-  const summaryRepo = new DailySummaryRepository();
 
   try {
     const body = await request.json();
@@ -102,27 +99,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       totalNutrition,
     });
 
-    // Update daily summary
-    const summary = await summaryRepo.getDailySummary(date);
-    if (summary) {
-      const profileRepo = new ProfileRepository();
-      const targets = profileRepo.calculateNutritionalTargets();
-
-      const meals = mealRepo.getMealLogsByDate(date);
-      const dailyTotals = summaryRepo.calculateDailyTotals(meals, summary.supplements);
-
-      const scoreBreakdown = calculateHealthScore(dailyTotals, targets, {
-        ...summary,
-        meals,
-        totalNutrition: dailyTotals,
-      });
-
-      summaryRepo.saveDailySummary({
-        date,
-        totalNutrition: dailyTotals,
-        healthScore: scoreBreakdown.total,
-      });
-    }
+    // Update daily summary using utility function
+    await updateDailySummaryForDate(date);
 
     // Fetch and return the updated meal
     const updatedRow = stmt.get(id) as any;

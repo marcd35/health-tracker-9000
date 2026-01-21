@@ -29,12 +29,19 @@ export async function GET() {
     }
 
     // Fetch all meal data
-    const mealLogs = mealRepo.getAllMealLogs();
+    const mealLogsResult = mealRepo.getAllMealLogs(undefined, undefined, 10000, 0); // Large limit for export
+    const mealLogs = mealLogsResult.data;
     const mealFavorites = favoritesRepo.getFavorites();
 
     // Fetch all supplement data
     const supplements = supplementRepo.getAllSupplements();
-    const supplementLogs = supplementRepo.getAllSupplementLogs();
+    const supplementLogsResult = supplementRepo.getAllSupplementLogs(
+      undefined,
+      undefined,
+      10000,
+      0
+    ); // Large limit for export
+    const supplementLogs = supplementLogsResult.data;
     const nutrientTargets = supplementRepo.getAllNutrientTargets();
     const customNutrients = supplementRepo.getAllCustomNutrients();
 
@@ -42,13 +49,26 @@ export async function GET() {
     const allGoals = calorieGoalRepo.getAllGoals(profile.id);
     const currentGoal = calorieGoalRepo.getCurrentGoal(profile.id);
     const goalHistory = calorieGoalRepo.getAllGoalHistory(profile.id);
-    const dailyTracking = calorieTrackerRepo.getAllDailyTracking(profile.id);
+    const dailyTrackingResult = calorieTrackerRepo.getAllDailyTracking(
+      profile.id,
+      undefined,
+      undefined,
+      10000,
+      0
+    ); // Large limit for export
+    const dailyTracking = dailyTrackingResult.data;
     const allStreaks = calorieTrackerRepo.getAllStreaks(profile.id);
     const currentStreak = calorieTrackerRepo.getCurrentStreak(profile.id);
     const streakInfo = calorieTrackerRepo.getStreakInfo(profile.id);
 
     // Fetch all daily summaries
-    const dailySummaries = dailySummaryRepo.getAllDailySummaries();
+    const dailySummariesResult = dailySummaryRepo.getAllDailySummaries(
+      undefined,
+      undefined,
+      10000,
+      0
+    ); // Large limit for export
+    const dailySummaries = dailySummariesResult.data;
 
     // Get nutritional targets
     const nutritionalTargets = profileRepo.calculateNutritionalTargets();

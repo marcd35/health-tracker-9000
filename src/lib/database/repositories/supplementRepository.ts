@@ -130,6 +130,17 @@ export class SupplementRepository {
     return rows.map(this.mapRowToLog);
   }
 
+  getSupplementLogsByDates(dates: string[]): SupplementLog[] {
+    if (dates.length === 0) return [];
+
+    const placeholders = dates.map(() => '?').join(',');
+    const stmt = this.db.prepare(
+      `SELECT * FROM supplement_logs WHERE date IN (${placeholders}) ORDER BY date, taken_at`
+    );
+    const rows = stmt.all(...dates) as Record<string, unknown>[];
+    return rows.map(this.mapRowToLog);
+  }
+
   getSupplementLogsByDateAndId(date: string, supplementId: string): SupplementLog[] {
     const stmt = this.db.prepare(
       'SELECT * FROM supplement_logs WHERE date = ? AND supplement_id = ? ORDER BY taken_at'
@@ -138,7 +149,34 @@ export class SupplementRepository {
     return rows.map(this.mapRowToLog);
   }
 
-  getAllSupplementLogs(startDate?: string, endDate?: string): SupplementLog[] {
+  getAllSupplementLogs(
+    startDate?: string,
+    endDate?: string,
+    limit: number = 100,
+    offset: number = 0
+  ): { data: SupplementLog[]; total: number } {
+    // First, get the total count
+    let countQuery = 'SELECT COUNT(*) as total FROM supplement_logs';
+    const countParams: any[] = [];
+
+    if (startDate || endDate) {
+      const conditions: string[] = [];
+      if (startDate) {
+        conditions.push('date >= ?');
+        countParams.push(startDate);
+      }
+      if (endDate) {
+        conditions.push('date <= ?');
+        countParams.push(endDate);
+      }
+      countQuery += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    const countStmt = this.db.prepare(countQuery);
+    const countResult = countStmt.get(...countParams) as { total: number };
+    const total = countResult.total;
+
+    // Then get the paginated data
     let query = 'SELECT * FROM supplement_logs';
     const params: any[] = [];
 
@@ -155,14 +193,14 @@ export class SupplementRepository {
       query += ' WHERE ' + conditions.join(' AND ');
     }
 
-    query += ' ORDER BY date DESC, taken_at DESC';
+    query += ' ORDER BY date DESC, taken_at DESC LIMIT ? OFFSET ?';
+    params.push(limit, offset);
 
     const stmt = this.db.prepare(query);
-    const rows = (params.length > 0 ? stmt.all(...params) : stmt.all()) as Record<
-      string,
-      unknown
-    >[];
-    return rows.map(this.mapRowToLog);
+    const rows = stmt.all(...params) as Record<string, unknown>[];
+    const data = rows.map(this.mapRowToLog);
+
+    return { data, total };
   }
 
   checkDuplicateLog(date: string, supplementId: string): boolean {

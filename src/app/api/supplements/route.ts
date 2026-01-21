@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import { SupplementRepository } from '@/lib/database/repositories/supplementRepository';
-import { DailySummaryRepository } from '@/lib/database/repositories/dailySummaryRepository';
-import { ProfileRepository } from '@/lib/database/repositories/profileRepository';
-import { calculateHealthScore } from '@/lib/utils/healthScoring';
-import { MealLogRepository } from '@/lib/database/repositories/mealLogRepository';
+import { updateDailySummaryForDate } from '@/lib/utils/dailySummary';
 
 // GET - list all supplements OR logs by date
 export async function GET(request: Request) {
@@ -28,9 +25,6 @@ export async function GET(request: Request) {
 // POST - create supplement OR log taken (distinguished by body shape)
 export async function POST(request: Request) {
   const supplementRepo = new SupplementRepository();
-  const summaryRepo = new DailySummaryRepository();
-  const mealRepo = new MealLogRepository();
-  const profileRepo = new ProfileRepository();
 
   try {
     const body = await request.json();
@@ -48,27 +42,8 @@ export async function POST(request: Request) {
         isDuplicateWarning: isDuplicateWarning || false,
       });
 
-      // Update daily summary
-      const summary = await summaryRepo.getDailySummary(date);
-      if (summary) {
-        const targets = profileRepo.calculateNutritionalTargets();
-        const meals = mealRepo.getMealLogsByDate(date);
-        const supplements = supplementRepo.getSupplementLogsByDate(date);
-        const dailyTotals = summaryRepo.calculateDailyTotals(meals, supplements);
-
-        const scoreBreakdown = calculateHealthScore(dailyTotals, targets, {
-          ...summary,
-          meals,
-          supplements,
-          totalNutrition: dailyTotals,
-        });
-
-        summaryRepo.saveDailySummary({
-          date,
-          totalNutrition: dailyTotals,
-          healthScore: scoreBreakdown.total,
-        });
-      }
+      // Update daily summary using utility function
+      await updateDailySummaryForDate(date);
 
       return NextResponse.json({ success: true });
     }
