@@ -31,6 +31,10 @@ export function CalendarHeatmap({ monthlyData, onMonthChange }: CalendarHeatmapP
   const startingDayOfWeek = firstDay.getDay();
   const daysInMonth = lastDay.getDate();
 
+  // Get today's date for comparison
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   // Create a map of goal met status by date
   const goalMetMap = new Map<string, boolean>();
   monthlyData.weeks.forEach((week) => {
@@ -58,6 +62,20 @@ export function CalendarHeatmap({ monthlyData, onMonthChange }: CalendarHeatmapP
       hasData: goalMetMap.has(dateStr),
     });
   }
+
+  // Calculate days missed (only count past/current days with data that didn't meet goal)
+  const daysMissed = calendarDays.filter((dayInfo) => {
+    if (!dayInfo) return false; // Skip empty cells (days before month starts)
+
+    // Only count days that are today or in the past
+    const dayDate = new Date(dayInfo.dateStr);
+    dayDate.setHours(0, 0, 0, 0);
+
+    if (dayDate > today) return false; // Skip future days
+
+    // Count days with data where goal was not met
+    return dayInfo.hasData && !dayInfo.goalMet;
+  }).length;
 
   // Determine intensity for color coding
   const getIntensity = (goalMet: boolean, hasData: boolean): string => {
@@ -108,7 +126,10 @@ export function CalendarHeatmap({ monthlyData, onMonthChange }: CalendarHeatmapP
           {/* Week day headers */}
           <div className="grid grid-cols-7 gap-1">
             {weekDays.map((day) => (
-              <div key={day} className="py-2 text-center text-xs font-semibold text-muted-foreground">
+              <div
+                key={day}
+                className="py-2 text-center text-xs font-semibold text-muted-foreground"
+              >
                 {day}
               </div>
             ))}
@@ -122,7 +143,11 @@ export function CalendarHeatmap({ monthlyData, onMonthChange }: CalendarHeatmapP
                 className={`flex h-10 items-center justify-center rounded text-sm transition-colors ${
                   dayInfo ? getIntensity(dayInfo.goalMet, dayInfo.hasData) : ''
                 }`}
-                title={dayInfo ? `${dayInfo.dateStr}: ${dayInfo.goalMet ? 'Goal met' : 'Goal missed'}` : ''}
+                title={
+                  dayInfo
+                    ? `${dayInfo.dateStr}: ${dayInfo.goalMet ? 'Goal met' : 'Goal missed'}`
+                    : ''
+                }
               >
                 {dayInfo?.day}
               </div>
@@ -153,13 +178,13 @@ export function CalendarHeatmap({ monthlyData, onMonthChange }: CalendarHeatmapP
             </div>
             <div className="rounded-lg bg-accent/50 p-3 text-center">
               <p className="text-xs text-muted-foreground">Days Missed</p>
-              <p className="mt-1 text-xl font-bold text-red-600">
-                {monthlyData.daysTotal - monthlyData.daysMetGoal}
-              </p>
+              <p className="mt-1 text-xl font-bold text-red-600">{daysMissed}</p>
             </div>
             <div className="rounded-lg bg-accent/50 p-3 text-center">
               <p className="text-xs text-muted-foreground">On Pace %</p>
-              <p className="mt-1 text-xl font-bold text-blue-600">{monthlyData.onPacePercentage}%</p>
+              <p className="mt-1 text-xl font-bold text-blue-600">
+                {monthlyData.onPacePercentage}%
+              </p>
             </div>
           </div>
         </div>

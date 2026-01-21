@@ -1,6 +1,11 @@
 import { getDatabase } from '../connection';
 import { v4 as uuidv4 } from 'uuid';
-import type { CalorieGoal, CalorieGoalHistory, GoalType, ActivityLevel } from '@/lib/types/calorieTracking';
+import type {
+  CalorieGoal,
+  CalorieGoalHistory,
+  GoalType,
+  ActivityLevel,
+} from '@/lib/types/calorieTracking';
 import { calculateTDEE } from '@/lib/utils/nutritionalCalculator';
 import { ProfileRepository } from './profileRepository';
 
@@ -113,7 +118,14 @@ export class CalorieGoalRepository {
     archiveStmt.run(today, currentGoal.id);
 
     // Record the archival in history
-    this.recordGoalChange(profileId, currentGoal.id, 'archived', currentGoal.dailyCalorieTarget, null, changeReason);
+    this.recordGoalChange(
+      profileId,
+      currentGoal.id,
+      'archived',
+      currentGoal.dailyCalorieTarget,
+      null,
+      changeReason
+    );
 
     // Create a new goal with the updated parameters (starting tomorrow)
     const newGoalId = uuidv4();
@@ -180,7 +192,7 @@ export class CalorieGoalRepository {
   /**
    * Archive the current goal (mark as ended)
    */
-  private archiveCurrentGoal(profileId: string): void {
+  archiveCurrentGoal(profileId: string): void {
     const currentGoal = this.getCurrentGoal(profileId);
     if (currentGoal) {
       const now = new Date().toISOString().split('T')[0];
@@ -189,7 +201,13 @@ export class CalorieGoalRepository {
       `);
       stmt.run(now, currentGoal.id);
 
-      this.recordGoalChange(profileId, currentGoal.id, 'archived', currentGoal.dailyCalorieTarget, null);
+      this.recordGoalChange(
+        profileId,
+        currentGoal.id,
+        'archived',
+        currentGoal.dailyCalorieTarget,
+        null
+      );
     }
   }
 
@@ -230,16 +248,7 @@ export class CalorieGoalRepository {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    stmt.run(
-      historyId,
-      profileId,
-      goalId,
-      action,
-      previousTarget,
-      newTarget,
-      reason || null,
-      now
-    );
+    stmt.run(historyId, profileId, goalId, action, previousTarget, newTarget, reason || null, now);
   }
 
   /**
@@ -275,5 +284,29 @@ export class CalorieGoalRepository {
       changeReason: row.change_reason,
       changedAt: row.changed_at,
     };
+  }
+
+  /**
+   * Get all calorie goals for a profile (including archived)
+   */
+  getAllGoals(profileId: string): CalorieGoal[] {
+    const stmt = this.db.prepare(
+      'SELECT * FROM calorie_goals WHERE profile_id = ? ORDER BY start_date DESC'
+    );
+    const rows = stmt.all(profileId) as any[];
+
+    return rows.map((row) => this.rowToGoal(row));
+  }
+
+  /**
+   * Get all calorie goal history records for a profile
+   */
+  getAllGoalHistory(profileId: string): CalorieGoalHistory[] {
+    const stmt = this.db.prepare(
+      'SELECT * FROM calorie_goal_history WHERE profile_id = ? ORDER BY changed_at DESC'
+    );
+    const rows = stmt.all(profileId) as any[];
+
+    return rows.map((row) => this.rowToGoalHistory(row));
   }
 }

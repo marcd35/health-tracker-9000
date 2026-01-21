@@ -91,7 +91,11 @@ describe('Health Scoring', () => {
         },
       ],
     };
-    const score = calculateHealthScore(mockTargets as NutritionalValues, mockTargets, missedSupps);
+    const score = calculateHealthScore(
+      mockTargets as unknown as NutritionalValues,
+      mockTargets,
+      missedSupps
+    );
     expect(score.supplements).toBe(50);
   });
 });

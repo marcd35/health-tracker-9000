@@ -8,7 +8,6 @@ import type {
   CalorieStreak,
   MonthlyCalorieData,
   StreakInfo,
-  WeeklyMetrics,
   GoalChangeRequest,
   GoalChangeResponse,
 } from '@/lib/types/calorieTracking';

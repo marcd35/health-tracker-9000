@@ -25,7 +25,8 @@
       "mcp__ide__getDiagnostics",
       "Bash(npm list:*)",
       "Bash(npx shadcn@latest add:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(tree:*)"
     ]
   },
   "statusLine": {

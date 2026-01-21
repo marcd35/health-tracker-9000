@@ -1,15 +1,20 @@
 import { getDatabase } from '../connection';
 import { v4 as uuidv4 } from 'uuid';
-import type { DailyCalorieTracking, WeeklyProgressData, CalorieStreak, MonthlyCalorieData, WeeklyMetrics, StreakInfo } from '@/lib/types/calorieTracking';
+import type {
+  DailyCalorieTracking,
+  WeeklyProgressData,
+  CalorieStreak,
+  MonthlyCalorieData,
+  WeeklyMetrics,
+  StreakInfo,
+} from '@/lib/types/calorieTracking';
 import { MealLogRepository } from './mealLogRepository';
 import { CalorieGoalRepository } from './calorieGoalRepository';
-import { DailySummaryRepository } from './dailySummaryRepository';
 
 export class CalorieTrackerRepository {
   private db = getDatabase();
   private mealRepo = new MealLogRepository();
   private goalRepo = new CalorieGoalRepository();
-  private summaryRepo = new DailySummaryRepository();
 
   /**
    * Update daily calorie tracking for a specific date
@@ -27,7 +32,7 @@ export class CalorieTrackerRepository {
     const goalMet = this.determineGoalMet(goal.goalType, caloriesConsumed, caloriesTarget);
 
     // Get weekly data for calculations
-    const weekData = this.getWeekForDate(profileId, date);
+    const weekData = this.getWeekForDate(date);
     const dayIndex = this.getDayIndexInWeek(date);
 
     let weeklyTotalConsumed = 0;
@@ -47,15 +52,23 @@ export class CalorieTrackerRepository {
       }
     }
 
-    const weeklyAverage = dayIndex > 0 ? Math.round(weeklyTotalConsumed / (dayIndex + 1)) : caloriesConsumed;
-    const onPacePercentage = this.calculateOnPacePercentage(goal.goalType, weeklyTotalConsumed, weeklyTotalTarget, dayIndex + 1);
-    const trend = this.calculateTrend(profileId, date, caloriesConsumed, caloriesTarget);
+    const weeklyAverage =
+      dayIndex > 0 ? Math.round(weeklyTotalConsumed / (dayIndex + 1)) : caloriesConsumed;
+    const onPacePercentage = this.calculateOnPacePercentage(
+      goal.goalType,
+      weeklyTotalConsumed,
+      weeklyTotalTarget,
+      dayIndex + 1
+    );
+    const trend = this.calculateTrend(profileId, date, caloriesConsumed);
 
     const id = uuidv4();
     const now = new Date().toISOString();
 
     // Check if tracking already exists for this date
-    const existing = this.db.prepare('SELECT id FROM daily_calorie_tracking WHERE date = ?').get(date) as any;
+    const existing = this.db
+      .prepare('SELECT id FROM daily_calorie_tracking WHERE date = ?')
+      .get(date) as any;
 
     if (existing) {
       const updateStmt = this.db.prepare(`
@@ -128,7 +141,9 @@ export class CalorieTrackerRepository {
    * Get daily tracking for a specific date
    */
   getDailyTracking(profileId: string, date: string): DailyCalorieTracking | null {
-    const stmt = this.db.prepare('SELECT * FROM daily_calorie_tracking WHERE date = ? AND profile_id = ?');
+    const stmt = this.db.prepare(
+      'SELECT * FROM daily_calorie_tracking WHERE date = ? AND profile_id = ?'
+    );
     const row = stmt.get(date, profileId) as any;
 
     if (!row) return null;
@@ -140,7 +155,7 @@ export class CalorieTrackerRepository {
    * Get weekly tracking data (7 days ending on endDate)
    */
   getWeeklyTracking(profileId: string, endDate: string): WeeklyProgressData {
-    const weekData = this.getWeekForDate(profileId, endDate);
+    const weekData = this.getWeekForDate(endDate);
     const days: DailyCalorieTracking[] = [];
 
     let weeklyConsumed = 0;
@@ -174,7 +189,9 @@ export class CalorieTrackerRepository {
 
     const weeklyAverage = Math.round(weeklyConsumed / 7);
     const goal = this.goalRepo.getCurrentGoal(profileId);
-    const weeklyTargetValue = goal ? goal.weeklyCalorieTarget + goal.dailyCalorieTarget * 7 : weeklyTarget;
+    const weeklyTargetValue = goal
+      ? goal.weeklyCalorieTarget + goal.dailyCalorieTarget * 7
+      : weeklyTarget;
     const onPacePercentage = goal
       ? this.calculateOnPacePercentage(goal.goalType, weeklyConsumed, weeklyTargetValue, 7)
       : 0;
@@ -288,7 +305,12 @@ export class CalorieTrackerRepository {
     // Calculate on-pace percentage
     const goal = this.goalRepo.getCurrentGoal(profileId);
     const onPacePercentage = goal
-      ? this.calculateOnPacePercentage(goal.goalType, monthlyConsumed, monthlyTarget * daysTotal, daysTotal)
+      ? this.calculateOnPacePercentage(
+          goal.goalType,
+          monthlyConsumed,
+          monthlyTarget * daysTotal,
+          daysTotal
+        )
       : 0;
 
     return {
@@ -297,7 +319,7 @@ export class CalorieTrackerRepository {
       weeks,
       monthlyConsumed,
       monthlyTarget: monthlyTarget * daysTotal,
-      monthlyDeficitSurplus: monthlyConsumed - (monthlyTarget * daysTotal),
+      monthlyDeficitSurplus: monthlyConsumed - monthlyTarget * daysTotal,
       daysMetGoal,
       daysTotal,
       averageConsumed,
@@ -325,9 +347,10 @@ export class CalorieTrackerRepository {
     }
 
     // Calculate streak percentage (days met goal / total days in streak)
-    const streakPercentage = currentStreak.daysCount > 0
-      ? Math.round((currentStreak.goalMetCount / currentStreak.daysCount) * 100)
-      : 0;
+    const streakPercentage =
+      currentStreak.daysCount > 0
+        ? Math.round((currentStreak.goalMetCount / currentStreak.daysCount) * 100)
+        : 0;
 
     // Calculate last activity date (today or yesterday if streak ended)
     const lastActivityDate = currentStreak.streakEndDate || new Date().toISOString().split('T')[0];
@@ -375,9 +398,8 @@ export class CalorieTrackerRepository {
       : 0;
 
     // Calculate projection (if trend continues for full 7-day week)
-    const projection = dayTrackings.length > 0
-      ? Math.round((weeklyConsumed / dayTrackings.length) * 7)
-      : 0;
+    const projection =
+      dayTrackings.length > 0 ? Math.round((weeklyConsumed / dayTrackings.length) * 7) : 0;
 
     const weekEnd = new Date(days[days.length - 1]);
     weekEnd.setDate(weekEnd.getDate() + (6 - (days.length - 1)));
@@ -424,9 +446,7 @@ export class CalorieTrackerRepository {
   /**
    * Calculate trend from array of day trackings
    */
-  private calculateTrendFromDays(
-    dayTrackings: DailyCalorieTracking[]
-  ): 'up' | 'down' | 'stable' {
+  private calculateTrendFromDays(dayTrackings: DailyCalorieTracking[]): 'up' | 'down' | 'stable' {
     if (dayTrackings.length < 2) return 'stable';
 
     const firstDayCalories = dayTrackings[0].caloriesConsumed;
@@ -465,17 +485,22 @@ export class CalorieTrackerRepository {
   /**
    * Calculate on-pace percentage for the week
    */
-  private calculateOnPacePercentage(goalType: string, weeklyConsumed: number, weeklyTarget: number, daysElapsed: number): number {
+  private calculateOnPacePercentage(
+    goalType: string,
+    weeklyConsumed: number,
+    weeklyTarget: number,
+    daysElapsed: number
+  ): number {
     if (goalType === 'weight_loss') {
       // For weight loss, we want to be below target
       // on-pace: if staying below target
       const deficit = weeklyTarget - weeklyConsumed;
-      const targetDeficit = Math.abs(weeklyTarget) / 7 * daysElapsed;
+      const targetDeficit = (Math.abs(weeklyTarget) / 7) * daysElapsed;
       return Math.round((deficit / targetDeficit) * 100);
     } else if (goalType === 'gain') {
       // For weight gain, we want to be above target
       const surplus = weeklyConsumed - weeklyTarget;
-      const targetSurplus = weeklyTarget / 7 * daysElapsed;
+      const targetSurplus = (weeklyTarget / 7) * daysElapsed;
       return Math.round((surplus / targetSurplus) * 100);
     } else {
       // Maintenance: how close to target
@@ -488,7 +513,11 @@ export class CalorieTrackerRepository {
   /**
    * Calculate trend (up, down, stable) based on last 3 days
    */
-  private calculateTrend(profileId: string, date: string, currentCalories: number, currentTarget: number): 'up' | 'down' | 'stable' {
+  private calculateTrend(
+    profileId: string,
+    date: string,
+    currentCalories: number
+  ): 'up' | 'down' | 'stable' {
     const dateObj = new Date(date);
     const prev1 = new Date(dateObj);
     prev1.setDate(prev1.getDate() - 1);
@@ -559,7 +588,7 @@ export class CalorieTrackerRepository {
   /**
    * Get array of dates for the week (Sunday to Saturday) ending on the given date
    */
-  private getWeekForDate(profileId: string, date: string): { days: string[] } {
+  private getWeekForDate(date: string): { days: string[] } {
     const dateObj = new Date(date);
     const dayOfWeek = dateObj.getDay();
     const startOfWeek = new Date(dateObj);
@@ -620,5 +649,45 @@ export class CalorieTrackerRepository {
       createdAt: row.created_at,
       isActive: !row.streak_end_date,
     };
+  }
+
+  /**
+   * Get all daily calorie tracking records for a profile
+   */
+  getAllDailyTracking(
+    profileId: string,
+    startDate?: string,
+    endDate?: string
+  ): DailyCalorieTracking[] {
+    let query = 'SELECT * FROM daily_calorie_tracking WHERE profile_id = ?';
+    const params: any[] = [profileId];
+
+    if (startDate) {
+      query += ' AND date >= ?';
+      params.push(startDate);
+    }
+    if (endDate) {
+      query += ' AND date <= ?';
+      params.push(endDate);
+    }
+
+    query += ' ORDER BY date DESC';
+
+    const stmt = this.db.prepare(query);
+    const rows = stmt.all(...params) as any[];
+
+    return rows.map((row) => this.rowToDailyTracking(row));
+  }
+
+  /**
+   * Get all calorie streaks for a profile
+   */
+  getAllStreaks(profileId: string): CalorieStreak[] {
+    const stmt = this.db.prepare(
+      'SELECT * FROM calorie_streaks WHERE profile_id = ? ORDER BY streak_start_date DESC'
+    );
+    const rows = stmt.all(profileId) as any[];
+
+    return rows.map((row) => this.rowToStreak(row));
   }
 }

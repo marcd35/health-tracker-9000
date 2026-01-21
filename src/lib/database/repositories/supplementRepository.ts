@@ -138,6 +138,33 @@ export class SupplementRepository {
     return rows.map(this.mapRowToLog);
   }
 
+  getAllSupplementLogs(startDate?: string, endDate?: string): SupplementLog[] {
+    let query = 'SELECT * FROM supplement_logs';
+    const params: any[] = [];
+
+    if (startDate || endDate) {
+      const conditions: string[] = [];
+      if (startDate) {
+        conditions.push('date >= ?');
+        params.push(startDate);
+      }
+      if (endDate) {
+        conditions.push('date <= ?');
+        params.push(endDate);
+      }
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    query += ' ORDER BY date DESC, taken_at DESC';
+
+    const stmt = this.db.prepare(query);
+    const rows = (params.length > 0 ? stmt.all(...params) : stmt.all()) as Record<
+      string,
+      unknown
+    >[];
+    return rows.map(this.mapRowToLog);
+  }
+
   checkDuplicateLog(date: string, supplementId: string): boolean {
     const stmt = this.db.prepare(
       'SELECT COUNT(*) as count FROM supplement_logs WHERE date = ? AND supplement_id = ? AND taken = 1'

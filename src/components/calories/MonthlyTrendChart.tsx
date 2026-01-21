@@ -107,10 +107,7 @@ export function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
 
         {/* Chart */}
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart
-            data={displayData}
-            margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
-          >
+          <LineChart data={displayData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis
               dataKey="date"
@@ -119,7 +116,9 @@ export function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
             />
             <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fill: '#a1a1aa' }} />
             <Tooltip
-              formatter={(value: number) => `${Math.round(value)} cal`}
+              formatter={(value: number | undefined) =>
+                value ? `${Math.round(value)} cal` : 'N/A'
+              }
               contentStyle={{
                 backgroundColor: 'hsl(var(--background))',
                 border: '1px solid hsl(var(--border))',

@@ -10,15 +10,18 @@ import { TodaysMealsList } from '@/components/meals/TodaysMealsList';
 import { HistoricalLogCard } from '@/components/meals/HistoricalLogCard';
 import { FavoriteMealsSection } from '@/components/meals/FavoriteMealsSection';
 import { CalorieProgressCard } from '@/components/calories/CalorieProgressCard';
-import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import type { MealLog } from '@/lib/types/health';
 import type { MealFavorite } from '@/lib/database/repositories/mealFavoritesRepository';
 
 export default function MealsPage() {
   const { dailyLog, profile, isLoading, fetchDailyLog, fetchProfile, addMeal } = useHealthStore();
-  const { todayTracking, currentGoal, fetchDailyTracking: fetchCalorieTracking, fetchCurrentGoal } =
-    useCalorieTrackerStore();
+  const {
+    todayTracking,
+    currentGoal,
+    fetchDailyTracking: fetchCalorieTracking,
+    fetchCurrentGoal,
+  } = useCalorieTrackerStore();
   const today = new Date().toISOString().split('T')[0];
 
   const [modalOpen, setModalOpen] = useState(false);

@@ -103,4 +103,36 @@ export class MealLogRepository {
       .sort((a, b) => b.count - a.count)
       .slice(0, limit);
   }
+
+  getAllMealLogs(startDate?: string, endDate?: string): MealLog[] {
+    let query = 'SELECT * FROM meal_logs';
+    const params: any[] = [];
+
+    if (startDate || endDate) {
+      const conditions: string[] = [];
+      if (startDate) {
+        conditions.push('date >= ?');
+        params.push(startDate);
+      }
+      if (endDate) {
+        conditions.push('date <= ?');
+        params.push(endDate);
+      }
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    query += ' ORDER BY date DESC, created_at DESC';
+
+    const stmt = this.db.prepare(query);
+    const rows = (params.length > 0 ? stmt.all(...params) : stmt.all()) as any[];
+
+    return rows.map((row) => ({
+      id: row.id,
+      date: row.date,
+      mealType: row.meal_type,
+      foods: JSON.parse(row.foods),
+      totalNutrition: JSON.parse(row.total_nutrition),
+      createdAt: row.created_at,
+    }));
+  }
 }

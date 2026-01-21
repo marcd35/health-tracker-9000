@@ -82,14 +82,21 @@ export async function POST(request: Request) {
     clearTrackingStmt.run(thirtyDaysAgoStr);
 
     // Group meals by date and add meal logs
-    const mealsByDate = new Map<string, Array<{
-      mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
-      name: string;
-      calories: number;
-    }>>();
+    const mealsByDate = new Map<
+      string,
+      Array<{
+        mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+        name: string;
+        calories: number;
+      }>
+    >();
 
     for (const meal of mockProfile.mealData) {
-      const mealType = (meal.mealType === 'snacks' ? 'snack' : meal.mealType) as 'breakfast' | 'lunch' | 'dinner' | 'snack';
+      const mealType = (meal.mealType === 'snacks' ? 'snack' : meal.mealType) as
+        | 'breakfast'
+        | 'lunch'
+        | 'dinner'
+        | 'snack';
       if (!mealsByDate.has(meal.date)) {
         mealsByDate.set(meal.date, []);
       }
@@ -112,9 +119,10 @@ export async function POST(request: Request) {
         ],
         totalNutrition: {
           calories: meal.calories,
-          carbs: Math.round(meal.calories * 0.5 / 4), // 50% carbs
-          protein: Math.round(meal.calories * 0.3 / 4), // 30% protein
-          fat: Math.round(meal.calories * 0.2 / 9), // 20% fat
+          carbs: Math.round((meal.calories * 0.5) / 4), // 50% carbs
+          protein: Math.round((meal.calories * 0.3) / 4), // 30% protein
+          fat: Math.round((meal.calories * 0.2) / 9), // 20% fat
+          fiber: 0,
         },
       });
     }
@@ -123,7 +131,7 @@ export async function POST(request: Request) {
     const insertDailyTrackingStmt = db.prepare(`
       INSERT INTO daily_calorie_tracking (
         id, date, profile_id, calories_consumed, calories_target,
-        calorie_deficit_surplus, goal_met, trend, created_at, updated_at
+        calories_deficit_surplus, goal_met, trend, created_at, updated_at
       )
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);

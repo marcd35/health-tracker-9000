@@ -131,4 +131,44 @@ export class DailySummaryRepository {
 
     return summary;
   }
+
+  getAllDailySummaries(startDate?: string, endDate?: string): DailyLog[] {
+    let query = 'SELECT * FROM daily_summary';
+    const params: any[] = [];
+
+    if (startDate || endDate) {
+      const conditions: string[] = [];
+      if (startDate) {
+        conditions.push('date >= ?');
+        params.push(startDate);
+      }
+      if (endDate) {
+        conditions.push('date <= ?');
+        params.push(endDate);
+      }
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    query += ' ORDER BY date DESC';
+
+    const stmt = this.db.prepare(query);
+    const rows = (params.length > 0 ? stmt.all(...params) : stmt.all()) as any[];
+
+    return rows.map((row) => {
+      const meals = this.mealRepo.getMealLogsByDate(row.date);
+      const supplements = this.supplementRepo.getSupplementLogsByDate(row.date);
+
+      const summary: DailyLog = {
+        date: row.date,
+        weight: row.weight,
+        meals,
+        supplements,
+        totalNutrition: JSON.parse(row.total_nutrition || '{}'),
+        healthScore: row.health_score || 0,
+        notes: row.notes || '',
+      };
+
+      return summary;
+    });
+  }
 }
