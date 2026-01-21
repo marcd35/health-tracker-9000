@@ -26,7 +26,14 @@
       "Bash(npm list:*)",
       "Bash(npx shadcn@latest add:*)",
       "Bash(find:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(ls:*)",
+      "Bash(for f in \"src/app/page.tsx\" \"src/app/meals/page.tsx\" \"src/app/supplements/page.tsx\" \"src/app/profile/page.tsx\" \"src/app/calories/page.tsx\" \"src/lib/store/healthStore.ts\" \"src/lib/store/supplementStore.ts\" \"src/lib/store/calorieTrackerStore.ts\" \"src/lib/database/schema.sql\")",
+      "Bash(do if [ -f \"$f\" ])",
+      "Bash(then echo \"✓ $f\")",
+      "Bash(else echo \"✗ $f MISSING\")",
+      "Bash(fi)",
+      "Bash(done)"
     ]
   },
   "statusLine": {

@@ -7,6 +7,10 @@ import { ProfileRepository } from '@/lib/database/repositories/profileRepository
 import { CalorieTrackerRepository } from '@/lib/database/repositories/calorieTrackerRepository';
 import { calculateHealthScore } from '@/lib/utils/healthScoring';
 import { getDatabase } from '@/lib/database/connection';
+import { withErrorHandling } from '@/lib/utils/errorHandler';
+import { MealLogSchema } from '@/lib/validation/schemas';
+import { ValidationError } from '@/lib/errors/ApiError';
+import { flagConflicts } from '@/lib/utils/allergenChecker';
 
 export async function POST(request: Request) {
   const mealRepo = new MealLogRepository();
@@ -15,13 +19,20 @@ export async function POST(request: Request) {
   const profileRepo = new ProfileRepository();
   const calorieTrackerRepo = new CalorieTrackerRepository();
 
-  try {
+  return withErrorHandling(async () => {
     const body = await request.json();
-    const { date, mealType, foods } = body;
+    const validated = MealLogSchema.parse(body);
+    const { date, mealType, foods } = validated;
 
-    // Calculate nutrition for each food in the meal
-    // Handle USDA foods that might not be in database yet
-    const mealNutrients = foods.map((f: any) => {
+    // Get user profile for allergen checking
+    const profile = profileRepo.getProfile();
+    if (!profile) {
+      throw new ValidationError('User profile not found');
+    }
+
+    // Calculate nutrition and collect Food objects for allergen checking
+    const foodObjects: any[] = [];
+    const mealNutrients = foods.map((f) => {
       let food = foodRepo.getFoodById(f.foodId);
 
       // If food not found and it's a USDA food (ID starts with "usda-"),
@@ -47,7 +58,7 @@ export async function POST(request: Request) {
             f.foodData.allergens.map((a: string) => ({
               allergenType: a,
               source: 'user_flagged',
-              confidenceLevel: 'high'
+              confidenceLevel: 'high',
             }))
           );
         }
@@ -55,9 +66,20 @@ export async function POST(request: Request) {
         food = foodRepo.getFoodById(importedId);
       }
 
-      if (!food) throw new Error(`Food not found: ${f.foodId}`);
+      if (!food) throw new ValidationError(`Food not found: ${f.foodId}`);
+
+      foodObjects.push(food);
       return calculateNutrition(food, f.amount);
     });
+
+    // ENFORCE allergen checking server-side
+    const allergenConflicts = flagConflicts(foodObjects, profile);
+    if (allergenConflicts.length > 0) {
+      throw new ValidationError('Allergen conflict detected', {
+        conflicts: allergenConflicts,
+        message: 'Cannot save meal with allergen conflicts. Please remove conflicting foods.',
+      });
+    }
 
     const totalNutrition = sumNutrition(mealNutrients);
 
@@ -71,7 +93,6 @@ export async function POST(request: Request) {
     // Update daily summary
     const summary = await summaryRepo.getDailySummary(date);
     if (summary) {
-      const profileRepo = new ProfileRepository();
       const targets = profileRepo.calculateNutritionalTargets();
 
       const meals = mealRepo.getMealLogsByDate(date);
@@ -91,30 +112,28 @@ export async function POST(request: Request) {
     }
 
     // Update calorie tracking if user has a calorie goal
-    const profile = profileRepo.getProfile();
     if (profile) {
       calorieTrackerRepo.updateDailyTracking(profile.id, date);
     }
 
     return NextResponse.json(newMeal);
-  } catch (error: any) {
-    console.error('API Error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
-  }
+  }, 'POST /api/meals');
 }
 
 export async function DELETE(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get('id');
+  return withErrorHandling(async () => {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
 
-  if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
+    if (!id) {
+      throw new ValidationError('ID required');
+    }
 
-  const mealRepo = new MealLogRepository();
-  const summaryRepo = new DailySummaryRepository();
-  const profileRepo = new ProfileRepository();
-  const calorieTrackerRepo = new CalorieTrackerRepository();
+    const mealRepo = new MealLogRepository();
+    const summaryRepo = new DailySummaryRepository();
+    const profileRepo = new ProfileRepository();
+    const calorieTrackerRepo = new CalorieTrackerRepository();
 
-  try {
     // Get date before deleting to update summary
     const stmt = getDatabase().prepare('SELECT date FROM meal_logs WHERE id = ?');
     const row = stmt.get(id) as any;
@@ -125,7 +144,6 @@ export async function DELETE(request: Request) {
     if (date) {
       const summary = await summaryRepo.getDailySummary(date);
       if (summary) {
-        const profileRepo = new ProfileRepository();
         const targets = profileRepo.calculateNutritionalTargets();
 
         const meals = mealRepo.getMealLogsByDate(date);
@@ -152,8 +170,5 @@ export async function DELETE(request: Request) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  }
+  }, 'DELETE /api/meals');
 }

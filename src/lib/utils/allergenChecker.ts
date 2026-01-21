@@ -24,8 +24,26 @@ export function checkFoodForAllergens(food: Food, profile: UserProfile): Allerge
   return null;
 }
 
+export function normalizeAllergen(allergen: string): string {
+  return allergen.toLowerCase().trim();
+}
+
 export function flagConflicts(foods: Food[], profile: UserProfile): AllergenConflict[] {
-  return foods
-    .map((f) => checkFoodForAllergens(f, profile))
-    .filter((c): c is AllergenConflict => c !== null);
+  const normalizedUserAllergies = profile.allergies.map(normalizeAllergen);
+
+  const conflicts: AllergenConflict[] = [];
+
+  for (const food of foods) {
+    const foodAllergens = (food.allergens || []).map(normalizeAllergen);
+    const matches = foodAllergens.filter((a) => normalizedUserAllergies.includes(a));
+
+    if (matches.length > 0) {
+      conflicts.push({
+        foodName: food.name,
+        allergensFound: matches,
+      });
+    }
+  }
+
+  return conflicts;
 }
