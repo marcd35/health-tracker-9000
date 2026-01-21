@@ -10,3 +10,27 @@ global.ResizeObserver = class ResizeObserver {
   unobserve() {}
   disconnect() {}
 };
+
+// Polyfills for Node.js environment
+if (typeof global.TextEncoder === 'undefined') {
+  const { TextEncoder, TextDecoder } = require('util');
+  global.TextEncoder = TextEncoder;
+  global.TextDecoder = TextDecoder;
+}
+
+// Polyfills for Next.js web APIs
+if (typeof global.Request === 'undefined') {
+  global.Request = class Request {};
+}
+
+if (typeof global.Response === 'undefined') {
+  global.Response = class Response {};
+}
+
+if (typeof global.Headers === 'undefined') {
+  global.Headers = class Headers {};
+}
+
+if (typeof global.fetch === 'undefined') {
+  global.fetch = () => Promise.resolve(new Response());
+}

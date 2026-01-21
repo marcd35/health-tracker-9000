@@ -532,7 +532,7 @@ describe('SupplementRepository', () => {
 
     describe('getCustomNutrientByKey', () => {
       it('should return custom nutrient by key', () => {
-        const created = repo.createCustomNutrient({
+        repo.createCustomNutrient({
           key: 'test-nutrient',
           name: 'Test Nutrient',
           unit: 'mg',

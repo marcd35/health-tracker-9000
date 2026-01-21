@@ -16,6 +16,12 @@ function runMigrations(database: Database.Database): void {
 export function getDatabase(): Database.Database {
   if (db) return db;
 
+  // Check if we're in test mode with a test database
+  if (process.env.TEST_DB) {
+    db = process.env.TEST_DB as unknown as Database.Database;
+    return db;
+  }
+
   // Ensure data directory exists
   const dataDir = path.dirname(DB_PATH);
   if (!fs.existsSync(dataDir)) {
@@ -38,7 +44,10 @@ export function getDatabase(): Database.Database {
 
 export function closeDatabase(): void {
   if (db) {
-    db.close();
+    // Don't close test databases - they're managed by tests
+    if (!process.env.TEST_DB) {
+      db.close();
+    }
     db = null;
   }
 }

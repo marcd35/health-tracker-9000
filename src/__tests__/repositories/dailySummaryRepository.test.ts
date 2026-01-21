@@ -51,7 +51,7 @@ describe('DailySummaryRepository', () => {
         dosageQuantity: 1,
       });
 
-      const meal = mealRepo.addMealLog({
+      mealRepo.addMealLog({
         date: '2024-01-15',
         mealType: 'breakfast',
         foods: [
