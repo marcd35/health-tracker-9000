@@ -219,6 +219,7 @@ function importSupplements(supplementData: any, result: ImportResult) {
             dosageQuantity: supp.dosageQuantity,
             dosageNotes: supp.dosageNotes,
             supplementType: supp.supplementType,
+            enabled: true,
           });
           result.imported.supplements++;
         } catch (error) {

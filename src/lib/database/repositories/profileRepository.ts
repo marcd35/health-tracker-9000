@@ -22,6 +22,7 @@ export class ProfileRepository {
 
     return {
       id: row.id,
+      displayName: row.display_name || undefined,
       age: row.age,
       weight: row.weight,
       height: row.height,
@@ -45,17 +46,19 @@ export class ProfileRepository {
       this.db
         .prepare(
           `
-        UPDATE profile SET 
-          age = ?, 
-          weight = ?, 
-          height = ?, 
-          gender = ?, 
-          activity_level = ?, 
+        UPDATE profile SET
+          display_name = ?,
+          age = ?,
+          weight = ?,
+          height = ?,
+          gender = ?,
+          activity_level = ?,
           updated_at = ?
         WHERE id = ?
       `
         )
         .run(
+          updated.displayName || null,
           updated.age,
           updated.weight,
           updated.height,

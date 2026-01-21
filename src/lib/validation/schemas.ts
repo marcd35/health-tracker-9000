@@ -24,6 +24,7 @@ export const MealUpdateSchema = z.object({
 
 // Profile update schema
 export const ProfileUpdateSchema = z.object({
+  displayName: z.string().min(1).max(100).optional(),
   age: z.number().int().min(1).max(120).optional(),
   weight: z.number().positive().max(500).optional(),
   height: z.number().positive().max(300).optional(),

@@ -1,5 +1,6 @@
 import { getDatabase } from '../connection';
 import type { MealLog } from '@/lib/types/health';
+import type { MealLogRow } from '@/lib/types/database';
 import { v4 as uuidv4 } from 'uuid';
 
 export class MealLogRepository {
@@ -29,12 +30,12 @@ export class MealLogRepository {
 
   getMealLogsByDate(date: string): MealLog[] {
     const stmt = this.db.prepare('SELECT * FROM meal_logs WHERE date = ?');
-    const rows = stmt.all(date) as any[];
+    const rows = stmt.all(date) as MealLogRow[];
 
     return rows.map((row) => ({
       id: row.id,
       date: row.date,
-      mealType: row.meal_type,
+      mealType: row.meal_type as MealLog['mealType'],
       foods: JSON.parse(row.foods),
       totalNutrition: JSON.parse(row.total_nutrition),
       createdAt: row.created_at,
@@ -43,7 +44,7 @@ export class MealLogRepository {
 
   updateMealLog(id: string, updates: Partial<MealLog>): void {
     const stmt = this.db.prepare('SELECT * FROM meal_logs WHERE id = ?');
-    const current = stmt.get(id) as any;
+    const current = stmt.get(id) as MealLogRow | undefined;
     if (!current) throw new Error('Meal log not found');
 
     // Map camelCase updates to snake_case for database
@@ -76,12 +77,12 @@ export class MealLogRepository {
     const stmt = this.db.prepare(
       `SELECT * FROM meal_logs WHERE date IN (${placeholders}) ORDER BY date, created_at`
     );
-    const rows = stmt.all(...dates) as any[];
+    const rows = stmt.all(...dates) as MealLogRow[];
 
     return rows.map((row) => ({
       id: row.id,
       date: row.date,
-      mealType: row.meal_type,
+      mealType: row.meal_type as MealLog['mealType'],
       foods: JSON.parse(row.foods),
       totalNutrition: JSON.parse(row.total_nutrition),
       createdAt: row.created_at,
@@ -108,7 +109,11 @@ export class MealLogRepository {
       LIMIT ?
     `);
 
-    const rows = stmt.all(cutoffDate, limit) as any[];
+    const rows = stmt.all(cutoffDate, limit) as {
+      food_id: string;
+      food_name: string;
+      frequency: number;
+    }[];
 
     return rows.map((row) => ({
       foodId: row.food_id,
@@ -165,12 +170,12 @@ export class MealLogRepository {
     params.push(limit, offset);
 
     const stmt = this.db.prepare(query);
-    const rows = stmt.all(...params) as any[];
+    const rows = stmt.all(...params) as MealLogRow[];
 
     const data = rows.map((row) => ({
       id: row.id,
       date: row.date,
-      mealType: row.meal_type,
+      mealType: row.meal_type as MealLog['mealType'],
       foods: JSON.parse(row.foods),
       totalNutrition: JSON.parse(row.total_nutrition),
       createdAt: row.created_at,

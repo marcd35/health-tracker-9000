@@ -8,8 +8,9 @@ import { RecommendationsCard } from '@/components/dashboard/RecommendationsCard'
 import { TodaysMeals } from '@/components/dashboard/TodaysMeals';
 import { TodaysSupplements } from '@/components/dashboard/TodaysSupplements';
 import { MicronutrientGrid } from '@/components/dashboard/MicronutrientGrid';
+import { CalorieProgressCard } from '@/components/dashboard/CalorieProgressCard';
 import { Button } from '@/components/ui/button';
-import { Plus, Utensils } from 'lucide-react';
+import { Utensils } from 'lucide-react';
 import Link from 'next/link';
 import { generateRecommendations } from '@/lib/utils/recommendations';
 
@@ -36,10 +37,12 @@ const WeeklyTrendChart = dynamic(
 export default function DashboardPage() {
   const {
     profile,
+    preferences,
     dailyLog,
     weeklySummary,
     isLoading,
     fetchProfile,
+    fetchPreferences,
     fetchDailyLog,
     fetchWeeklySummary,
   } = useHealthStore();
@@ -47,10 +50,19 @@ export default function DashboardPage() {
   const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
-    fetchProfile();
-    fetchDailyLog(today);
-    fetchWeeklySummary(today);
-  }, [fetchProfile, fetchDailyLog, fetchWeeklySummary, today]);
+    // Check if we need to refresh data (new day)
+    const lastFetchedDate = localStorage.getItem('lastDashboardDate');
+    if (lastFetchedDate !== today) {
+      fetchProfile();
+      fetchPreferences();
+      fetchDailyLog(today);
+      fetchWeeklySummary(today);
+      localStorage.setItem('lastDashboardDate', today);
+    } else {
+      // Same day, still fetch preferences in case they changed
+      fetchPreferences();
+    }
+  }, [fetchProfile, fetchPreferences, fetchDailyLog, fetchWeeklySummary, today]);
 
   if (isLoading && !dailyLog) {
     return <DashboardSkeleton />;
@@ -129,9 +141,19 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back{profile ? `, ${profile.gender === 'male' ? 'Mr.' : 'Ms.'}` : ''}!
-            Here&apos;s your health summary for today.
+            {profile?.displayName
+              ? `Welcome back, ${profile.displayName}!`
+              : 'Welcome back!'}
+            {' '}Here&apos;s your health summary for today.
           </p>
+          {!profile?.displayName && (
+            <p className="text-sm text-muted-foreground mt-2">
+              <Link href="/profile" className="text-primary hover:underline">
+                Complete your profile
+              </Link>
+              {' '}to personalize your experience.
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <Button asChild variant="outline" className="gap-2" aria-label="Navigate to meal logging">
@@ -140,17 +162,12 @@ export default function DashboardPage() {
               Log Meal
             </Link>
           </Button>
-          <Button asChild className="gap-2" aria-label="Navigate to supplement logging">
-            <Link href="/supplements">
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              Quick Action
-            </Link>
-          </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <HealthScoreCard score={healthScore} breakdown={breakdown} />
+        <CalorieProgressCard />
         <div className="lg:col-span-2">
           <NutritionSummaryCard actual={actual} targets={targets} />
         </div>
@@ -163,10 +180,15 @@ export default function DashboardPage() {
           <MicronutrientGrid nutrients={microData} />
         </div>
         <div className="space-y-6">
-          <RecommendationsCard recommendations={recommendations} />
-          <TodaysSupplements supplements={dailyLog?.supplements || []} />
-          <TodaysMeals meals={dailyLog?.meals || []} />
+          {preferences?.showHealthInsights && (
+            <RecommendationsCard recommendations={recommendations} />
+          )}
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TodaysMeals meals={dailyLog?.meals || []} />
+        <TodaysSupplements supplements={dailyLog?.supplements || []} />
       </div>
     </div>
   );

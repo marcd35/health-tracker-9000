@@ -88,6 +88,7 @@ export interface Supplement {
   dosageQuantity: number;
   dosageNotes?: string;
   supplementType: SupplementType;
+  enabled: boolean;
   createdAt: string;
 }
 
@@ -100,6 +101,7 @@ export interface SupplementLog {
   taken: boolean;
   takenAt?: string; // ISO timestamp
   isDuplicateWarning?: boolean; // Flag for duplicate logs on same day
+  enabled?: boolean; // Whether the supplement is enabled (not archived)
   createdAt: string;
 }
 

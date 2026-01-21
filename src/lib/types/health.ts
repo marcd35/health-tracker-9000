@@ -1,5 +1,6 @@
 export interface UserProfile {
   id: string;
+  displayName?: string;
   age: number;
   weight: number; // kg
   height: number; // cm
@@ -88,6 +89,7 @@ export interface Supplement {
   nutrients: Partial<NutritionalValues>;
   servingSize: string;
   notes?: string;
+  enabled: boolean;
 }
 
 export interface MealLog {
@@ -109,6 +111,7 @@ export interface SupplementLog {
   supplementId: string;
   supplementName: string;
   taken: boolean;
+  enabled?: boolean;
   createdAt: string;
 }
 

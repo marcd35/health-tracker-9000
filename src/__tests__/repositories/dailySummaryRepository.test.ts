@@ -49,6 +49,7 @@ describe('DailySummaryRepository', () => {
         color: '#fbbf24',
         dosageFrequency: 'daily',
         dosageQuantity: 1,
+        enabled: true,
       });
 
       mealRepo.addMealLog({
@@ -109,6 +110,7 @@ describe('DailySummaryRepository', () => {
         color: '#10b981',
         dosageFrequency: 'daily',
         dosageQuantity: 1,
+        enabled: true,
       });
 
       mealRepo.addMealLog({
@@ -179,6 +181,7 @@ describe('DailySummaryRepository', () => {
         color: '#6366f1',
         dosageFrequency: 'daily',
         dosageQuantity: 1,
+        enabled: true,
       });
 
       const supp2 = supplementRepo.createSupplement({
@@ -191,6 +194,7 @@ describe('DailySummaryRepository', () => {
         color: '#3b82f6',
         dosageFrequency: 'daily',
         dosageQuantity: 1,
+        enabled: true,
       });
 
       const supplementLogs = [
@@ -347,6 +351,7 @@ describe('DailySummaryRepository', () => {
             color: '#fbbf24',
             dosageFrequency: 'daily',
             dosageQuantity: 1,
+            enabled: true,
           });
 
           supplementRepo.logSupplementTaken({

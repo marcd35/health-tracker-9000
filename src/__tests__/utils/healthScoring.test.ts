@@ -98,4 +98,88 @@ describe('Health Scoring', () => {
     );
     expect(score.supplements).toBe(50);
   });
+
+  it('should exclude disabled supplements from compliance calculation', () => {
+    const dailyLogWithDisabled = {
+      ...mockDailyLog,
+      supplements: [
+        {
+          id: '1',
+          date: new Date().toISOString(),
+          supplementId: '1',
+          supplementName: 'Vitamin D',
+          taken: true,
+          enabled: true,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: '2',
+          date: new Date().toISOString(),
+          supplementId: '2',
+          supplementName: 'Omega 3',
+          taken: false,
+          enabled: true,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: '3',
+          date: new Date().toISOString(),
+          supplementId: '3',
+          supplementName: 'Iron',
+          taken: false,
+          enabled: false, // disabled
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    };
+    const score = calculateHealthScore(
+      mockTargets as unknown as NutritionalValues,
+      mockTargets,
+      dailyLogWithDisabled
+    );
+    // Only 2 enabled supplements: 1 taken, 1 not taken = 50%
+    expect(score.supplements).toBe(50);
+  });
+
+  it('should return perfect score when all enabled supplements are taken and disabled ones exist', () => {
+    const dailyLogWithDisabledButAllEnabledTaken = {
+      ...mockDailyLog,
+      supplements: [
+        {
+          id: '1',
+          date: new Date().toISOString(),
+          supplementId: '1',
+          supplementName: 'Vitamin D',
+          taken: true,
+          enabled: true,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: '2',
+          date: new Date().toISOString(),
+          supplementId: '2',
+          supplementName: 'Omega 3',
+          taken: true,
+          enabled: true,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: '3',
+          date: new Date().toISOString(),
+          supplementId: '3',
+          supplementName: 'Iron',
+          taken: false,
+          enabled: false, // disabled and not taken (doesn't affect score)
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    };
+    const score = calculateHealthScore(
+      mockTargets as unknown as NutritionalValues,
+      mockTargets,
+      dailyLogWithDisabledButAllEnabledTaken
+    );
+    // All enabled supplements (2) are taken = 100%
+    expect(score.supplements).toBe(100);
+  });
 });

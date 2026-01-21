@@ -98,8 +98,11 @@ function calculateMicroAdherence(actual: NutritionalValues, targets: Nutritional
 }
 
 function calculateSupplementCompliance(dailyLog: DailyLog): number {
-  if (dailyLog.supplements.length === 0) return 100; // No supplements scheduled = perfect score
+  // Filter to only enabled supplements
+  const enabledSupplements = dailyLog.supplements.filter((s) => s.enabled !== false);
 
-  const taken = dailyLog.supplements.filter((s) => s.taken).length;
-  return (taken / dailyLog.supplements.length) * 100;
+  if (enabledSupplements.length === 0) return 100; // No enabled supplements = perfect score
+
+  const taken = enabledSupplements.filter((s) => s.taken).length;
+  return (taken / enabledSupplements.length) * 100;
 }

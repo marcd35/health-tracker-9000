@@ -35,11 +35,22 @@ export class CalorieTrackerRepository {
     const weekData = this.getWeekForDate(date);
     const dayIndex = this.getDayIndexInWeek(date);
 
+    // Single query to get all tracking for the week
+    const placeholders = weekData.days.map(() => '?').join(',');
+    const weekStmt = this.db.prepare(
+      `SELECT * FROM daily_calorie_tracking WHERE profile_id = ? AND date IN (${placeholders})`
+    );
+    const weekRows = weekStmt.all(profileId, ...weekData.days) as any[];
+    const weekTrackingMap = new Map<string, DailyCalorieTracking>();
+    weekRows.forEach((row) => {
+      weekTrackingMap.set(row.date, this.rowToDailyTracking(row));
+    });
+
     let weeklyTotalConsumed = 0;
     let weeklyTotalTarget = 0;
     for (let i = 0; i < 7; i++) {
       if (i <= dayIndex) {
-        const dayTracking = this.getDailyTracking(profileId, weekData.days[i]);
+        const dayTracking = weekTrackingMap.get(weekData.days[i]);
         if (dayTracking && i < dayIndex) {
           // Previous days in week
           weeklyTotalConsumed += dayTracking.caloriesConsumed;
@@ -162,8 +173,19 @@ export class CalorieTrackerRepository {
     let weeklyTarget = 0;
     let daysMetGoal = 0;
 
+    // Single query to get all tracking for the week
+    const placeholders = weekData.days.map(() => '?').join(',');
+    const stmt = this.db.prepare(
+      `SELECT * FROM daily_calorie_tracking WHERE profile_id = ? AND date IN (${placeholders})`
+    );
+    const rows = stmt.all(profileId, ...weekData.days) as any[];
+    const trackingMap = new Map<string, DailyCalorieTracking>();
+    rows.forEach((row) => {
+      trackingMap.set(row.date, this.rowToDailyTracking(row));
+    });
+
     for (const day of weekData.days) {
-      const tracking = this.getDailyTracking(profileId, day);
+      const tracking = trackingMap.get(day);
       if (tracking) {
         days.push(tracking);
         weeklyConsumed += tracking.caloriesConsumed;
@@ -257,6 +279,17 @@ export class CalorieTrackerRepository {
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
+    // Single query to get all tracking for the month
+    const placeholders = monthDays.map(() => '?').join(',');
+    const stmt = this.db.prepare(
+      `SELECT * FROM daily_calorie_tracking WHERE profile_id = ? AND date IN (${placeholders})`
+    );
+    const rows = stmt.all(profileId, ...monthDays) as any[];
+    const trackingMap = new Map<string, DailyCalorieTracking>();
+    rows.forEach((row) => {
+      trackingMap.set(row.date, this.rowToDailyTracking(row));
+    });
+
     // Group days into weeks
     const weeks: WeeklyMetrics[] = [];
     let currentWeek: string[] = [];
@@ -267,7 +300,7 @@ export class CalorieTrackerRepository {
 
       if (dayOfWeek === 0 && currentWeek.length > 0) {
         // End of week (Saturday -> Sunday)
-        weeks.push(this.buildWeeklyMetrics(profileId, currentWeekStart!, currentWeek));
+        weeks.push(this.buildWeeklyMetrics(profileId, currentWeekStart!, currentWeek, trackingMap));
         currentWeek = [];
         currentWeekStart = null;
       }
@@ -280,7 +313,7 @@ export class CalorieTrackerRepository {
 
     // Don't forget the last partial week
     if (currentWeek.length > 0 && currentWeekStart) {
-      weeks.push(this.buildWeeklyMetrics(profileId, currentWeekStart, currentWeek));
+      weeks.push(this.buildWeeklyMetrics(profileId, currentWeekStart, currentWeek, trackingMap));
     }
 
     // Aggregate all weeks
@@ -368,14 +401,19 @@ export class CalorieTrackerRepository {
   /**
    * Build weekly metrics for a given set of days
    */
-  private buildWeeklyMetrics(profileId: string, weekStart: string, days: string[]): WeeklyMetrics {
+  private buildWeeklyMetrics(
+    profileId: string,
+    weekStart: string,
+    days: string[],
+    trackingMap?: Map<string, DailyCalorieTracking>
+  ): WeeklyMetrics {
     let weeklyConsumed = 0;
     let weeklyTarget = 0;
     let daysMetGoal = 0;
     const dayTrackings: DailyCalorieTracking[] = [];
 
     for (const day of days) {
-      const tracking = this.getDailyTracking(profileId, day);
+      const tracking = trackingMap ? trackingMap.get(day) : this.getDailyTracking(profileId, day);
       if (tracking) {
         dayTrackings.push(tracking);
         weeklyConsumed += tracking.caloriesConsumed;

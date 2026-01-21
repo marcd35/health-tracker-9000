@@ -42,6 +42,7 @@ describe('SupplementRepository', () => {
             color: '#6366f1',
             dosageFrequency: 'daily',
             dosageQuantity: 1,
+            enabled: true,
           });
         });
 
@@ -70,6 +71,7 @@ describe('SupplementRepository', () => {
           color: mockSupplements[0].color,
           dosageFrequency: mockSupplements[0].dosageFrequency,
           dosageQuantity: mockSupplements[0].dosageQuantity,
+          enabled: true,
         });
 
         const result = repo.getSupplementById(created.id);
@@ -98,6 +100,7 @@ describe('SupplementRepository', () => {
           color: '#ef4444',
           dosageFrequency: 'daily' as const,
           dosageQuantity: 1,
+          enabled: true,
         };
 
         const result = repo.createSupplement(data);
@@ -124,6 +127,7 @@ describe('SupplementRepository', () => {
           color: '#3b82f6',
           dosageFrequency: 'daily' as const,
           dosageQuantity: 2,
+          enabled: true,
         };
 
         const result = repo.createSupplement(data);
@@ -146,6 +150,7 @@ describe('SupplementRepository', () => {
           color: '#6366f1',
           dosageFrequency: 'daily',
           dosageQuantity: 1,
+          enabled: true,
         });
         supplementId = created.id;
       });
@@ -190,6 +195,7 @@ describe('SupplementRepository', () => {
           color: '#6366f1',
           dosageFrequency: 'daily',
           dosageQuantity: 1,
+          enabled: true,
         });
 
         // Create a log for this supplement
@@ -237,6 +243,7 @@ describe('SupplementRepository', () => {
         color: '#fbbf24',
         dosageFrequency: 'daily',
         dosageQuantity: 1,
+        enabled: true,
       });
       supplementId = supplement.id;
     });

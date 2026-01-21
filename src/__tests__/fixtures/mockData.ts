@@ -180,6 +180,7 @@ export const mockSupplements: Supplement[] = [
     color: '#fbbf24',
     dosageFrequency: 'daily',
     dosageQuantity: 1,
+    enabled: true,
     createdAt: '2024-01-01T00:00:00.000Z',
   },
   {
@@ -193,6 +194,7 @@ export const mockSupplements: Supplement[] = [
     color: '#06b6d4',
     dosageFrequency: 'daily',
     dosageQuantity: 2,
+    enabled: true,
     createdAt: '2024-01-01T00:00:00.000Z',
   },
   {
@@ -211,6 +213,7 @@ export const mockSupplements: Supplement[] = [
     color: '#10b981',
     dosageFrequency: 'daily',
     dosageQuantity: 1,
+    enabled: true,
     createdAt: '2024-01-01T00:00:00.000Z',
   },
 ];

@@ -1,9 +1,11 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
 import { UserProfile, DailyLog, MealLog, Food, Supplement } from '@/lib/types/health';
+import type { UserPreferences, PreferencesUpdateInput } from '@/lib/types/preferences';
 
 interface HealthState {
   profile: UserProfile | null;
+  preferences: UserPreferences | null;
   dailyLog: DailyLog | null;
   weeklySummary: DailyLog[];
   allSupplements: Supplement[];
@@ -15,6 +17,8 @@ interface HealthState {
   // Actions
   fetchProfile: () => Promise<void>;
   updateProfile: (profile: Partial<UserProfile>) => Promise<void>;
+  fetchPreferences: () => Promise<void>;
+  updatePreferences: (updates: PreferencesUpdateInput) => Promise<void>;
   fetchDailyLog: (date: string) => Promise<void>;
   fetchWeeklySummary: (endDate: string) => Promise<void>;
   fetchAllSupplements: () => Promise<void>;
@@ -44,6 +48,7 @@ interface HealthState {
 
 export const useHealthStore = create<HealthState>((set, get) => ({
   profile: null,
+  preferences: null,
   dailyLog: null,
   weeklySummary: [],
   allSupplements: [],
@@ -83,6 +88,37 @@ export const useHealthStore = create<HealthState>((set, get) => ({
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
       toast.error(err.message || 'Failed to update profile');
+    }
+  },
+
+  fetchPreferences: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch('/api/preferences');
+      if (!response.ok) throw new Error('Failed to fetch preferences');
+      const data = await response.json();
+      set({ preferences: data, isLoading: false });
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      toast.error(err.message || 'Failed to fetch preferences');
+    }
+  },
+
+  updatePreferences: async (updates) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch('/api/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      if (!response.ok) throw new Error('Failed to update preferences');
+      const data = await response.json();
+      set({ preferences: data, isLoading: false });
+      toast.success('Preferences updated successfully');
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      toast.error(err.message || 'Failed to update preferences');
     }
   },
 

@@ -25,6 +25,7 @@ interface SupplementState {
   createSupplement: (data: SupplementFormData) => Promise<Supplement | null>;
   updateSupplement: (id: string, data: Partial<SupplementFormData>) => Promise<void>;
   deleteSupplement: (id: string) => Promise<void>;
+  toggleSupplementEnabled: (id: string, enabled: boolean) => Promise<void>;
 
   // Logging
   fetchTodayLogs: (date: string) => Promise<void>;
@@ -149,6 +150,25 @@ export const useSupplementStore = create<SupplementState>((set, get) => ({
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to delete supplement';
       set({ error: message, isLoading: false });
+      toast.error(message);
+    }
+  },
+
+  toggleSupplementEnabled: async (id, enabled) => {
+    try {
+      const res = await fetch(`/api/supplements/${id}/toggle-enabled`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled }),
+      });
+      if (!res.ok) throw new Error('Failed to toggle supplement');
+      const updated = await res.json();
+      set((state) => ({
+        supplements: state.supplements.map((s) => (s.id === id ? updated : s)),
+      }));
+      toast.success(enabled ? 'Supplement reactivated' : 'Supplement disabled');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to toggle supplement';
       toast.error(message);
     }
   },

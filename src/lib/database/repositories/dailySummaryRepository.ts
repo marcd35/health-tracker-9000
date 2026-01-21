@@ -1,5 +1,6 @@
 import { getDatabase } from '../connection';
 import type { DailyLog, NutritionalValues } from '@/lib/types/health';
+import type { DailySummaryRow } from '@/lib/types/database';
 import { MealLogRepository } from './mealLogRepository';
 import { SupplementRepository } from './supplementRepository';
 import { ProfileRepository } from './profileRepository';
@@ -53,7 +54,7 @@ export class DailySummaryRepository {
   saveDailySummary(summary: Partial<DailyLog> & { date: string }): void {
     const existing = this.db
       .prepare('SELECT * FROM daily_summary WHERE date = ?')
-      .get(summary.date) as any;
+      .get(summary.date) as DailySummaryRow | undefined;
     const totalNutrition =
       summary.totalNutrition !== undefined
         ? JSON.stringify(summary.totalNutrition)
@@ -107,7 +108,7 @@ export class DailySummaryRepository {
     // Single query to get all summaries for the week
     const placeholders = dates.map(() => '?').join(',');
     const stmt = this.db.prepare(`SELECT * FROM daily_summary WHERE date IN (${placeholders})`);
-    const summaryRows = stmt.all(...dates) as any[];
+    const summaryRows = stmt.all(...dates) as DailySummaryRow[];
 
     // Batch fetch all meals and supplements for the week
     const meals = this.mealRepo.getMealLogsByDates(dates);
@@ -142,14 +143,14 @@ export class DailySummaryRepository {
 
       const summary: DailyLog = {
         date: dateStr,
-        weight: summaryRow ? summaryRow.weight : undefined,
+        weight: summaryRow ? (summaryRow.weight ?? undefined) : undefined,
         meals: dateMeals,
         supplements: dateSupplements,
         totalNutrition: summaryRow
           ? JSON.parse(summaryRow.total_nutrition)
           : this.calculateDailyTotals(dateMeals, dateSupplements),
         healthScore: summaryRow ? summaryRow.health_score : 0,
-        notes: summaryRow ? summaryRow.notes : '',
+        notes: summaryRow ? (summaryRow.notes ?? '') : '',
       };
 
       if (profile) {
@@ -167,7 +168,7 @@ export class DailySummaryRepository {
 
   private getDailySummarySync(date: string): DailyLog | null {
     const stmt = this.db.prepare('SELECT * FROM daily_summary WHERE date = ?');
-    const row = stmt.get(date) as any;
+    const row = stmt.get(date) as DailySummaryRow | undefined;
 
     const meals = this.mealRepo.getMealLogsByDate(date);
     const supplements = this.supplementRepo.getSupplementLogsByDate(date);
@@ -181,14 +182,14 @@ export class DailySummaryRepository {
 
     const summary: DailyLog = {
       date: row ? row.date : date,
-      weight: row ? row.weight : profile?.weight,
+      weight: row ? (row.weight ?? undefined) : profile?.weight,
       meals,
       supplements,
       totalNutrition: row
         ? JSON.parse(row.total_nutrition)
         : this.calculateDailyTotals(meals, supplements),
       healthScore: row ? row.health_score : 0,
-      notes: row ? row.notes : '',
+      notes: row ? (row.notes ?? '') : '',
     };
 
     if (profile) {
@@ -249,7 +250,7 @@ export class DailySummaryRepository {
     params.push(limit, offset);
 
     const stmt = this.db.prepare(query);
-    const rows = stmt.all(...params) as any[];
+    const rows = stmt.all(...params) as DailySummaryRow[];
 
     if (rows.length === 0) return { data: [], total };
 
@@ -284,12 +285,12 @@ export class DailySummaryRepository {
 
       const summary: DailyLog = {
         date: row.date,
-        weight: row.weight,
+        weight: row.weight ?? undefined,
         meals: dateMeals,
         supplements: dateSupplements,
         totalNutrition: JSON.parse(row.total_nutrition || '{}'),
         healthScore: row.health_score || 0,
-        notes: row.notes || '',
+        notes: row.notes ?? '',
       };
 
       return summary;

@@ -31,8 +31,8 @@ export class SupplementRepository {
 
     const stmt = this.db.prepare(`
       INSERT INTO supplements
-      (id, name, brand, serving_size, nutrients, custom_nutrients, notes, color, dosage_frequency, dosage_quantity, dosage_notes, supplement_type, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, name, brand, serving_size, nutrients, custom_nutrients, notes, color, dosage_frequency, dosage_quantity, dosage_notes, supplement_type, enabled, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -48,6 +48,7 @@ export class SupplementRepository {
       data.dosageQuantity,
       data.dosageNotes || null,
       data.supplementType,
+      data.enabled ? 1 : 0,
       createdAt
     );
 
@@ -69,7 +70,7 @@ export class SupplementRepository {
     const stmt = this.db.prepare(`
       UPDATE supplements SET
         name = ?, brand = ?, serving_size = ?, nutrients = ?, custom_nutrients = ?, notes = ?,
-        color = ?, dosage_frequency = ?, dosage_quantity = ?, dosage_notes = ?, supplement_type = ?
+        color = ?, dosage_frequency = ?, dosage_quantity = ?, dosage_notes = ?, supplement_type = ?, enabled = ?
       WHERE id = ?
     `);
 
@@ -85,6 +86,7 @@ export class SupplementRepository {
       updated.dosageQuantity,
       updated.dosageNotes || null,
       updated.supplementType,
+      updated.enabled ? 1 : 0,
       id
     );
 
@@ -95,6 +97,11 @@ export class SupplementRepository {
     // Delete associated logs first
     this.db.prepare('DELETE FROM supplement_logs WHERE supplement_id = ?').run(id);
     this.db.prepare('DELETE FROM supplements WHERE id = ?').run(id);
+  }
+
+  toggleEnabled(id: string, enabled: boolean): void {
+    const stmt = this.db.prepare('UPDATE supplements SET enabled = ? WHERE id = ?');
+    stmt.run(enabled ? 1 : 0, id);
   }
 
   // ===== SUPPLEMENT LOGS =====
@@ -390,6 +397,7 @@ export class SupplementRepository {
       dosageQuantity: (row.dosage_quantity as number) || 1,
       dosageNotes: row.dosage_notes as string | undefined,
       supplementType,
+      enabled: (row.enabled as number | null | undefined) !== 0,
       createdAt: row.created_at as string,
     };
   }

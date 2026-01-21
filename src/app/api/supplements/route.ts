@@ -66,6 +66,7 @@ export async function POST(request: Request) {
       dosageQuantity: validated.dosageQuantity,
       dosageNotes: validated.dosageNotes,
       supplementType: validated.supplementType,
+      enabled: true,
     });
 
     return NextResponse.json(newSupplement, { status: 201 });

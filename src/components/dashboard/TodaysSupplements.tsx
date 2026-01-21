@@ -5,12 +5,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Pill, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useSupplementStore } from '@/lib/store/supplementStore';
 
 interface SupplementEntry {
   id: string;
   supplementId: string;
   supplementName: string;
   taken: boolean;
+  enabled?: boolean;
 }
 
 interface TodaysSupplementsProps {
@@ -18,6 +20,11 @@ interface TodaysSupplementsProps {
 }
 
 export function TodaysSupplements({ supplements }: TodaysSupplementsProps) {
+  const { toggleSupplementEnabled } = useSupplementStore();
+
+  const enabledSupplements = supplements.filter((s) => s.enabled !== false);
+  const disabledSupplements = supplements.filter((s) => s.enabled === false);
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -38,22 +45,46 @@ export function TodaysSupplements({ supplements }: TodaysSupplementsProps) {
             </Button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {supplements.map((supp) => (
+          <div className="space-y-3">
+            {/* Enabled supplements */}
+            {enabledSupplements.map((supp) => (
               <div key={supp.id} className="flex items-center space-x-3">
-                <Checkbox
-                  id={supp.id}
-                  checked={supp.taken}
-                  onCheckedChange={() => {}} // Handle in upper state
-                />
+                <Checkbox id={supp.id} checked={supp.taken} onCheckedChange={() => {}} />
                 <label
                   htmlFor={supp.id}
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  className="text-sm font-medium leading-none cursor-pointer flex-1"
                 >
                   {supp.supplementName}
                 </label>
               </div>
             ))}
+
+            {/* Disabled supplements */}
+            {disabledSupplements.length > 0 && (
+              <>
+                <div className="border-t pt-3 mt-3">
+                  <p className="text-xs text-muted-foreground mb-2 font-medium">Disabled</p>
+                  {disabledSupplements.map((supp) => (
+                    <div
+                      key={supp.id}
+                      className="flex items-center justify-between space-x-3 opacity-50"
+                    >
+                      <label className="text-sm font-medium leading-none cursor-not-allowed">
+                        {supp.supplementName}
+                      </label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={() => toggleSupplementEnabled(supp.supplementId, true)}
+                      >
+                        Reactivate
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
       </CardContent>

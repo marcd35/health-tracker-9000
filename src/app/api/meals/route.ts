@@ -10,6 +10,51 @@ import { MealLogSchema } from '@/lib/validation/schemas';
 import { ValidationError } from '@/lib/errors/ApiError';
 import { flagConflicts } from '@/lib/utils/allergenChecker';
 import { updateDailySummaryForDate } from '@/lib/utils/dailySummary';
+import { z } from 'zod';
+
+const PaginationSchema = z.object({
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val) : 100)),
+  offset: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val) : 0)),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+
+export async function GET(request: Request) {
+  const mealRepo = new MealLogRepository();
+  const { searchParams } = new URL(request.url);
+
+  return withErrorHandling(async () => {
+    const params = PaginationSchema.parse({
+      limit: searchParams.get('limit'),
+      offset: searchParams.get('offset'),
+      startDate: searchParams.get('startDate'),
+      endDate: searchParams.get('endDate'),
+    });
+
+    const result = mealRepo.getAllMealLogs(
+      params.startDate,
+      params.endDate,
+      params.limit,
+      params.offset
+    );
+
+    return NextResponse.json({
+      data: result.data,
+      pagination: {
+        total: result.total,
+        limit: params.limit,
+        offset: params.offset,
+        hasMore: params.offset + params.limit < result.total,
+      },
+    });
+  }, 'GET /api/meals');
+}
 
 export async function POST(request: Request) {
   const mealRepo = new MealLogRepository();
