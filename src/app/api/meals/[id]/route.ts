@@ -2,18 +2,22 @@ import { NextResponse } from 'next/server';
 import { MealLogRepository } from '@/lib/database/repositories/mealLogRepository';
 import { FoodRepository } from '@/lib/database/repositories/foodRepository';
 import { calculateNutrition, sumNutrition } from '@/lib/utils/nutrition';
+import { ProfileRepository } from '@/lib/database/repositories/profileRepository';
 import { getDatabase } from '@/lib/database/connection';
+import { withErrorHandling } from '@/lib/utils/errorHandler';
+import { ValidationError } from '@/lib/errors/ApiError';
+import { flagConflicts } from '@/lib/utils/allergenChecker';
 import { updateDailySummaryForDate } from '@/lib/utils/dailySummary';
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  try {
+  return withErrorHandling(async () => {
     const stmt = getDatabase().prepare('SELECT * FROM meal_logs WHERE id = ?');
     const row = stmt.get(id) as any;
 
     if (!row) {
-      return NextResponse.json({ error: 'Meal not found' }, { status: 404 });
+      throw new ValidationError('Meal not found', 404);
     }
 
     const meal = {
@@ -26,18 +30,16 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     };
 
     return NextResponse.json(meal);
-  } catch (error: any) {
-    console.error('API Error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
-  }
+  }, 'GET /api/meals/[id]');
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const mealRepo = new MealLogRepository();
   const foodRepo = new FoodRepository();
+  const profileRepo = new ProfileRepository();
 
-  try {
+  return withErrorHandling(async () => {
     const body = await request.json();
     const { mealType, foods } = body;
 
@@ -46,12 +48,19 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const existing = stmt.get(id) as any;
 
     if (!existing) {
-      return NextResponse.json({ error: 'Meal not found' }, { status: 404 });
+      throw new ValidationError('Meal not found', 404);
     }
 
     const date = existing.date;
 
-    // Calculate nutrition for each food in the meal
+    // Get user profile for allergen checking
+    const profile = profileRepo.getProfile();
+    if (!profile) {
+      throw new ValidationError('User profile not found');
+    }
+
+    // Calculate nutrition and collect Food objects for allergen checking
+    const foodObjects: any[] = [];
     const mealNutrients = foods.map((f: any) => {
       let food = foodRepo.getFoodById(f.foodId);
 
@@ -86,9 +95,20 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         food = foodRepo.getFoodById(importedId);
       }
 
-      if (!food) throw new Error(`Food not found: ${f.foodId}`);
+      if (!food) throw new ValidationError(`Food not found: ${f.foodId}`);
+
+      foodObjects.push(food);
       return calculateNutrition(food, f.amount);
     });
+
+    // ENFORCE allergen checking server-side
+    const allergenConflicts = flagConflicts(foodObjects, profile);
+    if (allergenConflicts.length > 0) {
+      throw new ValidationError('Allergen conflict detected', {
+        conflicts: allergenConflicts,
+        message: 'Cannot save meal with allergen conflicts. Please remove conflicting foods.',
+      });
+    }
 
     const totalNutrition = sumNutrition(mealNutrients);
 
@@ -114,8 +134,5 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     };
 
     return NextResponse.json(updatedMeal);
-  } catch (error: any) {
-    console.error('API Error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
-  }
+  }, 'PUT /api/meals/[id]');
 }

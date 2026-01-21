@@ -2,30 +2,30 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CalorieGoalRepository } from '@/lib/database/repositories/calorieGoalRepository';
 import { CalorieTrackerRepository } from '@/lib/database/repositories/calorieTrackerRepository';
 import { ProfileRepository } from '@/lib/database/repositories/profileRepository';
+import { withErrorHandling } from '@/lib/utils/errorHandler';
+import { ValidationError } from '@/lib/errors/ApiError';
+import { CalorieGoalCreateSchema } from '@/lib/validation/schemas';
 
 const goalRepo = new CalorieGoalRepository();
 const trackerRepo = new CalorieTrackerRepository();
 const profileRepo = new ProfileRepository();
 
 export async function POST(request: NextRequest) {
-  try {
+  return withErrorHandling(async () => {
     const body = await request.json();
-    const { goalType, weeklyCalorieTarget, activityLevel } = body;
-
-    // Validate required fields
-    if (!goalType || !weeklyCalorieTarget || !activityLevel) {
-      return NextResponse.json(
-        { error: 'Missing required fields: goalType, weeklyCalorieTarget, activityLevel' },
-        { status: 400 }
-      );
-    }
+    const validated = CalorieGoalCreateSchema.parse(body);
 
     const profile = profileRepo.getProfile();
     if (!profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+      throw new ValidationError('Profile not found', 404);
     }
 
-    const goal = goalRepo.createGoal(profile.id, goalType, weeklyCalorieTarget, activityLevel);
+    const goal = goalRepo.createGoal(
+      profile.id,
+      validated.goalType,
+      validated.weeklyCalorieTarget,
+      validated.activityLevel
+    );
 
     // Create initial tracking for today
     const today = new Date().toISOString().split('T')[0];
@@ -37,20 +37,17 @@ export async function POST(request: NextRequest) {
       dailyTarget: goal.dailyCalorieTarget,
       message: `Goal created! Daily target: ${goal.dailyCalorieTarget} calories`,
     });
-  } catch (error: any) {
-    console.error('Error creating calorie goal:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  }, 'POST /api/calorie-tracking');
 }
 
 export async function GET(request: NextRequest) {
-  try {
+  return withErrorHandling(async () => {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
 
     const profile = profileRepo.getProfile();
     if (!profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+      throw new ValidationError('Profile not found', 404);
     }
 
     if (action === 'history') {
@@ -65,8 +62,5 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(goal);
-  } catch (error: any) {
-    console.error('Error fetching calorie goal:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  }, 'GET /api/calorie-tracking');
 }

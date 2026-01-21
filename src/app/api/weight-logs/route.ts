@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { WeightLogRepository } from '@/lib/database/repositories/weightLogRepository';
 import { ProfileRepository } from '@/lib/database/repositories/profileRepository';
+import { withErrorHandling } from '@/lib/utils/errorHandler';
+import { ValidationError } from '@/lib/errors/ApiError';
+import { WeightLogSchema } from '@/lib/validation/schemas';
 
 // GET - Get weight history
 export async function GET(request: Request) {
@@ -11,19 +14,16 @@ export async function GET(request: Request) {
   const repo = new WeightLogRepository();
   const profileRepo = new ProfileRepository();
 
-  try {
+  return withErrorHandling(async () => {
     // Get the current profile (for now, we assume single user)
     const profile = profileRepo.getProfile();
     if (!profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+      throw new ValidationError('Profile not found', 404);
     }
 
     const logs = repo.getWeightHistory(profile.id, startDate, endDate);
     return NextResponse.json(logs);
-  } catch (error) {
-    console.error('API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  }
+  }, 'GET /api/weight-logs');
 }
 
 // POST - Log new weight entry
@@ -31,36 +31,27 @@ export async function POST(request: Request) {
   const repo = new WeightLogRepository();
   const profileRepo = new ProfileRepository();
 
-  try {
+  return withErrorHandling(async () => {
     const body = await request.json();
-    const { weight, date, notes } = body;
-
-    // Validation
-    if (!weight || typeof weight !== 'number' || weight <= 0) {
-      return NextResponse.json({ error: 'Valid weight (in lbs) is required' }, { status: 400 });
-    }
+    const validated = WeightLogSchema.parse(body);
 
     // Get the current profile
     const profile = profileRepo.getProfile();
     if (!profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+      throw new ValidationError('Profile not found', 404);
     }
 
     // Log the weight
-    const weightLog = repo.logWeight(profile.id, weight, date, notes);
+    const weightLog = repo.logWeight(profile.id, validated.weight, validated.date, validated.notes);
 
     // Update profile's current weight if this is today's entry
     const today = new Date().toISOString().split('T')[0];
-    if (!date || date === today) {
-      profileRepo.updateProfile({ weight });
+    if (!validated.date || validated.date === today) {
+      profileRepo.updateProfile({ weight: validated.weight });
     }
 
     return NextResponse.json(weightLog, { status: 201 });
-  } catch (error: unknown) {
-    console.error('API Error:', error);
-    const message = error instanceof Error ? error.message : 'Internal Server Error';
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  }, 'POST /api/weight-logs');
 }
 
 // DELETE - Delete a weight log entry
@@ -69,15 +60,12 @@ export async function DELETE(request: Request) {
   const id = searchParams.get('id');
   const repo = new WeightLogRepository();
 
-  if (!id) {
-    return NextResponse.json({ error: 'ID required' }, { status: 400 });
-  }
+  return withErrorHandling(async () => {
+    if (!id) {
+      throw new ValidationError('Weight log ID required');
+    }
 
-  try {
     repo.deleteWeightLog(id);
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  }
+  }, 'DELETE /api/weight-logs');
 }

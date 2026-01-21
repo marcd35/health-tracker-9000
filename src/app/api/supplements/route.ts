@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server';
 import { SupplementRepository } from '@/lib/database/repositories/supplementRepository';
 import { updateDailySummaryForDate } from '@/lib/utils/dailySummary';
+import { withErrorHandling } from '@/lib/utils/errorHandler';
+import { ValidationError } from '@/lib/errors/ApiError';
+import {
+  SupplementCreateSchema,
+  SupplementUpdateSchema,
+  SupplementLogSchema,
+} from '@/lib/validation/schemas';
 
 // GET - list all supplements OR logs by date
 export async function GET(request: Request) {
@@ -8,7 +15,7 @@ export async function GET(request: Request) {
   const date = searchParams.get('date');
   const repo = new SupplementRepository();
 
-  try {
+  return withErrorHandling(async () => {
     if (date) {
       const logs = repo.getSupplementLogsByDate(date);
       return NextResponse.json(logs);
@@ -16,80 +23,73 @@ export async function GET(request: Request) {
       const supplements = repo.getAllSupplements();
       return NextResponse.json(supplements);
     }
-  } catch (error) {
-    console.error('API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  }
+  }, 'GET /api/supplements');
 }
 
 // POST - create supplement OR log taken (distinguished by body shape)
 export async function POST(request: Request) {
   const supplementRepo = new SupplementRepository();
 
-  try {
+  return withErrorHandling(async () => {
     const body = await request.json();
 
     // If body has 'supplementId' and 'date', it's a log action
     if (body.supplementId && body.date) {
-      const { date, supplementId, supplementName, taken, takenAt, isDuplicateWarning } = body;
+      const validated = SupplementLogSchema.parse(body);
 
       supplementRepo.logSupplementTaken({
-        date,
-        supplementId,
-        supplementName,
-        taken,
-        takenAt: takenAt || new Date().toISOString(),
-        isDuplicateWarning: isDuplicateWarning || false,
+        date: validated.date,
+        supplementId: validated.supplementId,
+        supplementName: validated.supplementName,
+        taken: validated.taken,
+        takenAt: validated.takenAt || new Date().toISOString(),
+        isDuplicateWarning: validated.isDuplicateWarning || false,
       });
 
       // Update daily summary using utility function
-      await updateDailySummaryForDate(date);
+      await updateDailySummaryForDate(validated.date);
 
       return NextResponse.json({ success: true });
     }
 
     // Otherwise, create new supplement
+    const validated = SupplementCreateSchema.parse(body);
     const newSupplement = supplementRepo.createSupplement({
-      name: body.name,
-      brand: body.brand,
-      servingSize: body.servingSize,
-      nutrients: body.nutrients || {},
-      customNutrients: body.customNutrients || {},
-      notes: body.notes,
-      color: body.color || '#6366f1',
-      dosageFrequency: body.dosageFrequency || 'daily',
-      dosageQuantity: body.dosageQuantity || 1,
-      dosageNotes: body.dosageNotes,
-      supplementType: body.supplementType || 'nutrient',
+      name: validated.name,
+      brand: validated.brand,
+      servingSize: validated.servingSize,
+      nutrients: validated.nutrients || {},
+      customNutrients: validated.customNutrients || {},
+      notes: validated.notes,
+      color: validated.color,
+      dosageFrequency: validated.dosageFrequency,
+      dosageQuantity: validated.dosageQuantity,
+      dosageNotes: validated.dosageNotes,
+      supplementType: validated.supplementType,
     });
 
     return NextResponse.json(newSupplement, { status: 201 });
-  } catch (error: unknown) {
-    console.error('API Error:', error);
-    const message = error instanceof Error ? error.message : 'Internal Server Error';
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  }, 'POST /api/supplements');
 }
 
 // PUT - update supplement
 export async function PUT(request: Request) {
   const repo = new SupplementRepository();
 
-  try {
+  return withErrorHandling(async () => {
     const body = await request.json();
-    const { id, ...updates } = body;
+    const { id, ...updateData } = body;
 
     if (!id) {
-      return NextResponse.json({ error: 'ID required' }, { status: 400 });
+      throw new ValidationError('Supplement ID required');
     }
 
-    const updated = repo.updateSupplement(id, updates);
+    // Validate the update data
+    const validated = SupplementUpdateSchema.parse(updateData);
+
+    const updated = repo.updateSupplement(id, validated as any);
     return NextResponse.json(updated);
-  } catch (error: unknown) {
-    console.error('API Error:', error);
-    const message = error instanceof Error ? error.message : 'Internal Server Error';
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  }, 'PUT /api/supplements');
 }
 
 // DELETE - delete supplement
@@ -98,15 +98,12 @@ export async function DELETE(request: Request) {
   const id = searchParams.get('id');
   const repo = new SupplementRepository();
 
-  if (!id) {
-    return NextResponse.json({ error: 'ID required' }, { status: 400 });
-  }
+  return withErrorHandling(async () => {
+    if (!id) {
+      throw new ValidationError('Supplement ID required');
+    }
 
-  try {
     repo.deleteSupplement(id);
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  }
+  }, 'DELETE /api/supplements');
 }

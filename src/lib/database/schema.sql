@@ -158,3 +158,7 @@ CREATE INDEX IF NOT EXISTS idx_foods_name ON foods(name);
 CREATE INDEX IF NOT EXISTS idx_supplement_logs_date_id ON supplement_logs(date, supplement_id);
 CREATE INDEX IF NOT EXISTS idx_nutritional_targets_profile_id ON nutritional_targets(profile_id);
 CREATE INDEX IF NOT EXISTS idx_supplement_nutrient_targets_key ON supplement_nutrient_targets(nutrient_key);
+CREATE INDEX IF NOT EXISTS idx_daily_summary_date ON daily_summary(date);
+CREATE INDEX IF NOT EXISTS idx_daily_calorie_tracking_profile_date ON daily_calorie_tracking(profile_id, date);
+CREATE INDEX IF NOT EXISTS idx_calorie_streaks_profile ON calorie_streaks(profile_id, streak_end_date);
+CREATE INDEX IF NOT EXISTS idx_weight_logs_date ON weight_logs(date);
