@@ -838,13 +838,26 @@ export const withCache = <T>(
 
 **Priority:** Increase confidence and prevent regressions
 
-- [ ] Write repository tests (5 days)
+**Current Status: IN PROGRESS** ✅
+
+- **Completed:** Testing infrastructure setup, Jest coverage configuration, test database helpers, mock fixtures
+- **Repository Tests Progress:** 2/9 completed (22%)
+  - ✅ mealLogRepository.ts (21 tests) - CRUD, recent foods, allergen checking
+  - ✅ supplementRepository.ts (39 tests) - CRUD, nutrient targets, custom nutrients
+  - [ ] dailySummaryRepository.ts - Weekly summaries, N+1 fixes
+  - [ ] profileRepository.ts - User profiles, nutritional calculations
+  - [ ] foodRepository.ts - Food search, USDA integration
+  - [ ] calorieTrackerRepository.ts - Goals, streaks, daily tracking
+  - [ ] calorieGoalRepository.ts - Goal management, history
+  - [ ] weightLogRepository.ts - Weight logging, history
+  - [ ] mealFavoritesRepository.ts - Favorite meals CRUD
 - [ ] Write API route tests (7 days)
 - [ ] Write store tests (3 days)
 - [ ] Write utility tests (2 days)
 - [ ] Write component tests for critical UI (5 days)
 
-**Deliverable:** 60%+ test coverage with critical paths covered
+**Current Test Coverage:** ~12-15% (60 tests passing)
+**Target:** 60%+ test coverage with critical paths covered
 
 ---
 

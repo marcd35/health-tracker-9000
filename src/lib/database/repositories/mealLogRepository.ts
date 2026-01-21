@@ -46,24 +46,22 @@ export class MealLogRepository {
     const current = stmt.get(id) as any;
     if (!current) throw new Error('Meal log not found');
 
-    const updated = {
-      ...current,
-      ...updates,
-      foods: JSON.stringify(updates.foods || JSON.parse(current.foods)),
-      total_nutrition: JSON.stringify(
-        updates.totalNutrition || JSON.parse(current.total_nutrition)
-      ),
-    };
+    // Map camelCase updates to snake_case for database
+    const dbUpdates: any = {};
+    if (updates.mealType !== undefined) dbUpdates.meal_type = updates.mealType;
+    if (updates.foods !== undefined) dbUpdates.foods = JSON.stringify(updates.foods);
+    if (updates.totalNutrition !== undefined)
+      dbUpdates.total_nutrition = JSON.stringify(updates.totalNutrition);
 
     const updateStmt = this.db.prepare(`
-      UPDATE meal_logs SET 
-        meal_type = ?, 
-        foods = ?, 
-        total_nutrition = ?
+      UPDATE meal_logs SET
+        ${Object.keys(dbUpdates)
+          .map((key) => `${key} = ?`)
+          .join(', ')}
       WHERE id = ?
     `);
 
-    updateStmt.run(updated.meal_type, updated.foods, updated.total_nutrition, id);
+    updateStmt.run(...Object.values(dbUpdates), id);
   }
 
   deleteMealLog(id: string): void {

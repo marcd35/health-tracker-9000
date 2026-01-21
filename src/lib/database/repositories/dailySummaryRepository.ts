@@ -26,7 +26,8 @@ export class DailySummaryRepository {
 
     meals.forEach((meal) => {
       Object.keys(meal.totalNutrition).forEach((key) => {
-        totals[key] = (totals[key] || 0) + (meal.totalNutrition[key] || 0);
+        (totals as Record<string, number>)[key] =
+          ((totals as Record<string, number>)[key] || 0) + (meal.totalNutrition[key] || 0);
       });
     });
 
@@ -37,7 +38,7 @@ export class DailySummaryRepository {
         const supp = allSupplements.find((s) => s.id === log.supplementId);
         if (supp && supp.nutrients) {
           Object.entries(supp.nutrients).forEach(([key, value]) => {
-            if (value !== undefined && key in totals) {
+            if (value !== undefined) {
               (totals as Record<string, number>)[key] =
                 ((totals as Record<string, number>)[key] || 0) + value;
             }
@@ -52,23 +53,28 @@ export class DailySummaryRepository {
   saveDailySummary(summary: Partial<DailyLog> & { date: string }): void {
     const existing = this.db
       .prepare('SELECT * FROM daily_summary WHERE date = ?')
-      .get(summary.date);
-    const totalNutrition = JSON.stringify(summary.totalNutrition || {});
+      .get(summary.date) as any;
+    const totalNutrition =
+      summary.totalNutrition !== undefined
+        ? JSON.stringify(summary.totalNutrition)
+        : existing
+          ? existing.total_nutrition
+          : JSON.stringify({});
 
     if (existing) {
       const stmt = this.db.prepare(`
-        UPDATE daily_summary SET 
-          weight = ?, 
-          total_nutrition = ?, 
-          health_score = ?, 
+        UPDATE daily_summary SET
+          weight = ?,
+          total_nutrition = ?,
+          health_score = ?,
           notes = ?
         WHERE date = ?
       `);
       stmt.run(
-        summary.weight,
+        summary.weight !== undefined ? summary.weight : existing.weight,
         totalNutrition,
-        summary.healthScore || 0,
-        summary.notes,
+        summary.healthScore !== undefined ? summary.healthScore : existing.health_score,
+        summary.notes !== undefined ? summary.notes : existing.notes,
         summary.date
       );
     } else {
@@ -136,7 +142,7 @@ export class DailySummaryRepository {
 
       const summary: DailyLog = {
         date: dateStr,
-        weight: summaryRow ? summaryRow.weight : profile?.weight || 0,
+        weight: summaryRow ? summaryRow.weight : undefined,
         meals: dateMeals,
         supplements: dateSupplements,
         totalNutrition: summaryRow
@@ -165,6 +171,12 @@ export class DailySummaryRepository {
 
     const meals = this.mealRepo.getMealLogsByDate(date);
     const supplements = this.supplementRepo.getSupplementLogsByDate(date);
+
+    // Return null if no stored summary and no meals/supplements
+    if (!row && meals.length === 0 && supplements.length === 0) {
+      return null;
+    }
+
     const profile = this.profileRepo.getProfile();
 
     const summary: DailyLog = {

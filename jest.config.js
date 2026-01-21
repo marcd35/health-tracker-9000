@@ -14,7 +14,23 @@ const customJestConfig = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   testMatch: ['**/__tests__/**/*.test.[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)'],
-  transformIgnorePatterns: ['node_modules/(?!uuid)'],
+  transformIgnorePatterns: ['node_modules/(?!(uuid|@dnd-kit|recharts))'],
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/__tests__/**',
+    '!src/**/*.test.{ts,tsx}',
+    '!src/**/*.spec.{ts,tsx}',
+  ],
+  coverageThreshold: {
+    global: {
+      statements: 60,
+      branches: 50,
+      functions: 70,
+      lines: 60,
+    },
+  },
+  coverageReporters: ['text', 'lcov', 'html'],
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
