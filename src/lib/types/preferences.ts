@@ -4,6 +4,7 @@ export interface UserPreferences {
   timezone: string;
   showClock: boolean;
   showHealthInsights: boolean;
+  hydrationEnabled: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -12,4 +13,5 @@ export interface PreferencesUpdateInput {
   timezone?: string;
   showClock?: boolean;
   showHealthInsights?: boolean;
+  hydrationEnabled?: boolean;
 }

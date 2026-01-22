@@ -16,6 +16,7 @@ export class PreferencesRepository {
       timezone: row.timezone,
       showClock: row.show_clock === 1,
       showHealthInsights: row.show_health_insights === 1,
+      hydrationEnabled: row.hydration_enabled === 1,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
@@ -38,6 +39,7 @@ export class PreferencesRepository {
           timezone = ?,
           show_clock = ?,
           show_health_insights = ?,
+          hydration_enabled = ?,
           updated_at = ?
         WHERE user_id = ?
       `
@@ -46,6 +48,7 @@ export class PreferencesRepository {
         updated.timezone,
         updated.showClock ? 1 : 0,
         updated.showHealthInsights ? 1 : 0,
+        updated.hydrationEnabled ? 1 : 0,
         updated.updatedAt,
         'default'
       );

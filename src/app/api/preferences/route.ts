@@ -8,6 +8,7 @@ const PreferencesUpdateSchema = z.object({
   timezone: z.string().optional(),
   showClock: z.boolean().optional(),
   showHealthInsights: z.boolean().optional(),
+  hydrationEnabled: z.boolean().optional(),
 });
 
 export async function GET() {

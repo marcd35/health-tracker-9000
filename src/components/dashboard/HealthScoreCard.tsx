@@ -14,9 +14,14 @@ interface HealthScoreCardProps {
     supplements: number;
     hydration: number;
   };
+  hydrationEnabled?: boolean;
 }
 
-export function HealthScoreCard({ score, breakdown }: HealthScoreCardProps) {
+export function HealthScoreCard({
+  score,
+  breakdown,
+  hydrationEnabled = true,
+}: HealthScoreCardProps) {
   const getScoreColor = (value: number) => {
     if (value >= 80) return 'text-green-500';
     if (value >= 60) return 'text-yellow-500';
@@ -60,12 +65,14 @@ export function HealthScoreCard({ score, breakdown }: HealthScoreCardProps) {
             color={getProgressColor(breakdown.supplements)}
             description="Percentage of scheduled supplements taken today."
           />
-          <ScoreItem
-            label="Hydration"
-            value={breakdown.hydration}
-            color={getProgressColor(breakdown.hydration)}
-            description="Tracking liquid intake (currently based on meal hydration values)."
-          />
+          {hydrationEnabled && (
+            <ScoreItem
+              label="Hydration"
+              value={breakdown.hydration}
+              color={getProgressColor(breakdown.hydration)}
+              description="Tracking liquid intake (currently based on meal hydration values)."
+            />
+          )}
         </div>
       </CardContent>
     </Card>

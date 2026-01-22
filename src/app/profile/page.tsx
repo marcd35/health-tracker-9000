@@ -37,6 +37,7 @@ function ProfileForm({
   isLoading: boolean;
 }) {
   const [formData, setFormData] = useState({
+    displayName: profile.displayName || '', // ADD THIS
     age: profile.age,
     gender: profile.gender,
     weight: profile.weight,
@@ -72,6 +73,31 @@ function ProfileForm({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <User className="h-5 w-5 text-primary" />
+            <CardTitle>Personal Information</CardTitle>
+          </div>
+          <CardDescription>Your display name shown on the dashboard</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="displayName">Display Name</Label>
+            <Input
+              id="displayName"
+              type="text"
+              placeholder="Enter your name"
+              value={formData.displayName}
+              onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">
+              Used in dashboard greetings and personalized messages
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">

@@ -126,12 +126,33 @@ export function FoodSearchInput({ onSelect }: FoodSearchInputProps) {
               !usdaSearchLoading &&
               results.length === 0 &&
               query.length > 1 &&
-              !usdaSearchError && (
-                <CommandEmpty>
-                  {searchMode === 'usda'
-                    ? 'No foods found in USDA database.'
-                    : 'No food found. Try searching USDA database.'}
-                </CommandEmpty>
+              !usdaSearchError &&
+              searchMode === 'local' && (
+                <CommandGroup>
+                  <CommandItem
+                    value="usda-search-suggestion"
+                    onSelect={() => {
+                      // Switch to USDA mode - search auto-triggers via useEffect
+                      setSearchMode('usda');
+                    }}
+                    className="cursor-pointer hover:bg-accent"
+                  >
+                    <Database className="mr-2 h-4 w-4 text-blue-500" />
+                    <span className="text-blue-600 dark:text-blue-400 font-medium">
+                      Search USDA Database for &ldquo;{query}&rdquo;
+                    </span>
+                  </CommandItem>
+                </CommandGroup>
+              )}
+
+            {/* Keep existing empty state for USDA mode */}
+            {!isSearching &&
+              !usdaSearchLoading &&
+              results.length === 0 &&
+              query.length > 1 &&
+              !usdaSearchError &&
+              searchMode === 'usda' && (
+                <CommandEmpty>No foods found in USDA database.</CommandEmpty>
               )}
             <CommandGroup>
               {results.map((food) => (

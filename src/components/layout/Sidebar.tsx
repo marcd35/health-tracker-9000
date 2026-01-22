@@ -12,6 +12,7 @@ import {
   HeartPulse,
   Shield,
   Flame,
+  User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -22,7 +23,8 @@ const navigation = [
   { name: 'Supplements', href: '/supplements', icon: Pill },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'History', href: '/history', icon: History },
-  { name: 'Profile', href: '/profile', icon: Settings },
+  { name: 'Profile', href: '/profile', icon: User },
+  { name: 'Settings', href: '/settings', icon: Settings },
   { name: 'Admin', href: '/admin', icon: Shield },
 ];
 

@@ -15,31 +15,41 @@ export interface HealthScoreBreakdown {
  * @param actual - The actual nutritional values consumed (macros and micros).
  * @param targets - The user's daily nutritional targets.
  * @param dailyLog - The full daily log including supplements and notes.
+ * @param hydrationEnabled - Whether hydration tracking is enabled for this user.
  * @returns {HealthScoreBreakdown} A breakdown of the score including total, macros, micros, etc.
  */
 export function calculateHealthScore(
   actual: NutritionalValues,
   targets: NutritionalTargets,
-  dailyLog: DailyLog
+  dailyLog: DailyLog,
+  hydrationEnabled: boolean
 ): HealthScoreBreakdown {
-  // 1. Macro Adherence (40%)
+  // Calculate individual component scores (0-100 scale)
   const macroScore = calculateMacroAdherence(actual, targets);
-
-  // 2. Micronutrient Adherence (40%)
   const microScore = calculateMicroAdherence(actual, targets);
-
-  // 3. Supplement Compliance (10%)
   const supplementScore = calculateSupplementCompliance(dailyLog);
+  const hydrationScore = dailyLog.notes ? 10 : 5; // Placeholder
 
-  // 4. Hydration/Notes (10%) - For now, we'll base it on if notes exist or a simple placeholder
-  const hydrationScore = dailyLog.notes ? 10 : 5;
+  // Build enabled categories array
+  const enabledCategories = [
+    { name: 'macros', score: macroScore },
+    { name: 'micros', score: microScore },
+    { name: 'supplements', score: supplementScore },
+  ];
 
-  const total = Math.round(
-    macroScore * 0.4 + microScore * 0.4 + supplementScore * 0.1 + hydrationScore * 0.1
-  );
+  // Only include hydration if enabled
+  if (hydrationEnabled) {
+    enabledCategories.push({ name: 'hydration', score: hydrationScore });
+  }
+
+  // Dynamic weight: 1 / N (where N = number of enabled categories)
+  const weight = 1 / enabledCategories.length;
+
+  // Calculate weighted total
+  const total = enabledCategories.reduce((sum, cat) => sum + cat.score * weight, 0);
 
   return {
-    total: Math.min(100, Math.max(0, total)),
+    total: Math.round(Math.min(100, Math.max(0, total))),
     macros: Math.round(macroScore),
     micros: Math.round(microScore),
     supplements: Math.round(supplementScore),

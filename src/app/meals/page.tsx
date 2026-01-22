@@ -15,14 +15,14 @@ import type { MealLog } from '@/lib/types/health';
 import type { MealFavorite } from '@/lib/database/repositories/mealFavoritesRepository';
 
 export default function MealsPage() {
-  const { dailyLog, profile, isLoading, fetchDailyLog, fetchProfile, addMeal } = useHealthStore();
+  const { dailyLog, profile, isLoading, activeDate, fetchDailyLog, fetchProfile, addMeal } =
+    useHealthStore();
   const {
     todayTracking,
     currentGoal,
     fetchDailyTracking: fetchCalorieTracking,
     fetchCurrentGoal,
   } = useCalorieTrackerStore();
-  const today = new Date().toISOString().split('T')[0];
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingMeal, setEditingMeal] = useState<MealLog | null>(null);
@@ -32,13 +32,13 @@ export default function MealsPage() {
   const [mealToSave, setMealToSave] = useState<MealLog | null>(null);
 
   useEffect(() => {
-    fetchDailyLog(today);
-    fetchCalorieTracking(today);
+    fetchDailyLog(activeDate);
+    fetchCalorieTracking(activeDate);
     fetchCurrentGoal();
     if (!profile) {
       fetchProfile();
     }
-  }, [fetchDailyLog, fetchProfile, fetchCalorieTracking, fetchCurrentGoal, today, profile]);
+  }, [fetchDailyLog, fetchProfile, fetchCalorieTracking, fetchCurrentGoal, activeDate, profile]);
 
   const handleLogMeal = () => {
     setEditingMeal(null);
@@ -55,7 +55,7 @@ export default function MealsPage() {
   const handleCopyMeal = async (meal: MealLog) => {
     try {
       await addMeal({
-        date: today,
+        date: activeDate,
         mealType: meal.mealType,
         foods: meal.foods.map((f) => ({
           foodId: f.foodId,
@@ -63,7 +63,7 @@ export default function MealsPage() {
           amount: f.amount,
         })),
       });
-      toast.success('Meal copied to today');
+      toast.success('Meal copied');
     } catch {
       // Error handled by store
     }
@@ -72,7 +72,7 @@ export default function MealsPage() {
   const handleQuickAddFavorite = async (favorite: MealFavorite) => {
     try {
       await addMeal({
-        date: today,
+        date: activeDate,
         mealType: favorite.mealType,
         foods: favorite.foods,
       });

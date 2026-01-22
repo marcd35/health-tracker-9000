@@ -41,28 +41,20 @@ export default function DashboardPage() {
     dailyLog,
     weeklySummary,
     isLoading,
+    activeDate, // ADD THIS
     fetchProfile,
     fetchPreferences,
     fetchDailyLog,
     fetchWeeklySummary,
   } = useHealthStore();
 
-  const today = new Date().toISOString().split('T')[0];
-
   useEffect(() => {
-    // Check if we need to refresh data (new day)
-    const lastFetchedDate = localStorage.getItem('lastDashboardDate');
-    if (lastFetchedDate !== today) {
-      fetchProfile();
-      fetchPreferences();
-      fetchDailyLog(today);
-      fetchWeeklySummary(today);
-      localStorage.setItem('lastDashboardDate', today);
-    } else {
-      // Same day, still fetch preferences in case they changed
-      fetchPreferences();
-    }
-  }, [fetchProfile, fetchPreferences, fetchDailyLog, fetchWeeklySummary, today]);
+    // Remove localStorage caching - activeDate is source of truth
+    fetchProfile();
+    fetchPreferences();
+    fetchDailyLog(activeDate); // Use activeDate
+    fetchWeeklySummary(activeDate); // Use activeDate
+  }, [activeDate, fetchProfile, fetchPreferences, fetchDailyLog, fetchWeeklySummary]);
 
   if (isLoading && !dailyLog) {
     return <DashboardSkeleton />;
@@ -141,17 +133,15 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            {profile?.displayName
-              ? `Welcome back, ${profile.displayName}!`
-              : 'Welcome back!'}
-            {' '}Here&apos;s your health summary for today.
+            {profile?.displayName ? `Welcome back, ${profile.displayName}!` : 'Welcome back!'}{' '}
+            Here&apos;s your health summary for today.
           </p>
           {!profile?.displayName && (
             <p className="text-sm text-muted-foreground mt-2">
               <Link href="/profile" className="text-primary hover:underline">
                 Complete your profile
-              </Link>
-              {' '}to personalize your experience.
+              </Link>{' '}
+              to personalize your experience.
             </p>
           )}
         </div>
@@ -166,7 +156,11 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <HealthScoreCard score={healthScore} breakdown={breakdown} />
+        <HealthScoreCard
+          score={healthScore}
+          breakdown={breakdown}
+          hydrationEnabled={preferences?.hydrationEnabled}
+        />
         <CalorieProgressCard />
         <div className="lg:col-span-2">
           <NutritionSummaryCard actual={actual} targets={targets} />

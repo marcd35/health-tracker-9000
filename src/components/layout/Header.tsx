@@ -3,6 +3,7 @@
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DateTimeClock } from './DateTimeClock';
+import { DateNavigator } from './DateNavigator';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -17,11 +18,15 @@ export function Header({ onMenuClick }: HeaderProps) {
         </Button>
       </div>
 
+      {/* Center: Date Navigator */}
       <div className="flex-1 flex justify-center">
-        <DateTimeClock />
+        <DateNavigator />
       </div>
 
-      <div className="w-16" />
+      {/* Right: Clock (if enabled) */}
+      <div className="flex items-center">
+        <DateTimeClock />
+      </div>
     </header>
   );
 }

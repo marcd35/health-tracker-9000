@@ -5,6 +5,7 @@ import { Plus, Pill, History, FileJson, Settings, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useHealthStore } from '@/lib/store/healthStore';
 import { useSupplementStore } from '@/lib/store/supplementStore';
 import { SupplementCard } from '@/components/supplements/SupplementCard';
 import { SupplementDialog } from '@/components/supplements/SupplementDialog';
@@ -40,7 +41,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export default function SupplementsPage() {
-  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const { activeDate } = useHealthStore();
 
   const {
     supplements,
@@ -85,13 +86,13 @@ export default function SupplementsPage() {
   useEffect(() => {
     const fetchData = async () => {
       fetchSupplements();
-      fetchTodayLogs(today);
+      fetchTodayLogs(activeDate);
       fetchNutrientTargets();
       fetchCustomNutrients();
     };
 
     fetchData();
-  }, [fetchSupplements, fetchTodayLogs, fetchNutrientTargets, fetchCustomNutrients, today]);
+  }, [fetchSupplements, fetchTodayLogs, fetchNutrientTargets, fetchCustomNutrients, activeDate]);
 
   // Calculate taken counts per supplement
   const takenCounts = useMemo(() => {
@@ -149,13 +150,13 @@ export default function SupplementsPage() {
   };
 
   const handleTake = async (supplement: Supplement) => {
-    const isDuplicate = checkDuplicateLog(supplement.id, today);
+    const isDuplicate = checkDuplicateLog(supplement.id, activeDate);
 
     if (isDuplicate) {
       const logs = todayLogs.filter((l) => l.supplementId === supplement.id && l.taken);
       setDuplicateWarning({ supplement, existingLogs: logs });
     } else {
-      await logSupplementTaken(supplement.id, supplement.name, today);
+      await logSupplementTaken(supplement.id, supplement.name, activeDate);
     }
   };
 
@@ -164,7 +165,7 @@ export default function SupplementsPage() {
       await logSupplementTaken(
         duplicateWarning.supplement.id,
         duplicateWarning.supplement.name,
-        today,
+        activeDate,
         undefined,
         true
       );
@@ -180,11 +181,11 @@ export default function SupplementsPage() {
   };
 
   const handleEditLog = async (logId: string, takenAt: string) => {
-    await updateLog(logId, takenAt, today);
+    await updateLog(logId, takenAt, activeDate);
   };
 
   const handleDeleteLog = async (logId: string) => {
-    await deleteLog(logId, today);
+    await deleteLog(logId, activeDate);
   };
 
   const handleImport = async (importedSupplements: SupplementFormData[]) => {
@@ -214,7 +215,7 @@ export default function SupplementsPage() {
   const handleNutrientTargetReset = async (
     nutrientKey: Parameters<typeof deleteNutrientTarget>[0]
   ) => {
-    await deleteNutrientTarget(nutrientKey, today);
+    await deleteNutrientTarget(nutrientKey, activeDate);
   };
 
   if (isLoading && supplements.length === 0) {

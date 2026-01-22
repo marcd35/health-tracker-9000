@@ -4,6 +4,7 @@ import type { DailySummaryRow } from '@/lib/types/database';
 import { MealLogRepository } from './mealLogRepository';
 import { SupplementRepository } from './supplementRepository';
 import { ProfileRepository } from './profileRepository';
+import { PreferencesRepository } from './preferencesRepository';
 import { calculateHealthScore } from '@/lib/utils/healthScoring';
 
 export class DailySummaryRepository {
@@ -155,7 +156,14 @@ export class DailySummaryRepository {
 
       if (profile) {
         const targets = this.profileRepo.calculateNutritionalTargets();
-        const breakdown = calculateHealthScore(summary.totalNutrition, targets, summary);
+        const preferencesRepo = new PreferencesRepository();
+        const preferences = preferencesRepo.getPreferences();
+        const breakdown = calculateHealthScore(
+          summary.totalNutrition,
+          targets,
+          summary,
+          preferences?.hydrationEnabled || false
+        );
         summary.healthScoreBreakdown = breakdown;
         summary.healthScore = breakdown.total;
       }
@@ -194,7 +202,14 @@ export class DailySummaryRepository {
 
     if (profile) {
       const targets = this.profileRepo.calculateNutritionalTargets();
-      const breakdown = calculateHealthScore(summary.totalNutrition, targets, summary);
+      const preferencesRepo = new PreferencesRepository();
+      const preferences = preferencesRepo.getPreferences();
+      const breakdown = calculateHealthScore(
+        summary.totalNutrition,
+        targets,
+        summary,
+        preferences?.hydrationEnabled || false
+      );
       summary.healthScoreBreakdown = breakdown;
       summary.healthScore = breakdown.total;
     }

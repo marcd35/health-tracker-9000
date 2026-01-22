@@ -29,12 +29,11 @@ const WeeklyTrendChart = dynamic(
 );
 
 export default function AnalyticsPage() {
-  const { weeklySummary, isLoading, fetchWeeklySummary } = useHealthStore();
+  const { weeklySummary, isLoading, fetchWeeklySummary, activeDate } = useHealthStore();
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    fetchWeeklySummary(today);
-  }, [fetchWeeklySummary]);
+    fetchWeeklySummary(activeDate);
+  }, [fetchWeeklySummary, activeDate]);
 
   const trendData = weeklySummary
     .map((day) => ({

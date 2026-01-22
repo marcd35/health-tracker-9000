@@ -36,6 +36,7 @@ export default function SettingsPage() {
     timezone: preferences?.timezone || 'UTC',
     showClock: preferences?.showClock ?? true,
     showHealthInsights: preferences?.showHealthInsights ?? false,
+    hydrationEnabled: preferences?.hydrationEnabled ?? false,
   });
 
   const [isSaving, setIsSaving] = useState(false);
@@ -46,6 +47,7 @@ export default function SettingsPage() {
         timezone: preferences.timezone,
         showClock: preferences.showClock,
         showHealthInsights: preferences.showHealthInsights,
+        hydrationEnabled: preferences.hydrationEnabled,
       });
     }
   }, [preferences]);
@@ -76,7 +78,10 @@ export default function SettingsPage() {
           {/* Timezone */}
           <div className="space-y-2">
             <Label htmlFor="timezone">Timezone</Label>
-            <Select value={localSettings.timezone} onValueChange={(value) => setLocalSettings({ ...localSettings, timezone: value })}>
+            <Select
+              value={localSettings.timezone}
+              onValueChange={(value) => setLocalSettings({ ...localSettings, timezone: value })}
+            >
               <SelectTrigger id="timezone">
                 <SelectValue />
               </SelectTrigger>
@@ -88,18 +93,24 @@ export default function SettingsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">Used for displaying time and resetting daily data</p>
+            <p className="text-xs text-muted-foreground">
+              Used for displaying time and resetting daily data
+            </p>
           </div>
 
           {/* Clock Toggle */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Show Clock</Label>
-              <p className="text-xs text-muted-foreground">Display current date and time in header</p>
+              <p className="text-xs text-muted-foreground">
+                Display current date and time in header
+              </p>
             </div>
             <Switch
               checked={localSettings.showClock}
-              onCheckedChange={(checked) => setLocalSettings({ ...localSettings, showClock: checked })}
+              onCheckedChange={(checked) =>
+                setLocalSettings({ ...localSettings, showClock: checked })
+              }
             />
           </div>
 
@@ -107,11 +118,32 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Health Insights</Label>
-              <p className="text-xs text-muted-foreground">Show personalized recommendations on dashboard</p>
+              <p className="text-xs text-muted-foreground">
+                Show personalized recommendations on dashboard
+              </p>
             </div>
             <Switch
               checked={localSettings.showHealthInsights}
-              onCheckedChange={(checked) => setLocalSettings({ ...localSettings, showHealthInsights: checked })}
+              onCheckedChange={(checked) =>
+                setLocalSettings({ ...localSettings, showHealthInsights: checked })
+              }
+            />
+          </div>
+
+          {/* Hydration Tracking Toggle */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Enable Hydration Tracking</Label>
+              <p className="text-xs text-muted-foreground">
+                Track daily water intake and include it in health score calculation. History will
+                reflect this setting at the time.
+              </p>
+            </div>
+            <Switch
+              checked={localSettings.hydrationEnabled ?? false}
+              onCheckedChange={(checked) => {
+                setLocalSettings({ ...localSettings, hydrationEnabled: checked });
+              }}
             />
           </div>
 
@@ -125,15 +157,22 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Habit Management</CardTitle>
-          <CardDescription>Enable or disable supplements to affect health score calculation</CardDescription>
+          <CardDescription>
+            Enable or disable supplements to affect health score calculation
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {supplements.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No supplements yet. Add some to manage them here.</p>
+            <p className="text-sm text-muted-foreground">
+              No supplements yet. Add some to manage them here.
+            </p>
           ) : (
             <div className="space-y-3">
               {supplements.map((supp) => (
-                <div key={supp.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                <div
+                  key={supp.id}
+                  className="flex items-center justify-between py-2 border-b last:border-0"
+                >
                   <div>
                     <p className="font-medium text-sm">{supp.name}</p>
                     <p className="text-xs text-muted-foreground">{supp.brand}</p>

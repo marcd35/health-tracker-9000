@@ -13,6 +13,13 @@ interface HealthState {
   error: string | null;
   usdaSearchLoading: boolean;
   usdaSearchError: string | null;
+  activeDate: string; // ISO date string (YYYY-MM-DD)
+
+  // Date navigation actions
+  setActiveDate: (date: string) => void;
+  navigateToYesterday: () => void;
+  navigateToTomorrow: () => void;
+  navigateToToday: () => void;
 
   // Actions
   fetchProfile: () => Promise<void>;
@@ -56,9 +63,32 @@ export const useHealthStore = create<HealthState>((set, get) => ({
   error: null,
   usdaSearchLoading: false,
   usdaSearchError: null,
+  activeDate: new Date().toISOString().split('T')[0], // Initialize to today
 
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (error) => set({ error }),
+  setActiveDate: (date: string) => {
+    set({ activeDate: date });
+    // Auto-fetch daily log when activeDate changes
+    get().fetchDailyLog(date);
+    get().fetchWeeklySummary(date);
+  },
+  navigateToYesterday: () => {
+    const current = new Date(get().activeDate);
+    current.setDate(current.getDate() - 1);
+    const yesterday = current.toISOString().split('T')[0];
+    get().setActiveDate(yesterday);
+  },
+  navigateToTomorrow: () => {
+    const current = new Date(get().activeDate);
+    current.setDate(current.getDate() + 1);
+    const tomorrow = current.toISOString().split('T')[0];
+    get().setActiveDate(tomorrow);
+  },
+  navigateToToday: () => {
+    const today = new Date().toISOString().split('T')[0];
+    get().setActiveDate(today);
+  },
 
   fetchProfile: async () => {
     set({ isLoading: true, error: null });
