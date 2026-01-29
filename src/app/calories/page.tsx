@@ -41,6 +41,7 @@ export default function CaloriesPage() {
   const [weightCheckInOpen, setWeightCheckInOpen] = useState(false);
   const [weightLogs, setWeightLogs] = useState<WeightLog[]>([]);
   const [latestWeight, setLatestWeight] = useState<number | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const currentGoal = useCalorieTrackerStore((state) => state.currentGoal);
   const todayTracking = useCalorieTrackerStore((state) => state.todayTracking);
@@ -246,6 +247,8 @@ export default function CaloriesPage() {
                     fetchMonthlyData(currentMonth.year, currentMonth.month),
                     fetchStreakData(),
                   ]);
+                  // Force HeroCalorieCard to remount and refetch meal data
+                  setRefreshKey((prev) => prev + 1);
                 }}
               />
             )}
@@ -264,6 +267,7 @@ export default function CaloriesPage() {
           </Card>
         ) : todayTracking && weeklyTracking ? (
           <HeroCalorieCard
+            key={refreshKey}
             tracking={todayTracking}
             currentGoal={currentGoal}
             weeklyTracking={weeklyTracking}
