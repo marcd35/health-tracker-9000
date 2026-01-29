@@ -27,12 +27,14 @@ export async function GET(request: NextRequest) {
     const tracking = trackerRepo.updateDailyTracking(profile.id, date);
 
     if (!tracking) {
+      console.error('[API] Failed to create tracking for date:', date);
       return NextResponse.json({ error: 'Failed to create tracking' }, { status: 500 });
     }
 
     return NextResponse.json(tracking);
   } catch (error: any) {
-    console.error('Error fetching daily tracking:', error);
+    console.error('[API] Error fetching daily tracking:', error);
+    console.error('[API] Stack:', error.stack);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -17,10 +17,15 @@ export async function GET() {
 
     return NextResponse.json({
       currentStreak: currentStreak || null,
-      bestStreak,
+      bestStreak: bestStreak || 0,
     });
   } catch (error: any) {
-    console.error('Error fetching streak data:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('[API] Error fetching streak data:', error);
+    console.error('[API] Stack:', error.stack);
+    // Return empty data instead of 500 when no goals/data exist
+    return NextResponse.json({
+      currentStreak: null,
+      bestStreak: 0,
+    });
   }
 }

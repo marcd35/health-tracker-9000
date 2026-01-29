@@ -2,27 +2,22 @@
 -- All schema changes MUST be made via migrations in src/lib/database/migrations/
 -- This file is only for reference and fresh database initialization.
 
--- User Profile
-CREATE TABLE IF NOT EXISTS profile (
-  id TEXT PRIMARY KEY,
-  age INTEGER NOT NULL,
-  weight REAL NOT NULL,
-  height REAL NOT NULL,
-  gender TEXT NOT NULL,
-  activity_level TEXT NOT NULL,
-  health_conditions TEXT, -- JSON array
-  allergies TEXT, -- JSON array
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
-);
+-- ============================================================
+-- SECURITY NOTE: User Profile Data
+-- ============================================================
+-- User profile data (age, weight, height, gender, etc.) is stored
+-- in data/profile.json ONLY, NOT in the database.
+-- This ensures sensitive personal information is kept separate
+-- from the database for security purposes.
+-- Profile ID is still referenced in other tables but WITHOUT FK constraints.
+-- ============================================================
 
 -- User Conditions
 CREATE TABLE IF NOT EXISTS user_conditions (
   id TEXT PRIMARY KEY,
   profile_id TEXT NOT NULL,
   name TEXT NOT NULL,
-  created_at TEXT NOT NULL,
-  FOREIGN KEY (profile_id) REFERENCES profile(id)
+  created_at TEXT NOT NULL
 );
 
 -- User Allergies
@@ -30,8 +25,7 @@ CREATE TABLE IF NOT EXISTS user_allergies (
   id TEXT PRIMARY KEY,
   profile_id TEXT NOT NULL,
   name TEXT NOT NULL,
-  created_at TEXT NOT NULL,
-  FOREIGN KEY (profile_id) REFERENCES profile(id)
+  created_at TEXT NOT NULL
 );
 
 -- Nutritional Targets
@@ -60,8 +54,7 @@ CREATE TABLE IF NOT EXISTS nutritional_targets (
   potassium REAL,
   zinc REAL,
   selenium REAL,
-  created_at TEXT NOT NULL,
-  FOREIGN KEY (profile_id) REFERENCES profile(id)
+  created_at TEXT NOT NULL
 );
 
 -- Foods Database
@@ -151,7 +144,85 @@ CREATE TABLE IF NOT EXISTS daily_summary (
   created_at TEXT NOT NULL
 );
 
+-- Calorie Goals - User's weight loss/gain/maintenance targets
+CREATE TABLE IF NOT EXISTS calorie_goals (
+  id TEXT PRIMARY KEY,
+  profile_id TEXT NOT NULL,
+  goal_type TEXT NOT NULL, -- 'weight_loss' | 'maintenance' | 'gain'
+  weekly_calorie_target INTEGER NOT NULL, -- deficit/surplus per week (e.g., -3500 for 1lb loss)
+  daily_calorie_target INTEGER NOT NULL, -- calculated from weekly + TDEE
+  activity_level TEXT NOT NULL,
+  start_date TEXT NOT NULL,
+  end_date TEXT, -- null if current goal
+  notes TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+-- Calorie Goal History - Audit trail of goal changes
+CREATE TABLE IF NOT EXISTS calorie_goal_history (
+  id TEXT PRIMARY KEY,
+  profile_id TEXT NOT NULL,
+  calorie_goal_id TEXT NOT NULL,
+  action TEXT NOT NULL, -- 'created' | 'updated' | 'archived'
+  previous_daily_target INTEGER,
+  new_daily_target INTEGER,
+  change_reason TEXT,
+  changed_at TEXT NOT NULL,
+  FOREIGN KEY (calorie_goal_id) REFERENCES calorie_goals(id)
+);
+
+-- Daily Calorie Tracking - Track daily progress toward goals
+CREATE TABLE IF NOT EXISTS daily_calorie_tracking (
+  id TEXT PRIMARY KEY,
+  date TEXT NOT NULL UNIQUE,
+  profile_id TEXT NOT NULL,
+  calories_consumed INTEGER NOT NULL,
+  calories_target INTEGER NOT NULL,
+  calories_deficit_surplus INTEGER, -- negative = deficit, positive = surplus
+  goal_met INTEGER DEFAULT 0, -- 1 = met, 0 = missed
+  weekly_total_consumed INTEGER,
+  weekly_total_target INTEGER,
+  weekly_average INTEGER,
+  on_pace_percentage INTEGER, -- 0-100+ how close to weekly goal
+  trend TEXT, -- 'up', 'down', 'stable'
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+-- Calorie Streaks - Track consecutive days meeting calorie goals
+CREATE TABLE IF NOT EXISTS calorie_streaks (
+  id TEXT PRIMARY KEY,
+  profile_id TEXT NOT NULL,
+  streak_start_date TEXT NOT NULL,
+  streak_end_date TEXT, -- null if ongoing
+  days_count INTEGER NOT NULL,
+  goal_met_count INTEGER NOT NULL, -- days where deficit/surplus was met
+  best_streak INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+
+-- Weight Logs - Track weight over time
+CREATE TABLE IF NOT EXISTS weight_logs (
+  id TEXT PRIMARY KEY,
+  profile_id TEXT NOT NULL,
+  weight REAL NOT NULL,
+  date TEXT NOT NULL, -- ISO 8601 date (YYYY-MM-DD)
+  notes TEXT,
+  created_at TEXT NOT NULL,
+  UNIQUE(profile_id, date) -- One weight entry per day per profile
+);
+
 -- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_calorie_goals_profile_id ON calorie_goals(profile_id);
+CREATE INDEX IF NOT EXISTS idx_calorie_goals_start_date ON calorie_goals(start_date);
+CREATE INDEX IF NOT EXISTS idx_calorie_goal_history_profile_id ON calorie_goal_history(profile_id);
+CREATE INDEX IF NOT EXISTS idx_calorie_goal_history_goal_id ON calorie_goal_history(calorie_goal_id);
+CREATE INDEX IF NOT EXISTS idx_daily_calorie_tracking_date ON daily_calorie_tracking(date);
+CREATE INDEX IF NOT EXISTS idx_daily_calorie_tracking_profile_id ON daily_calorie_tracking(profile_id);
+CREATE INDEX IF NOT EXISTS idx_calorie_streaks_profile_id ON calorie_streaks(profile_id);
+CREATE INDEX IF NOT EXISTS idx_calorie_streaks_start_date ON calorie_streaks(streak_start_date);
+CREATE INDEX IF NOT EXISTS idx_weight_logs_profile_date ON weight_logs(profile_id, date DESC);
 CREATE INDEX IF NOT EXISTS idx_meal_logs_date ON meal_logs(date);
 CREATE INDEX IF NOT EXISTS idx_supplement_logs_date ON supplement_logs(date);
 CREATE INDEX IF NOT EXISTS idx_foods_name ON foods(name);
@@ -159,6 +230,3 @@ CREATE INDEX IF NOT EXISTS idx_supplement_logs_date_id ON supplement_logs(date, 
 CREATE INDEX IF NOT EXISTS idx_nutritional_targets_profile_id ON nutritional_targets(profile_id);
 CREATE INDEX IF NOT EXISTS idx_supplement_nutrient_targets_key ON supplement_nutrient_targets(nutrient_key);
 CREATE INDEX IF NOT EXISTS idx_daily_summary_date ON daily_summary(date);
-CREATE INDEX IF NOT EXISTS idx_daily_calorie_tracking_profile_date ON daily_calorie_tracking(profile_id, date);
-CREATE INDEX IF NOT EXISTS idx_calorie_streaks_profile ON calorie_streaks(profile_id, streak_end_date);
-CREATE INDEX IF NOT EXISTS idx_weight_logs_date ON weight_logs(date);

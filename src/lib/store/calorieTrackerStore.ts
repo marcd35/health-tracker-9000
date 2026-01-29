@@ -109,7 +109,15 @@ export const useCalorieTrackerStore = create<CalorieTrackerState>((set, get) => 
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) throw new Error('Failed to create calorie goal');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Failed to create calorie goal:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+        throw new Error(errorData.error || `Failed to create calorie goal (${response.status})`);
+      }
       const result = await response.json();
 
       set({

@@ -11,7 +11,8 @@ export async function GET() {
     // Get the current profile
     const profile = profileRepo.getProfile();
     if (!profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+      // Return null weight if no profile exists yet
+      return NextResponse.json({ weight: null, source: 'none' }, { status: 200 });
     }
 
     const latestWeight = repo.getLatestWeight(profile.id);
@@ -21,8 +22,9 @@ export async function GET() {
     }
 
     return NextResponse.json(latestWeight);
-  } catch (error) {
-    console.error('API Error:', error);
+  } catch (error: any) {
+    console.error('[API] Error fetching latest weight:', error);
+    console.error('[API] Stack:', error?.stack);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
