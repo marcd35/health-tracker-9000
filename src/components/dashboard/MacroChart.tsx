@@ -1,6 +1,6 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -15,6 +15,15 @@ interface MacroChartProps {
 const COLORS = ['#3b82f6', '#f97316', '#eab308'];
 
 export const MacroChart = memo(function MacroChart({ data }: MacroChartProps) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   const chartData = [
     { name: 'Protein', value: data.protein },
     { name: 'Carbs', value: data.carbs },
@@ -34,38 +43,46 @@ export const MacroChart = memo(function MacroChart({ data }: MacroChartProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="h-[200px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                innerRadius={50}
-                outerRadius={70}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {chartData.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  background: 'hsl(var(--background))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px',
-                }}
-                itemStyle={{ color: 'hsl(var(--foreground))' }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          {isMounted ? (
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={70}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {chartData.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    background: 'hsl(var(--background))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                  }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center">
+              <p className="text-muted-foreground">Loading...</p>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-3 gap-3 text-center">
           <div className="space-y-1">
             <div className="text-xs font-medium text-blue-500">Protein</div>
             <div className="text-lg font-bold">{Math.round(data.protein)}g</div>
-            <div className="text-xs text-muted-foreground">{calculatePercentage(data.protein)}%</div>
+            <div className="text-xs text-muted-foreground">
+              {calculatePercentage(data.protein)}%
+            </div>
           </div>
           <div className="space-y-1">
             <div className="text-xs font-medium text-orange-500">Carbs</div>

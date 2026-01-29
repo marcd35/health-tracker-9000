@@ -109,7 +109,7 @@ export function WeightProgressChart({ logs, goalType }: WeightProgressChartProps
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0}>
           <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis

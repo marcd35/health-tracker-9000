@@ -26,14 +26,27 @@ export function CalorieProgressCard({ tracking, goalType }: CalorieProgressCardP
     dinner: 0,
     snacks: 0,
   });
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsDarkMode(document.documentElement.classList.contains('dark'));
-    const observer = new MutationObserver(() => {
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const updateDarkMode = () => {
       setIsDarkMode(document.documentElement.classList.contains('dark'));
-    });
+    };
+    // Use setTimeout to avoid synchronous setState in effect
+    const timeoutId = setTimeout(updateDarkMode, 0);
+    const observer = new MutationObserver(updateDarkMode);
     observer.observe(document.documentElement, { attributes: true });
-    return () => observer.disconnect();
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
   }, []);
 
   // Fetch meal data grouped by meal type
@@ -121,7 +134,10 @@ export function CalorieProgressCard({ tracking, goalType }: CalorieProgressCardP
   // Build pie chart data from meal types
   // If no meal data yet, show consumed + remaining
   const totalMeals =
-    mealTypeCalories.breakfast + mealTypeCalories.lunch + mealTypeCalories.dinner + mealTypeCalories.snacks;
+    mealTypeCalories.breakfast +
+    mealTypeCalories.lunch +
+    mealTypeCalories.dinner +
+    mealTypeCalories.snacks;
 
   let chartData: any[] = [];
   if (totalMeals > 0) {
@@ -143,14 +159,29 @@ export function CalorieProgressCard({ tracking, goalType }: CalorieProgressCardP
 
   const statusColors = {
     'on-track': 'bg-green-900/5 text-foreground border-green-200/50 dark:border-green-800/30',
-    'close': 'bg-amber-900/5 text-foreground border-amber-200/50 dark:border-amber-800/30',
-    'over': 'bg-red-900/5 text-foreground border-red-200/50 dark:border-red-800/30',
+    close: 'bg-amber-900/5 text-foreground border-amber-200/50 dark:border-amber-800/30',
+    over: 'bg-red-900/5 text-foreground border-red-200/50 dark:border-red-800/30',
   };
 
   const statusMessages = {
-    'on-track': goalType === 'weight_loss' ? '🎯 On track!' : goalType === 'gain' ? '💪 Keep going!' : '✨ Perfect!',
-    'close': goalType === 'weight_loss' ? '⚠️ Getting close' : goalType === 'gain' ? '🎯 Almost there' : '⚠️ Close',
-    'over': goalType === 'weight_loss' ? '❌ Over target' : goalType === 'gain' ? '✅ Met goal!' : '⚠️ Over target',
+    'on-track':
+      goalType === 'weight_loss'
+        ? '🎯 On track!'
+        : goalType === 'gain'
+          ? '💪 Keep going!'
+          : '✨ Perfect!',
+    close:
+      goalType === 'weight_loss'
+        ? '⚠️ Getting close'
+        : goalType === 'gain'
+          ? '🎯 Almost there'
+          : '⚠️ Close',
+    over:
+      goalType === 'weight_loss'
+        ? '❌ Over target'
+        : goalType === 'gain'
+          ? '✅ Met goal!'
+          : '⚠️ Over target',
   };
 
   return (
@@ -159,25 +190,31 @@ export function CalorieProgressCard({ tracking, goalType }: CalorieProgressCardP
         {/* Left side: Circular Chart */}
         <div className="flex flex-col items-center justify-center">
           <div className="w-32 h-32">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={45}
-                  outerRadius={64}
-                  paddingAngle={2}
-                  dataKey="value"
-                  startAngle={90}
-                  endAngle={-270}
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
+            {isMounted ? (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={45}
+                    outerRadius={64}
+                    paddingAngle={2}
+                    dataKey="value"
+                    startAngle={90}
+                    endAngle={-270}
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <p className="text-muted-foreground text-sm">Loading...</p>
+              </div>
+            )}
           </div>
           <p className="text-2xl font-bold mt-4 text-center">{displayPercentage}</p>
         </div>

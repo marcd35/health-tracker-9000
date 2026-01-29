@@ -17,7 +17,7 @@ import { AnalyticsSkeleton } from '@/components/analytics/AnalyticsSkeleton';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Info } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const WeeklyTrendChart = dynamic(
@@ -30,9 +30,17 @@ const WeeklyTrendChart = dynamic(
 
 export default function AnalyticsPage() {
   const { weeklySummary, isLoading, fetchWeeklySummary, activeDate } = useHealthStore();
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    console.log('[DEBUG] AnalyticsPage fetching weekly summary for date:', activeDate);
     fetchWeeklySummary(activeDate);
+
+    // Delay chart rendering to ensure parent container has dimensions
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 100);
+    return () => clearTimeout(timer);
   }, [fetchWeeklySummary, activeDate]);
 
   const trendData = weeklySummary
@@ -43,6 +51,8 @@ export default function AnalyticsPage() {
       calories: day.totalNutrition.calories,
     }))
     .reverse();
+
+  console.log('[DEBUG] AnalyticsPage trendData length:', trendData.length);
 
   if (isLoading && trendData.length === 0) {
     return <AnalyticsSkeleton />;
@@ -66,22 +76,32 @@ export default function AnalyticsPage() {
             <CardDescription>Daily caloric consumption vs target</CardDescription>
           </CardHeader>
           <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
-                <XAxis dataKey="date" axisLine={false} tickLine={false} />
-                <YAxis axisLine={false} tickLine={false} />
-                <ChartTooltip
-                  contentStyle={{
-                    background: 'hsl(var(--background))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                  }}
-                />
-                <Legend />
-                <Bar dataKey="calories" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {trendData.length > 0 && isMounted ? (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                <BarChart data={trendData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} />
+                  <YAxis axisLine={false} tickLine={false} />
+                  <ChartTooltip
+                    contentStyle={{
+                      background: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Legend />
+                  <Bar dataKey="calories" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : trendData.length > 0 ? (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-muted-foreground">Loading...</p>
+              </div>
+            ) : (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-muted-foreground">No data available</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

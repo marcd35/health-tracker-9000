@@ -1,6 +1,6 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
 import {
   XAxis,
   YAxis,
@@ -21,13 +21,52 @@ interface WeeklyTrendChartProps {
 }
 
 export const WeeklyTrendChart = memo(function WeeklyTrendChart({ data }: WeeklyTrendChartProps) {
+  console.log('[DEBUG] WeeklyTrendChart rendered with data length:', data.length);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    // Delay rendering to ensure parent container has dimensions
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Don't render chart if no data to avoid dimension warning
+  if (!data || data.length === 0) {
+    return (
+      <Card className="h-[400px] shadow-sm border border-slate-800">
+        <CardHeader>
+          <CardTitle className="text-xl font-bold text-foreground">Health Trends</CardTitle>
+        </CardHeader>
+        <CardContent className="h-[300px] flex items-center justify-center">
+          <p className="text-muted-foreground">No data available</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Don't render chart until mounted to avoid dimension warning
+  if (!isMounted) {
+    return (
+      <Card className="h-[400px] shadow-sm border border-slate-800">
+        <CardHeader>
+          <CardTitle className="text-xl font-bold text-foreground">Health Trends</CardTitle>
+        </CardHeader>
+        <CardContent className="h-[300px] flex items-center justify-center">
+          <p className="text-muted-foreground">Loading...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="h-[400px] shadow-sm border border-slate-800">
       <CardHeader>
         <CardTitle className="text-xl font-bold text-foreground">Health Trends</CardTitle>
       </CardHeader>
       <CardContent className="h-[300px]">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
           <AreaChart data={data}>
             <defs>
               <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">

@@ -103,7 +103,7 @@ export const MicrosRadialWheel = memo(function MicrosRadialWheel({
   return (
     <div className="flex flex-col items-center">
       <div className="relative w-[180px] h-[180px]">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
           <RadialBarChart
             cx="50%"
             cy="50%"

@@ -175,14 +175,18 @@ export class DailySummaryRepository {
   }
 
   private getDailySummarySync(date: string): DailyLog | null {
+    console.log('[DEBUG] getDailySummarySync called with date:', date);
     const stmt = this.db.prepare('SELECT * FROM daily_summary WHERE date = ?');
     const row = stmt.get(date) as DailySummaryRow | undefined;
+    console.log('[DEBUG] Database row found:', !!row);
 
     const meals = this.mealRepo.getMealLogsByDate(date);
     const supplements = this.supplementRepo.getSupplementLogsByDate(date);
+    console.log('[DEBUG] Meals found:', meals.length, 'Supplements found:', supplements.length);
 
     // Return null if no stored summary and no meals/supplements
     if (!row && meals.length === 0 && supplements.length === 0) {
+      console.log('[DEBUG] Returning null - no data found');
       return null;
     }
 
