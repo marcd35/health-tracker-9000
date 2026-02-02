@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(weeklyData);
   } catch (error: any) {
-    console.error('Error fetching weekly tracking:', error);
+    console.error('[API] Error fetching weekly tracking:', error);
+    console.error('[API] Stack:', error.stack);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -93,7 +93,7 @@ export const WeightLogSchema = z.object({
 // Calorie goal creation schema
 export const CalorieGoalCreateSchema = z.object({
   goalType: z.enum(['weight_loss', 'maintenance', 'gain']),
-  weeklyCalorieTarget: z.number().int().min(5000).max(25000),
+  weeklyCalorieTarget: z.number().int().min(-7000).max(7000),
   activityLevel: z.enum(['sedentary', 'light', 'moderate', 'active', 'very_active']),
 });
 

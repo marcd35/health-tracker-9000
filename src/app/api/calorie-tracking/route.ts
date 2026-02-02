@@ -13,23 +13,32 @@ const profileRepo = new ProfileRepository();
 export async function POST(request: NextRequest) {
   return withErrorHandling(async () => {
     const body = await request.json();
+    console.log('[DEBUG] POST /api/calorie-tracking - Request body:', body);
+    
     const validated = CalorieGoalCreateSchema.parse(body);
+    console.log('[DEBUG] Validation passed:', validated);
 
     const profile = profileRepo.getProfile();
+    console.log('[DEBUG] Profile retrieved:', profile?.id || 'NO PROFILE');
+    
     if (!profile) {
-      throw new ValidationError('Profile not found', 404);
+      console.error('[ERROR] ❌ Profile not found when creating calorie goal');
+      throw new ValidationError('Profile not found. Please create your profile first.', 404);
     }
 
+    console.log('[DEBUG] Creating goal for profile:', profile.id);
     const goal = goalRepo.createGoal(
       profile.id,
       validated.goalType,
       validated.weeklyCalorieTarget,
       validated.activityLevel
     );
+    console.log('[DEBUG] Goal created:', goal.id);
 
     // Create initial tracking for today
     const today = new Date().toISOString().split('T')[0];
     trackerRepo.updateDailyTracking(profile.id, today);
+    console.log('[DEBUG] Daily tracking initialized for:', today);
 
     return NextResponse.json({
       success: true,

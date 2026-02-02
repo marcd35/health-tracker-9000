@@ -9,17 +9,19 @@ export async function GET() {
   try {
     const profile = profileRepo.getProfile();
     if (!profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+      // Return null instead of 404 when no profile exists yet
+      return NextResponse.json(null, { status: 200 });
     }
 
     const goal = goalRepo.getCurrentGoal(profile.id);
     if (!goal) {
-      return NextResponse.json(null, { status: 404 });
+      return NextResponse.json(null, { status: 200 });
     }
 
     return NextResponse.json(goal);
   } catch (error: any) {
-    console.error('Error fetching current goal:', error);
+    console.error('[API] Error fetching current goal:', error);
+    console.error('[API] Stack:', error.stack);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

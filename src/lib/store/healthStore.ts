@@ -23,6 +23,7 @@ interface HealthState {
 
   // Actions
   fetchProfile: () => Promise<void>;
+  createProfile: (profile: Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateProfile: (profile: Partial<UserProfile>) => Promise<void>;
   fetchPreferences: () => Promise<void>;
   updatePreferences: (updates: PreferencesUpdateInput) => Promise<void>;
@@ -103,6 +104,37 @@ export const useHealthStore = create<HealthState>((set, get) => {
       } catch (err: any) {
         set({ error: err.message, isLoading: false });
         toast.error(err.message || 'Failed to fetch profile');
+      }
+    },
+
+    createProfile: async (profileData) => {
+      set({ isLoading: true, error: null });
+      try {
+        const response = await fetch('/api/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(profileData),
+        });
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Failed to create profile:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorData,
+          });
+          throw new Error(errorData.error || `Failed to create profile (${response.status})`);
+        }
+        const data = await response.json();
+        console.log('✅ Profile created:', data.id);
+        set({ profile: data, isLoading: false });
+        toast.success(data.message || 'Profile created successfully', {
+          description: `Your profile ID: ${data.id}`,
+          duration: 5000,
+        });
+      } catch (err: any) {
+        set({ error: err.message, isLoading: false });
+        toast.error(err.message || 'Failed to create profile');
+        throw err; // Re-throw so caller knows it failed
       }
     },
 

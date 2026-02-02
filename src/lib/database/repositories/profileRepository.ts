@@ -1,93 +1,95 @@
-import { getDatabase } from '../connection';
 import { v4 as uuidv4 } from 'uuid';
 import type { UserProfile, NutritionalTargets } from '@/lib/types/health';
 import { calculateNutritionalTargets } from '@/lib/utils/nutritionalCalculator';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+
+const PROFILE_PATH = path.join(process.cwd(), 'data', 'profile.json');
 
 export class ProfileRepository {
-  private db = getDatabase();
+  private ensureDataDirectory(): void {
+    const dataDir = path.dirname(PROFILE_PATH);
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+  }
+
+  private generateProfileId(displayName?: string): string {
+    // Create a unique ID based on displayName + timestamp + random hash
+    const name = displayName || 'user';
+    const timestamp = Date.now();
+    const hash = crypto
+      .createHash('md5')
+      .update(`${name}-${timestamp}`)
+      .digest('hex')
+      .substring(0, 8);
+    return `${name.toLowerCase().replace(/\s+/g, '-')}-${hash}`;
+  }
 
   getProfile(): UserProfile | null {
-    const stmt = this.db.prepare('SELECT * FROM profile LIMIT 1');
-    const row = stmt.get() as any;
+    try {
+      if (!fs.existsSync(PROFILE_PATH)) {
+        return null;
+      }
+      const data = fs.readFileSync(PROFILE_PATH, 'utf-8');
+      return JSON.parse(data);
+    } catch (error) {
+      console.error('Error reading profile:', error);
+      return null;
+    }
+  }
 
-    if (!row) return null;
+  createProfile(profile: UserProfile): UserProfile {
+    this.ensureDataDirectory();
 
-    const conditions = this.db
-      .prepare('SELECT name FROM user_conditions WHERE profile_id = ?')
-      .all(row.id) as { name: string }[];
+    const id = this.generateProfileId(profile.displayName);
+    const now = new Date().toISOString();
 
-    const allergies = this.db
-      .prepare('SELECT name FROM user_allergies WHERE profile_id = ?')
-      .all(row.id) as { name: string }[];
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🆔 PROFILE ID GENERATED');
+    console.log('Display Name:', profile.displayName || '(none)');
+    console.log('Generated ID:', id);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-    return {
-      id: row.id,
-      displayName: row.display_name || undefined,
-      age: row.age,
-      weight: row.weight,
-      height: row.height,
-      gender: row.gender,
-      activityLevel: row.activity_level,
-      healthConditions: conditions.map((c) => c.name),
-      allergies: allergies.map((a) => a.name),
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
+    const newProfile: UserProfile = {
+      ...profile,
+      id,
+      createdAt: now,
+      updatedAt: now,
     };
+
+    try {
+      fs.writeFileSync(PROFILE_PATH, JSON.stringify(newProfile, null, 2), 'utf-8');
+      console.log('[ProfileRepository] ✅ Profile created successfully');
+      console.log('[ProfileRepository] Profile ID:', id);
+      console.log('[ProfileRepository] File path:', PROFILE_PATH);
+      return newProfile;
+    } catch (error) {
+      console.error('[ERROR] ❌ Failed to create profile:', error);
+      throw error;
+    }
   }
 
   updateProfile(profile: Partial<UserProfile>): void {
     const current = this.getProfile();
     if (!current) throw new Error('Profile not found');
 
-    const updated = { ...current, ...profile, updatedAt: new Date().toISOString() };
+    const updated: UserProfile = {
+      ...current,
+      ...profile,
+      id: current.id, // Preserve original ID
+      createdAt: current.createdAt, // Preserve creation date
+      updatedAt: new Date().toISOString(),
+    };
 
-    const updateTx = this.db.transaction(() => {
-      // Update main profile fields
-      this.db
-        .prepare(
-          `
-        UPDATE profile SET
-          display_name = ?,
-          age = ?,
-          weight = ?,
-          height = ?,
-          gender = ?,
-          activity_level = ?,
-          updated_at = ?
-        WHERE id = ?
-      `
-        )
-        .run(
-          updated.displayName || null,
-          updated.age,
-          updated.weight,
-          updated.height,
-          updated.gender,
-          updated.activityLevel,
-          updated.updatedAt,
-          updated.id
-        );
-
-      // Update Health Conditions
-      this.db.prepare('DELETE FROM user_conditions WHERE profile_id = ?').run(updated.id);
-      const insertCondition = this.db.prepare(
-        'INSERT INTO user_conditions (id, profile_id, name, created_at) VALUES (?, ?, ?, ?)'
-      );
-      updated.healthConditions.forEach((condition) => {
-        insertCondition.run(uuidv4(), updated.id, condition, new Date().toISOString());
-      });
-
-      // Update Allergies
-      this.db.prepare('DELETE FROM user_allergies WHERE profile_id = ?').run(updated.id);
-      const insertAllergy = this.db.prepare(
-        'INSERT INTO user_allergies (id, profile_id, name, created_at) VALUES (?, ?, ?, ?)'
-      );
-      updated.allergies.forEach((allergy) => {
-        insertAllergy.run(uuidv4(), updated.id, allergy, new Date().toISOString());
-      });
-    });
-
-    updateTx();
+    try {
+      fs.writeFileSync(PROFILE_PATH, JSON.stringify(updated, null, 2), 'utf-8');
+      console.log('[ProfileRepository] Profile updated:', updated.id);
+    } catch (error) {
+      console.error('[ERROR] Failed to update profile:', error);
+      throw error;
+    }
   }
 
   calculateNutritionalTargets(): NutritionalTargets {

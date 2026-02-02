@@ -18,7 +18,8 @@ export async function GET(request: Request) {
     // Get the current profile (for now, we assume single user)
     const profile = profileRepo.getProfile();
     if (!profile) {
-      throw new ValidationError('Profile not found', 404);
+      // Return empty array if no profile exists yet
+      return NextResponse.json([]);
     }
 
     const logs = repo.getWeightHistory(profile.id, startDate, endDate);

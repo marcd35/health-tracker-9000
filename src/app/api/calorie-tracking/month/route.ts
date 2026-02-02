@@ -8,10 +8,7 @@ export async function GET(request: Request) {
   const month = parseInt(searchParams.get('month') || String(new Date().getMonth() + 1));
 
   if (!year || !month || month < 1 || month > 12) {
-    return NextResponse.json(
-      { error: 'Invalid year or month parameter' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Invalid year or month parameter' }, { status: 400 });
   }
 
   try {
@@ -19,10 +16,7 @@ export async function GET(request: Request) {
     const profile = profileRepo.getProfile();
 
     if (!profile) {
-      return NextResponse.json(
-        { error: 'Profile not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
     }
 
     const calorieTrackerRepo = new CalorieTrackerRepository();
@@ -34,10 +28,8 @@ export async function GET(request: Request) {
       data: monthlyData,
     });
   } catch (error: any) {
-    console.error('API Error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Internal Server Error' },
-      { status: 500 }
-    );
+    console.error('[API] Error in monthly tracking:', error);
+    console.error('[API] Stack:', error.stack);
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }

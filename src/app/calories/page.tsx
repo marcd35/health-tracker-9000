@@ -4,7 +4,15 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Link from 'next/link';
-import { Flame, TrendingDown, TrendingUp, TrendingUpIcon, Calendar, History } from 'lucide-react';
+import {
+  Flame,
+  TrendingDown,
+  TrendingUp,
+  TrendingUpIcon,
+  Calendar,
+  History,
+  Database,
+} from 'lucide-react';
 import { useCalorieTrackerStore } from '@/lib/store/calorieTrackerStore';
 import { CalorieGoalOnboarding } from '@/components/calories/CalorieGoalOnboarding';
 import { HeroCalorieCard } from '@/components/calories/HeroCalorieCard';
@@ -19,6 +27,7 @@ import { MonthlyTrendChart } from '@/components/calories/MonthlyTrendChart';
 import { TrendAnalysisCard } from '@/components/calories/TrendAnalysisCard';
 import { GoalModificationModal } from '@/components/calories/GoalModificationModal';
 import { GoalHistoryTimeline } from '@/components/calories/GoalHistoryTimeline';
+import { SyntheticDataModal } from '@/components/debug/SyntheticDataModal';
 import type { WeightLog } from '@/lib/types/weight';
 
 export default function CaloriesPage() {
@@ -219,9 +228,31 @@ export default function CaloriesPage() {
             <Flame className="w-8 h-8 text-orange-500" />
             <h1 className="text-3xl font-bold">Calorie Tracker</h1>
           </div>
-          <Button asChild>
-            <Link href="/meals">Log Meals</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Debug button - only visible in development */}
+            {process.env.NODE_ENV === 'development' && (
+              <SyntheticDataModal
+                triggerButton={
+                  <Button variant="outline" size="sm">
+                    <Database className="w-4 h-4 mr-2" />
+                    Test Data
+                  </Button>
+                }
+                onSuccess={async () => {
+                  // Refresh all tracking data after generating synthetic data
+                  await Promise.all([
+                    fetchDailyTracking(),
+                    fetchWeeklyTracking(),
+                    fetchMonthlyData(currentMonth.year, currentMonth.month),
+                    fetchStreakData(),
+                  ]);
+                }}
+              />
+            )}
+            <Button asChild>
+              <Link href="/meals">Log Meals</Link>
+            </Button>
+          </div>
         </div>
 
         {/* === DAILY SECTION (no explicit divider) === */}

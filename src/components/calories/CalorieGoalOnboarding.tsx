@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,17 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useCalorieTrackerStore } from '@/lib/store/calorieTrackerStore';
+import { useHealthStore } from '@/lib/store/healthStore';
 import type { GoalType, ActivityLevel } from '@/lib/types/calorieTracking';
 
 interface CalorieGoalOnboardingProps {
@@ -18,17 +28,61 @@ interface CalorieGoalOnboardingProps {
   onOpenChange: (open: boolean) => void;
 }
 
-type OnboardingStep = 'goalType' | 'weeklyTarget' | 'activityLevel' | 'confirmation';
+type OnboardingStep =
+  | 'profileSetup'
+  | 'goalType'
+  | 'weeklyTarget'
+  | 'activityLevel'
+  | 'confirmation';
 
 export function CalorieGoalOnboarding({ open, onOpenChange }: CalorieGoalOnboardingProps) {
-  const [step, setStep] = useState<OnboardingStep>('goalType');
+  const [step, setStep] = useState<OnboardingStep>('profileSetup');
   const [selectedGoal, setSelectedGoal] = useState<GoalType>('maintenance');
   const [weeklyTarget, setWeeklyTarget] = useState(-3500); // 1 lb/week loss
   const [selectedActivity, setSelectedActivity] = useState<ActivityLevel>('moderate');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Profile info fields
+  const [profileData, setProfileData] = useState({
+    displayName: '',
+    age: 30,
+    weight: 75,
+    height: 175,
+    gender: 'male' as const,
+    activityLevel: 'moderate' as ActivityLevel,
+  });
+
+  const healthProfile = useHealthStore((state) => state.profile);
+  const createProfile = useHealthStore((state) => state.createProfile);
+  const updateProfile = useHealthStore((state) => state.updateProfile);
   const createGoal = useCalorieTrackerStore((state) => state.createGoal);
   const dismissOnboarding = useCalorieTrackerStore((state) => state.dismissOnboarding);
+
+  // Reset to first step when modal closes
+  useEffect(() => {
+    if (!open) {
+      setStep('profileSetup');
+    }
+  }, [open]);
+
+  // Skip profile setup if profile already exists when opening
+  useEffect(() => {
+    if (!open) return;
+    if (healthProfile) {
+      setStep('goalType');
+      // Pre-fill profile data in case user goes back
+      setProfileData({
+        displayName: healthProfile.displayName || '',
+        age: healthProfile.age,
+        weight: healthProfile.weight,
+        height: healthProfile.height,
+        gender: healthProfile.gender,
+        activityLevel: healthProfile.activityLevel,
+      });
+    } else {
+      setStep('profileSetup');
+    }
+  }, [open, healthProfile]);
 
   const goalOptions: Array<{ type: GoalType; label: string; description: string }> = [
     {
@@ -86,22 +140,72 @@ export function CalorieGoalOnboarding({ open, onOpenChange }: CalorieGoalOnboard
     return Math.round(baseTDEE + weeklyTarget / 7);
   };
 
-  const handleNext = () => {
-    switch (step) {
-      case 'goalType':
-        setStep('weeklyTarget');
-        break;
-      case 'weeklyTarget':
-        setStep('activityLevel');
-        break;
-      case 'activityLevel':
-        setStep('confirmation');
-        break;
+  const handleNext = async () => {
+    if (step === 'profileSetup') {
+      // Validate profile data
+      if (!profileData.age || profileData.age <= 0 || profileData.age > 120) {
+        return;
+      }
+      if (!profileData.weight || profileData.weight <= 0 || profileData.weight > 300) {
+        return;
+      }
+      if (!profileData.height || profileData.height <= 0 || profileData.height > 250) {
+        return;
+      }
+
+      // Create or update profile
+      setIsLoading(true);
+      try {
+        if (healthProfile) {
+          // Update existing profile
+          await updateProfile({
+            displayName: profileData.displayName || undefined,
+            age: profileData.age,
+            weight: profileData.weight,
+            height: profileData.height,
+            gender: profileData.gender,
+            activityLevel: profileData.activityLevel,
+          });
+        } else {
+          // Create new profile
+          await createProfile({
+            displayName: profileData.displayName || undefined,
+            age: profileData.age,
+            weight: profileData.weight,
+            height: profileData.height,
+            gender: profileData.gender,
+            activityLevel: profileData.activityLevel,
+            healthConditions: [],
+            allergies: [],
+          });
+        }
+        setStep('goalType');
+      } catch (error) {
+        console.error('Failed to save profile:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      // Regular navigation
+      switch (step) {
+        case 'goalType':
+          setStep('weeklyTarget');
+          break;
+        case 'weeklyTarget':
+          setStep('activityLevel');
+          break;
+        case 'activityLevel':
+          setStep('confirmation');
+          break;
+      }
     }
   };
 
   const handleBack = () => {
     switch (step) {
+      case 'goalType':
+        setStep('profileSetup');
+        break;
       case 'weeklyTarget':
         setStep('goalType');
         break;
@@ -136,18 +240,129 @@ export function CalorieGoalOnboarding({ open, onOpenChange }: CalorieGoalOnboard
 
   const poundsPerWeek = calculateWeeklyToPounds(weeklyTarget);
   const dailyTarget = calculateDailyTarget();
+  const canGoBack = step !== 'profileSetup';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Set Up Your Calorie Goal</DialogTitle>
+          <DialogTitle>
+            {step === 'profileSetup' ? 'Set Up Your Profile' : 'Set Up Your Calorie Goal'}
+          </DialogTitle>
           <DialogDescription>
-            Let's personalize your tracking experience
+            {step === 'profileSetup'
+              ? "We'll need some basic info to get started"
+              : "Let's personalize your tracking experience"}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Profile Setup */}
+          {step === 'profileSetup' && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="displayName">Your Name</Label>
+                <Input
+                  id="displayName"
+                  type="text"
+                  placeholder="Enter your name"
+                  value={profileData.displayName}
+                  onChange={(e) => setProfileData({ ...profileData, displayName: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {healthProfile
+                    ? 'Your display name (updating existing profile)'
+                    : 'Used to create your unique profile ID'}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="age">Age</Label>
+                <Input
+                  id="age"
+                  type="number"
+                  min="1"
+                  max="120"
+                  value={profileData.age}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, age: parseInt(e.target.value) || 0 })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gender">Gender</Label>
+                <Select
+                  value={profileData.gender}
+                  onValueChange={(value) =>
+                    setProfileData({
+                      ...profileData,
+                      gender: value as 'male' | 'female' | 'other',
+                    })
+                  }
+                >
+                  <SelectTrigger id="gender">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="weight">Weight (kg)</Label>
+                  <Input
+                    id="weight"
+                    type="number"
+                    min="1"
+                    max="300"
+                    value={profileData.weight}
+                    onChange={(e) =>
+                      setProfileData({ ...profileData, weight: parseFloat(e.target.value) || 0 })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="height">Height (cm)</Label>
+                  <Input
+                    id="height"
+                    type="number"
+                    min="1"
+                    max="250"
+                    value={profileData.height}
+                    onChange={(e) =>
+                      setProfileData({ ...profileData, height: parseFloat(e.target.value) || 0 })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="activity">Activity Level</Label>
+                <Select
+                  value={profileData.activityLevel}
+                  onValueChange={(value) =>
+                    setProfileData({
+                      ...profileData,
+                      activityLevel: value as ActivityLevel,
+                    })
+                  }
+                >
+                  <SelectTrigger id="activity">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sedentary">Sedentary</SelectItem>
+                    <SelectItem value="light">Light Activity</SelectItem>
+                    <SelectItem value="moderate">Moderate Activity</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="very_active">Very Active</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
           {/* Goal Type Selection */}
           {step === 'goalType' && (
             <div className="space-y-3">
@@ -272,7 +487,7 @@ export function CalorieGoalOnboarding({ open, onOpenChange }: CalorieGoalOnboard
         {/* Navigation Buttons */}
         <div className="flex gap-2 justify-between">
           <div className="flex gap-2">
-            {step !== 'goalType' && (
+            {canGoBack && (
               <Button variant="outline" onClick={handleBack} disabled={isLoading}>
                 Back
               </Button>
@@ -284,7 +499,13 @@ export function CalorieGoalOnboarding({ open, onOpenChange }: CalorieGoalOnboard
                 <Button variant="outline" onClick={handleDismissForever} disabled={isLoading}>
                   Set Up Later
                 </Button>
-                <Button onClick={handleNext}>Next</Button>
+                <Button onClick={handleNext} disabled={isLoading}>
+                  {step === 'profileSetup'
+                    ? healthProfile
+                      ? 'Update Profile'
+                      : 'Create Profile'
+                    : 'Next'}
+                </Button>
               </>
             ) : (
               <>
