@@ -56,47 +56,19 @@ export async function POST(request: Request) {
       if (existingGoal) {
         calorieGoalRepo.archiveCurrentGoal(profileId);
       }
-      // Reset profile with new values
-      db.prepare(
-        `
-        UPDATE profile SET
-          age = ?,
-          gender = ?,
-          weight = ?,
-          height = ?,
-          activity_level = ?
-        WHERE id = ?
-      `
-      ).run(
-        profile.age,
-        profile.gender,
-        profile.weight,
-        profile.height,
-        profile.activityLevel,
-        profileId
-      );
-    } else {
-      // Update existing profile with synthetic data
-      db.prepare(
-        `
-        UPDATE profile SET
-          age = ?,
-          gender = ?,
-          weight = ?,
-          height = ?,
-          activity_level = ?
-        WHERE id = ?
-      `
-      ).run(
-        profile.age,
-        profile.gender,
-        profile.weight,
-        profile.height,
-        profile.activityLevel,
-        profileId
-      );
+    }
 
-      // Archive existing calorie goal if any
+    // Update profile with synthetic data (stored in JSON file, not database)
+    profileRepo.updateProfile({
+      age: profile.age,
+      gender: profile.gender,
+      weight: profile.weight,
+      height: profile.height,
+      activityLevel: profile.activityLevel,
+    });
+
+    // Archive existing calorie goal if not already archived
+    if (!wipeExistingData) {
       const existingGoal = calorieGoalRepo.getCurrentGoal(profileId);
       if (existingGoal) {
         calorieGoalRepo.archiveCurrentGoal(profileId);

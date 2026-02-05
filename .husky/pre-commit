@@ -1,1 +1,14 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run lint-staged for formatting and eslint
 npx lint-staged
+
+# Run TypeScript type checking on modified files
+echo "Checking TypeScript types..."
+npx tsc --noEmit || {
+  echo "❌ TypeScript type errors found. Fix them and try again."
+  exit 1
+}
+
+echo "✓ All checks passed!"

@@ -59,7 +59,8 @@ export function CalorieProgressCard({ tracking, goalType }: CalorieProgressCardP
           console.warn('Failed to fetch meals');
           return;
         }
-        const meals = await response.json();
+        const result = await response.json();
+        const meals = result.data || [];
 
         // Filter meals for the tracking date
         const filteredMeals = meals.filter((meal: any) => meal.date === tracking.date);

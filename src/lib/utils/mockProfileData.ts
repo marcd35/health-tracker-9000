@@ -8,6 +8,8 @@ export interface MockProfile {
     weight: number;
     height: number;
     activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
+    healthConditions: string[];
+    allergies: string[];
   };
   goalData: {
     goalType: 'weight_loss' | 'maintenance' | 'gain';
@@ -25,7 +27,13 @@ export interface MockProfile {
 /**
  * Calculate TDEE (Total Daily Energy Expenditure) using Mifflin-St Jeor formula
  */
-function calculateTDEE(age: number, weight: number, height: number, gender: 'male' | 'female', activityLevel: string): number {
+function calculateTDEE(
+  age: number,
+  weight: number,
+  height: number,
+  gender: 'male' | 'female',
+  activityLevel: string
+): number {
   // Mifflin-St Jeor formula
   let bmr: number;
   if (gender === 'male') {
@@ -185,7 +193,9 @@ function generateMealData30Days(
     const dateStr = currentDate.toISOString().split('T')[0];
 
     const hitsTarget = daysHittingTarget.has(dayOffset);
-    const targetVariance = hitsTarget ? 0 : (Math.random() > 0.5 ? 1 : -1) * (100 + Math.random() * 300);
+    const targetVariance = hitsTarget
+      ? 0
+      : (Math.random() > 0.5 ? 1 : -1) * (100 + Math.random() * 300);
     const adjustedTarget = dailyTarget + targetVariance;
 
     // Randomly select meals and adjust for target
@@ -194,13 +204,13 @@ function generateMealData30Days(
     const dinnerIndex = Math.floor(Math.random() * mealOptions.dinners.length);
     const snackIndex = Math.floor(Math.random() * mealOptions.snacks.length);
 
-    let breakfast = mealOptions.breakfasts[breakfastIndex];
-    let lunch = mealOptions.lunches[lunchIndex];
-    let dinner = mealOptions.dinners[dinnerIndex];
-    let snack = mealOptions.snacks[snackIndex];
+    const breakfast = mealOptions.breakfasts[breakfastIndex];
+    const lunch = mealOptions.lunches[lunchIndex];
+    const dinner = mealOptions.dinners[dinnerIndex];
+    const snack = mealOptions.snacks[snackIndex];
 
     // Adjust dinner slightly to hit target
-    let adjustedDinner = { ...dinner };
+    const adjustedDinner = { ...dinner };
     const currentTotal = breakfast.calories + lunch.calories + dinner.calories + snack.calories;
     const difference = adjustedTarget - currentTotal;
     adjustedDinner.calories = Math.max(200, dinner.calories + difference);
@@ -240,11 +250,11 @@ function generateMealData30Days(
  * Generate mock profile data for weight loss scenario
  */
 export function generateWeightLossProfile(): MockProfile {
-  const age = 28;
-  const weight = 180; // lbs
-  const height = 70; // inches
-  const gender: 'male' = 'male';
-  const activityLevel = 'moderate';
+  const age = 28 as const;
+  const weight = 180 as const; // lbs
+  const height = 70 as const; // inches
+  const gender = 'male' as const;
+  const activityLevel = 'moderate' as const;
 
   const tdee = calculateTDEE(age, weight, height, gender, activityLevel);
   const weeklyDeficit = -3500; // -1 lb/week
@@ -261,6 +271,8 @@ export function generateWeightLossProfile(): MockProfile {
       weight,
       height,
       activityLevel,
+      healthConditions: [],
+      allergies: [],
     },
     goalData: {
       goalType: 'weight_loss',
@@ -275,11 +287,11 @@ export function generateWeightLossProfile(): MockProfile {
  * Generate mock profile data for maintenance scenario
  */
 export function generateMaintenanceProfile(): MockProfile {
-  const age = 35;
-  const weight = 165; // lbs
-  const height = 68; // inches
-  const gender: 'female' = 'female';
-  const activityLevel = 'moderate';
+  const age = 35 as const;
+  const weight = 165 as const; // lbs
+  const height = 68 as const; // inches
+  const gender = 'female' as const;
+  const activityLevel = 'moderate' as const;
 
   const tdee = calculateTDEE(age, weight, height, gender, activityLevel);
   const dailyTarget = tdee;
@@ -295,6 +307,8 @@ export function generateMaintenanceProfile(): MockProfile {
       weight,
       height,
       activityLevel,
+      healthConditions: [],
+      allergies: [],
     },
     goalData: {
       goalType: 'maintenance',
@@ -309,11 +323,11 @@ export function generateMaintenanceProfile(): MockProfile {
  * Generate mock profile data for weight gain scenario
  */
 export function generateWeightGainProfile(): MockProfile {
-  const age = 24;
-  const weight = 155; // lbs
-  const height = 72; // inches
-  const gender: 'male' = 'male';
-  const activityLevel = 'moderate';
+  const age = 24 as const;
+  const weight = 155 as const; // lbs
+  const height = 70 as const; // inches
+  const gender = 'male' as const;
+  const activityLevel = 'moderate' as const;
 
   const tdee = calculateTDEE(age, weight, height, gender, activityLevel);
   const weeklySurplus = 3500; // +1 lb/week
@@ -330,6 +344,8 @@ export function generateWeightGainProfile(): MockProfile {
       weight,
       height,
       activityLevel,
+      healthConditions: [],
+      allergies: [],
     },
     goalData: {
       goalType: 'gain',

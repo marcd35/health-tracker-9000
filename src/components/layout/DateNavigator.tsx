@@ -1,12 +1,19 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Home, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useHealthStore } from '@/lib/store/healthStore';
 import { format, isToday, parseISO } from 'date-fns';
 
 export function DateNavigator() {
+  const [isMounted, setIsMounted] = useState(false);
   const { activeDate, navigateToYesterday, navigateToTomorrow, navigateToToday } = useHealthStore();
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsMounted(true);
+  }, []);
 
   const isViewingToday = isToday(parseISO(activeDate));
   const displayDate = format(parseISO(activeDate), 'EEEE, MMM d, yyyy');
@@ -14,7 +21,7 @@ export function DateNavigator() {
   return (
     <div className="flex items-center gap-2">
       {/* Temporal clarity indicator - UNMISTAKABLE when not viewing today */}
-      {typeof window !== 'undefined' && !isViewingToday && (
+      {isMounted && !isViewingToday && (
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-orange-100 dark:bg-orange-900/30 border-2 border-orange-400 dark:border-orange-600">
           <Calendar className="h-4 w-4 text-orange-700 dark:text-orange-300" />
           <span className="text-sm font-semibold text-orange-800 dark:text-orange-200">

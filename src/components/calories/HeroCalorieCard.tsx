@@ -67,11 +67,20 @@ export function HeroCalorieCard({
   useEffect(() => {
     const fetchMealData = async () => {
       try {
-        const response = await fetch(`/api/meals`);
-        if (!response.ok) return;
-        const meals = await response.json();
+        console.log('[HeroCalorieCard] Fetching meal data for date:', tracking.date);
+        const response = await fetch(
+          `/api/meals?startDate=${tracking.date}&endDate=${tracking.date}`
+        );
+        if (!response.ok) {
+          console.error('[HeroCalorieCard] Failed to fetch meals:', response.status);
+          return;
+        }
+        const result = await response.json();
+        const meals = result.data || result;
 
+        console.log('[HeroCalorieCard] Total meals fetched:', meals.length);
         const filteredMeals = meals.filter((meal: any) => meal.date === tracking.date);
+        console.log('[HeroCalorieCard] Filtered meals for today:', filteredMeals.length);
 
         const totals: MealTypeCalories = {
           breakfast: 0,
@@ -83,11 +92,13 @@ export function HeroCalorieCard({
         filteredMeals.forEach((meal: any) => {
           const mealType = (meal.mealType || 'snacks').toLowerCase() as keyof MealTypeCalories;
           const calories = meal.totalNutrition?.calories || 0;
+          console.log(`[HeroCalorieCard] ${mealType}: ${calories} cal`);
           if (mealType in totals) {
             totals[mealType] += calories;
           }
         });
 
+        console.log('[HeroCalorieCard] Final totals:', totals);
         setMealTypeCalories(totals);
       } catch (error) {
         console.error('Failed to fetch meal data:', error);

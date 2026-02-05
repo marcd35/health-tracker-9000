@@ -1,0 +1,78 @@
+# <type>(<scope>): <subject>
+# |<----  Using a Maximum Of 50 Characters  ----|
+#
+# Explain why this change is being made
+# |<----  Try To Limit Each Line to a Maximum Of 72 Characters  ----|
+#
+# Provide links to any relevant tickets, PRs or other resources
+# Example: Closes #123, Related to #456
+#
+# ---------- CONVENTIONAL COMMIT TYPES ----------
+# feat:     A new feature
+# fix:      A bug fix
+# docs:     Documentation only changes
+# style:    Changes that do not affect the meaning of the code
+#           (formatting, missing semicolons, etc)
+# refactor: A code change that neither fixes a bug nor adds a feature
+# perf:     A code change that improves performance
+# test:     Adding missing tests or correcting existing tests
+# chore:    Changes to build process, dependencies, or tooling
+# ci:       Changes to CI/CD configuration
+#
+# ---------- SCOPE EXAMPLES ----------
+# api:        API routes and endpoints
+# repo:       Repository/database layer
+# db:         Database schema or migrations
+# store:      Zustand state management
+# meal:       Meal logging feature
+# supplement: Supplement tracking feature
+# profile:    User profile feature
+# analytics:  Analytics and reporting
+# ui:         UI components and styling
+# form:       Form components
+# hook:       Custom React hooks
+# types:      TypeScript types and interfaces
+# util:       Utility functions and helpers
+#
+# ---------- ATOMIC COMMIT CHECKLIST ----------
+# Before committing, ensure:
+# ✓ One logical change per commit
+# ✓ Each commit is independently testable
+# ✓ No mixed concerns (e.g., feat + refactor)
+# ✓ All tests pass locally (npm test)
+# ✓ Linting passes locally (npm run lint)
+# ✓ TypeScript passes (npx tsc --noEmit)
+# ✓ Related files modified together
+# ✓ Tests added/updated for code changes
+#
+# ---------- PRECOMMIT CHECKS ----------
+# Husky + lint-staged automatically:
+# → Runs ESLint with --fix on *.{js,jsx,ts,tsx}
+# → Formats with Prettier on changed files
+# → Runs tests on modified components
+#
+# All checks must pass before commit completes.
+# If checks fail, fix the issues and stage again.
+#
+# ---------- EXAMPLES ----------
+# Regular feature:
+# feat(meal): add allergen conflict detection
+#
+# Bug fix:
+# fix(meal): prevent duplicate food entries
+#
+# Database change:
+# chore(db): add indexes to meal_logs table
+#
+# Component improvement:
+# refactor(analytics): extract chart logic to hook
+#
+# With body and references:
+# feat(api): implement daily summary endpoint
+#
+# Aggregates daily nutritional and supplement data,
+# returns health score and nutrient totals for dashboard.
+#
+# Closes #123
+#
+# --------------------------------------------------

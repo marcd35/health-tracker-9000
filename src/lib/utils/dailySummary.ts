@@ -18,11 +18,16 @@ export async function updateDailySummaryForDate(date: string): Promise<void> {
     const meals = mealRepo.getMealLogsByDate(date);
     const dailyTotals = summaryRepo.calculateDailyTotals(meals, summary.supplements);
 
-    const scoreBreakdown = calculateHealthScore(dailyTotals, targets, {
-      ...summary,
-      meals,
-      totalNutrition: dailyTotals,
-    });
+    const scoreBreakdown = calculateHealthScore(
+      dailyTotals,
+      targets,
+      {
+        ...summary,
+        meals,
+        totalNutrition: dailyTotals,
+      },
+      false
+    );
 
     summaryRepo.saveDailySummary({
       date,

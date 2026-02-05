@@ -15,14 +15,16 @@ import { z } from 'zod';
 const PaginationSchema = z.object({
   limit: z
     .string()
+    .nullable()
     .optional()
     .transform((val) => (val ? parseInt(val) : 100)),
   offset: z
     .string()
+    .nullable()
     .optional()
     .transform((val) => (val ? parseInt(val) : 0)),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
+  startDate: z.string().nullable().optional(),
+  endDate: z.string().nullable().optional(),
 });
 
 export async function GET(request: Request) {
@@ -38,8 +40,8 @@ export async function GET(request: Request) {
     });
 
     const result = mealRepo.getAllMealLogs(
-      params.startDate,
-      params.endDate,
+      params.startDate ?? undefined,
+      params.endDate ?? undefined,
       params.limit,
       params.offset
     );

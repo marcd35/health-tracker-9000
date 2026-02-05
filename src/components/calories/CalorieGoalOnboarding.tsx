@@ -43,12 +43,19 @@ export function CalorieGoalOnboarding({ open, onOpenChange }: CalorieGoalOnboard
   const [isLoading, setIsLoading] = useState(false);
 
   // Profile info fields
-  const [profileData, setProfileData] = useState({
+  const [profileData, setProfileData] = useState<{
+    displayName: string;
+    age: number;
+    weight: number;
+    height: number;
+    gender: 'male' | 'female' | 'other';
+    activityLevel: ActivityLevel;
+  }>({
     displayName: '',
     age: 30,
     weight: 75,
     height: 175,
-    gender: 'male' as const,
+    gender: 'male',
     activityLevel: 'moderate' as ActivityLevel,
   });
 
@@ -76,7 +83,7 @@ export function CalorieGoalOnboarding({ open, onOpenChange }: CalorieGoalOnboard
         age: healthProfile.age,
         weight: healthProfile.weight,
         height: healthProfile.height,
-        gender: healthProfile.gender,
+        gender: healthProfile.gender as 'male' | 'female' | 'other',
         activityLevel: healthProfile.activityLevel,
       });
     } else {
@@ -366,7 +373,7 @@ export function CalorieGoalOnboarding({ open, onOpenChange }: CalorieGoalOnboard
           {/* Goal Type Selection */}
           {step === 'goalType' && (
             <div className="space-y-3">
-              <p className="text-sm font-medium">What's your primary fitness goal?</p>
+              <p className="text-sm font-medium">What&rsquo;s your primary fitness goal?</p>
               {goalOptions.map((option) => (
                 <Card
                   key={option.type}
@@ -429,7 +436,7 @@ export function CalorieGoalOnboarding({ open, onOpenChange }: CalorieGoalOnboard
           {/* Activity Level Selection */}
           {step === 'activityLevel' && (
             <div className="space-y-3">
-              <p className="text-sm font-medium">What's your activity level?</p>
+              <p className="text-sm font-medium">What&rsquo;s your activity level?</p>
               {activityOptions.map((option) => (
                 <Card
                   key={option.level}
