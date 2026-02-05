@@ -5,6 +5,7 @@ import { ProfileRepository } from '@/lib/database/repositories/profileRepository
 import { CalorieGoalRepository } from '@/lib/database/repositories/calorieGoalRepository';
 import { MealLogRepository } from '@/lib/database/repositories/mealLogRepository';
 import { mockProfiles } from '@/lib/utils/mockProfileData';
+import type { UserProfile } from '@/lib/types/health';
 
 export async function POST(request: Request) {
   try {
@@ -22,30 +23,28 @@ export async function POST(request: Request) {
     const calorieGoalRepo = new CalorieGoalRepository();
     const mealLogRepo = new MealLogRepository();
 
-    // Update or create profile
+    // Get or create profile (stored in JSON file, not SQLite)
     const existingProfile = profileRepo.getProfile();
-    const profileId = existingProfile?.id || mockProfile.profileData.id;
+    let profileId: string;
 
-    // Update profile with mock data
-    const db = getDatabase();
-    const updateProfileStmt = db.prepare(`
-      UPDATE profile SET
-        age = ?,
-        gender = ?,
-        weight = ?,
-        height = ?,
-        activity_level = ?
-      WHERE id = ?
-    `);
-
-    updateProfileStmt.run(
-      mockProfile.profileData.age,
-      mockProfile.profileData.gender,
-      mockProfile.profileData.weight,
-      mockProfile.profileData.height,
-      mockProfile.profileData.activityLevel,
-      profileId
-    );
+    if (existingProfile) {
+      // Update existing profile with mock data
+      const updatedProfile: UserProfile = {
+        ...existingProfile,
+        age: mockProfile.profileData.age,
+        gender: mockProfile.profileData.gender,
+        weight: mockProfile.profileData.weight,
+        height: mockProfile.profileData.height,
+        activityLevel: mockProfile.profileData.activityLevel,
+        updatedAt: new Date().toISOString(),
+      };
+      profileRepo.updateProfile(updatedProfile);
+      profileId = existingProfile.id;
+    } else {
+      // Create new profile
+      const newProfile = profileRepo.createProfile(mockProfile.profileData);
+      profileId = newProfile.id;
+    }
 
     // Archive existing calorie goal if any
     const existingGoal = calorieGoalRepo.getCurrentGoal(profileId);
@@ -66,6 +65,7 @@ export async function POST(request: Request) {
     if (!currentGoal) throw new Error('Failed to create calorie goal');
 
     // Clear existing meals and tracking for the past 30 days
+    const db = getDatabase();
     const today = new Date();
     const thirtyDaysAgo = new Date(today);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);

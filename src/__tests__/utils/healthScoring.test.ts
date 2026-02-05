@@ -55,7 +55,7 @@ describe('Health Scoring', () => {
 
   it('calculates perfect score when targets are met', () => {
     const perfectNutrition = { ...mockTargets } as unknown as NutritionalValues;
-    const score = calculateHealthScore(perfectNutrition, mockTargets, mockDailyLog);
+    const score = calculateHealthScore(perfectNutrition, mockTargets, mockDailyLog, false);
 
     expect(score.total).toBe(91); // Based on current logic
     expect(score.macros).toBe(100);
@@ -65,7 +65,7 @@ describe('Health Scoring', () => {
 
   it('calculates lower score when macros are off', () => {
     const badMacros = { ...mockTargets, calories: 3000 } as NutritionalValues; // 50% deviation on calories
-    const score = calculateHealthScore(badMacros, mockTargets, mockDailyLog);
+    const score = calculateHealthScore(badMacros, mockTargets, mockDailyLog, false);
     expect(score.macros).toBe(88);
   });
 
@@ -94,7 +94,8 @@ describe('Health Scoring', () => {
     const score = calculateHealthScore(
       mockTargets as unknown as NutritionalValues,
       mockTargets,
-      missedSupps
+      missedSupps,
+      false
     );
     expect(score.supplements).toBe(50);
   });
@@ -135,7 +136,8 @@ describe('Health Scoring', () => {
     const score = calculateHealthScore(
       mockTargets as unknown as NutritionalValues,
       mockTargets,
-      dailyLogWithDisabled
+      dailyLogWithDisabled,
+      false
     );
     // Only 2 enabled supplements: 1 taken, 1 not taken = 50%
     expect(score.supplements).toBe(50);
@@ -177,7 +179,8 @@ describe('Health Scoring', () => {
     const score = calculateHealthScore(
       mockTargets as unknown as NutritionalValues,
       mockTargets,
-      dailyLogWithDisabledButAllEnabledTaken
+      dailyLogWithDisabledButAllEnabledTaken,
+      false
     );
     // All enabled supplements (2) are taken = 100%
     expect(score.supplements).toBe(100);

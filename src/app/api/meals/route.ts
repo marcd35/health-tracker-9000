@@ -40,8 +40,8 @@ export async function GET(request: Request) {
     });
 
     const result = mealRepo.getAllMealLogs(
-      params.startDate,
-      params.endDate,
+      params.startDate ?? undefined,
+      params.endDate ?? undefined,
       params.limit,
       params.offset
     );
